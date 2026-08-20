@@ -15,13 +15,17 @@ function fail(msg) {
   process.exit(1);
 }
 
-if (!fs.existsSync(ARCHIVE)) fail('gobek17-app.zip bulunamadı.');
+if (!fs.existsSync(ARCHIVE)) {
+  fail('gobek17-app.zip bulunamadı.');
+}
 
 try {
   if (!fs.existsSync(MARKER)) {
     fs.rmSync(APP, { recursive: true, force: true });
     fs.mkdirSync(APP, { recursive: true });
+
     console.log('[G17 BOOT] Uygulama arşivi açılıyor...');
+
     new AdmZip(ARCHIVE).extractAllTo(APP, true);
     fs.writeFileSync(MARKER, String(Date.now()));
   }
@@ -29,39 +33,102 @@ try {
   fail('Arşiv açılamadı: ' + (e && e.stack || e));
 }
 
-const domain = String(process.env.RAILWAY_PUBLIC_DOMAIN || '').trim();
-if (domain) {
-  const base = 'https://' + domain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  process.env.G17_PUBLIC_BASE_URL = process.env.G17_PUBLIC_BASE_URL || base;
-  process.env.G17_ALLOWED_ORIGINS = process.env.G17_ALLOWED_ORIGINS || ('null,' + base);
+const FIXED_PUBLIC_BASE =
+  'https://gobekliokey-production.up.railway.app';
+
+const railwayDomain =
+  String(process.env.RAILWAY_PUBLIC_DOMAIN || '').trim();
+
+const detectedBase = railwayDomain
+  ? 'https://' +
+    railwayDomain
+      .replace(/^https?:\/\//, '')
+      .replace(/\/+$/, '')
+  : FIXED_PUBLIC_BASE;
+
+process.env.G17_PUBLIC_BASE_URL =
+  process.env.G17_PUBLIC_BASE_URL || detectedBase;
+
+if (!process.env.G17_ALLOWED_ORIGINS) {
+  const origins = new Set([
+    'null',
+    FIXED_PUBLIC_BASE,
+    detectedBase
+  ]);
+
+  process.env.G17_ALLOWED_ORIGINS =
+    [...origins].join(',');
 }
 
-process.env.G17_STORE = process.env.G17_STORE || 'file';
-process.env.G17_REPLICA_COUNT = process.env.G17_REPLICA_COUNT || '1';
-process.env.G17_AUTH_MODE = process.env.G17_AUTH_MODE || 'required';
-process.env.G17_ALLOW_REGISTRATION = process.env.G17_ALLOW_REGISTRATION || '1';
-process.env.G17_MODERATION = process.env.G17_MODERATION || '0';
-process.env.G17_PASSWORD_MIN = process.env.G17_PASSWORD_MIN || '10';
-process.env.G17_TRUST_PROXY = process.env.G17_TRUST_PROXY || '1';
+process.env.G17_STORE =
+  process.env.G17_STORE || 'file';
+
+process.env.G17_REPLICA_COUNT =
+  process.env.G17_REPLICA_COUNT || '1';
+
+process.env.G17_AUTH_MODE =
+  process.env.G17_AUTH_MODE || 'required';
+
+process.env.G17_ALLOW_REGISTRATION =
+  process.env.G17_ALLOW_REGISTRATION || '1';
+
+process.env.G17_MODERATION =
+  process.env.G17_MODERATION || '0';
+
+process.env.G17_PASSWORD_MIN =
+  process.env.G17_PASSWORD_MIN || '10';
+
+process.env.G17_TRUST_PROXY =
+  process.env.G17_TRUST_PROXY || '1';
+
+console.log(
+  '[G17 BOOT] Public base:',
+  process.env.G17_PUBLIC_BASE_URL
+);
+
+console.log(
+  '[G17 BOOT] Allowed origins:',
+  process.env.G17_ALLOWED_ORIGINS
+);
 
 const entry = path.join(APP, 'server.cjs');
-if (!fs.existsSync(entry)) fail('Arşiv içinde server.cjs bulunamadı.');
 
-console.log('[G17 BOOT] Authority başlatılıyor:', entry);
+if (!fs.existsSync(entry)) {
+  fail('Arşiv içinde server.cjs bulunamadı.');
+}
 
-const child = spawn(process.execPath, [entry], {
-  cwd: APP,
-  env: process.env,
-  stdio: 'inherit'
-});
+console.log(
+  '[G17 BOOT] Authority başlatılıyor:',
+  entry
+);
+
+const child = spawn(
+  process.execPath,
+  [entry],
+  {
+    cwd: APP,
+    env: process.env,
+    stdio: 'inherit'
+  }
+);
 
 for (const sig of ['SIGTERM', 'SIGINT']) {
   process.on(sig, () => {
-    try { child.kill(sig); } catch (_) {}
+    try {
+      child.kill(sig);
+    } catch (_) {}
   });
 }
 
 child.on('exit', (code, signal) => {
-  if (signal) console.error('[G17 BOOT] Child signal:', signal);
-  process.exit(code == null ? 1 : code);
+  if (signal) {
+    console.error(
+      '[G17 BOOT] Child signal:',
+      signal
+    );
+  }
+
+  process.exit(
+    code == null ? 1 : code
+  );
 });
