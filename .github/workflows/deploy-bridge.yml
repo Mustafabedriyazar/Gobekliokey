@@ -1,14 +1,15 @@
 name: OKEY17 deploy bridge
 
-# TEK SEFERLİK KURULUR, SONRA HİÇ DOKUNULMAZ.
-# Akış: kanonik build artifact deposuna yayınlanır -> bu workflow SHA farkını görür
-# -> main'e 3 dosyayı commit eder -> Railway autodeploy.
-# PAT/secret yoktur. Actions'ın yerleşik GITHUB_TOKEN'ı kullanılır.
+# One-time setup. After this file is installed, no manual GitHub or Railway work is required.
+# Flow: canonical build artifacts are published to G17_ARTIFACT_BASE ->
+#       this workflow detects the SHA-256 difference -> commits ONLY the three
+#       deployment files to main -> Railway autodeploy -> health verification.
+# No PAT and no repository secret: the built-in GITHUB_TOKEN is used.
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '*/10 * * * *'
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,95 +21,91 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Repoyu al
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Yayın manifestini oku
+      - name: Read publish manifest
         id: manifest
         env:
           BASE: ${{ vars.G17_ARTIFACT_BASE }}
         run: |
           set -euo pipefail
-
           if [ -z "${BASE:-}" ]; then
-            echo "G17_ARTIFACT_BASE tanımlı değil."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "G17_ARTIFACT_BASE is not set; skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
-          if ! curl -fsSL "$BASE/manifest.json" -o /tmp/manifest.json; then
-            echo "Manifest henüz erişilebilir değil; değişiklik yapılmıyor."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
+          if ! curl -fsSL --retry 2 "$BASE/manifest.json" -o /tmp/manifest.json; then
+            echo "Manifest is not published yet; skipping quietly (job stays green)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "build=$(jq -r .build /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
+          echo "appsha=$(jq -r .app_zip_sha256 /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
+          echo "bootsha=$(jq -r .bootstrap_cjs_sha256 /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
+          echo "pkgsha=$(jq -r .package_json_sha256 /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
 
-          BUILD="$(jq -r '.build // empty' /tmp/manifest.json)"
-          APPSHA="$(jq -r '.app_zip_sha256 // empty' /tmp/manifest.json)"
-
-          if [ -z "$BUILD" ] || ! echo "$APPSHA" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            echo "Manifest geçersiz; değişiklik yapılmıyor."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "ready=true" >> "$GITHUB_OUTPUT"
-          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
-          echo "appsha=$APPSHA" >> "$GITHUB_OUTPUT"
-
-      - name: Mevcut main ile karşılaştır
+      - name: Compare with current main
         id: diff
-        if: steps.manifest.outputs.ready == 'true'
+        if: steps.manifest.outputs.skip == 'false'
         run: |
           set -euo pipefail
-
           CUR=""
           if [ -f gobek17-app.zip ]; then
             CUR="$(sha256sum gobek17-app.zip | cut -d' ' -f1)"
           fi
-
-          echo "current=$CUR" >> "$GITHUB_OUTPUT"
-
           if [ "$CUR" = "${{ steps.manifest.outputs.appsha }}" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Aynı build zaten main üzerinde."
+            echo "main is already up to date: $CUR"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "difference detected: main=$CUR published=${{ steps.manifest.outputs.appsha }}"
           fi
 
-      - name: Üç dosyayı indir ve SHA doğrula
-        if: steps.diff.outputs.changed == 'true'
+      - name: Download deployment files
+        if: steps.manifest.outputs.skip == 'false' && steps.diff.outputs.changed == 'true'
         env:
           BASE: ${{ vars.G17_ARTIFACT_BASE }}
         run: |
           set -euo pipefail
+          curl -fsSL --retry 3 "$BASE/bootstrap.cjs"   -o bootstrap.cjs
+          curl -fsSL --retry 3 "$BASE/gobek17-app.zip" -o gobek17-app.zip
+          curl -fsSL --retry 3 "$BASE/package.json"    -o package.json
 
-          curl -fsSL "$BASE/gobek17-app.zip" -o gobek17-app.zip
-          curl -fsSL "$BASE/bootstrap.cjs" -o bootstrap.cjs
-          curl -fsSL "$BASE/package.json" -o package.json
-
-          GOT="$(sha256sum gobek17-app.zip | cut -d' ' -f1)"
-          EXP="${{ steps.manifest.outputs.appsha }}"
-
-          if [ "$GOT" != "$EXP" ]; then
-            echo "SHA UYUŞMUYOR: beklenen $EXP, gelen $GOT"
-            exit 1
-          fi
-
-          echo "SHA doğrulandı: $GOT"
-
-      - name: Yalnız 3 dosyayı commit et
-        if: steps.diff.outputs.changed == 'true'
+      - name: Verify SHA-256 (no commit on mismatch)
+        if: steps.manifest.outputs.skip == 'false' && steps.diff.outputs.changed == 'true'
         run: |
           set -euo pipefail
+          verify() {
+            got="$(sha256sum "$1" | cut -d' ' -f1)"
+            if [ "$got" != "$2" ]; then
+              echo "SHA-256 MISMATCH: $1 expected=$2 got=$got"
+              exit 1
+            fi
+            echo "OK $1 $got"
+          }
+          verify bootstrap.cjs   "${{ steps.manifest.outputs.bootsha }}"
+          verify gobek17-app.zip "${{ steps.manifest.outputs.appsha }}"
+          verify package.json    "${{ steps.manifest.outputs.pkgsha }}"
 
+      - name: Commit the three deployment files only
+        if: steps.manifest.outputs.skip == 'false' && steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
           git config user.name "okey17-deploy-bridge"
           git config user.email "deploy-bridge@users.noreply.github.com"
-
           git add -- bootstrap.cjs gobek17-app.zip package.json
-
-          git diff --cached --quiet && exit 0
-
+          if git diff --cached --quiet; then
+            echo "nothing staged; exiting"
+            exit 0
+          fi
+          CHANGED="$(git diff --cached --name-only | sort | tr '\n' ' ')"
+          EXPECTED="bootstrap.cjs gobek17-app.zip package.json "
+          if [ "$CHANGED" != "$EXPECTED" ]; then
+            echo "UNEXPECTED FILES STAGED: $CHANGED"
+            exit 1
+          fi
           git commit -m "Deploy OKEY17 ${{ steps.manifest.outputs.build }}"
           git push origin HEAD:main
