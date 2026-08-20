@@ -36,11 +36,13 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
           if ! curl -fsSL --retry 2 "$BASE/manifest.json" -o /tmp/manifest.json; then
             echo "Manifest is not published yet; skipping quietly (job stays green)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "build=$(jq -r .build /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
           echo "appsha=$(jq -r .app_zip_sha256 /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
@@ -56,56 +58,9 @@ jobs:
           if [ -f gobek17-app.zip ]; then
             CUR="$(sha256sum gobek17-app.zip | cut -d' ' -f1)"
           fi
+
           if [ "$CUR" = "${{ steps.manifest.outputs.appsha }}" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "main is already up to date: $CUR"
           else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "difference detected: main=$CUR published=${{ steps.manifest.outputs.appsha }}"
-          fi
-
-      - name: Download deployment files
-        if: steps.manifest.outputs.skip == 'false' && steps.diff.outputs.changed == 'true'
-        env:
-          BASE: ${{ vars.G17_ARTIFACT_BASE }}
-        run: |
-          set -euo pipefail
-          curl -fsSL --retry 3 "$BASE/bootstrap.cjs"   -o bootstrap.cjs
-          curl -fsSL --retry 3 "$BASE/gobek17-app.zip" -o gobek17-app.zip
-          curl -fsSL --retry 3 "$BASE/package.json"    -o package.json
-
-      - name: Verify SHA-256 (no commit on mismatch)
-        if: steps.manifest.outputs.skip == 'false' && steps.diff.outputs.changed == 'true'
-        run: |
-          set -euo pipefail
-          verify() {
-            got="$(sha256sum "$1" | cut -d' ' -f1)"
-            if [ "$got" != "$2" ]; then
-              echo "SHA-256 MISMATCH: $1 expected=$2 got=$got"
-              exit 1
-            fi
-            echo "OK $1 $got"
-          }
-          verify bootstrap.cjs   "${{ steps.manifest.outputs.bootsha }}"
-          verify gobek17-app.zip "${{ steps.manifest.outputs.appsha }}"
-          verify package.json    "${{ steps.manifest.outputs.pkgsha }}"
-
-      - name: Commit the three deployment files only
-        if: steps.manifest.outputs.skip == 'false' && steps.diff.outputs.changed == 'true'
-        run: |
-          set -euo pipefail
-          git config user.name "okey17-deploy-bridge"
-          git config user.email "deploy-bridge@users.noreply.github.com"
-          git add -- bootstrap.cjs gobek17-app.zip package.json
-          if git diff --cached --quiet; then
-            echo "nothing staged; exiting"
-            exit 0
-          fi
-          CHANGED="$(git diff --cached --name-only | sort | tr '\n' ' ')"
-          EXPECTED="bootstrap.cjs gobek17-app.zip package.json "
-          if [ "$CHANGED" != "$EXPECTED" ]; then
-            echo "UNEXPECTED FILES STAGED: $CHANGED"
-            exit 1
-          fi
-          git commit -m "Deploy OKEY17 ${{ steps.manifest.outputs.build }}"
-          git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB
