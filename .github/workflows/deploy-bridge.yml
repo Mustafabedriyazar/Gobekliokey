@@ -1,0 +1,78 @@
+name: OKEY17 deploy bridge
+
+# TEK SEFERLİK KURULUR, SONRA HİÇ DOKUNULMAZ.
+# Akış: kanonik build artifact deposuna yayınlanır -> bu workflow SHA farkını görür
+#       -> main'e 3 dosyayı commit eder -> Railway autodeploy -> health doğrulaması.
+# Not: PAT/secret YOKTUR. Actions'ın yerleşik GITHUB_TOKEN'ı kullanılır.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'      # 10 dakikada bir kontrol
+  workflow_dispatch:             # elle tetikleme (opsiyonel)
+
+permissions:
+  contents: write                # yalnız bu repoya yazma; başka yetki yok
+
+concurrency:
+  group: okey17-deploy-bridge
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repoyu al
+        uses: actions/checkout@v4
+
+      - name: Yayın manifestini oku
+        id: manifest
+        env:
+          BASE: ${{ vars.G17_ARTIFACT_BASE }}      # repo variable, secret değil
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE:-}" ]; then
+            echo "G17_ARTIFACT_BASE tanımlı değil, çıkılıyor."; exit 0
+          fi
+          curl -fsSL "$BASE/manifest.json" -o /tmp/manifest.json
+          echo "build=$(jq -r .build /tmp/manifest.json)"        >> "$GITHUB_OUTPUT"
+          echo "appsha=$(jq -r .app_zip_sha256 /tmp/manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Mevcut main ile karşılaştır
+        id: diff
+        run: |
+          set -euo pipefail
+          CUR=""
+          [ -f gobek17-app.zip ] && CUR="$(sha256sum gobek17-app.zip | cut -d' ' -f1)"
+          echo "current=$CUR" >> "$GITHUB_OUTPUT"
+          if [ "$CUR" = "${{ steps.manifest.outputs.appsha }}" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true"  >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Üç dosyayı indir ve SHA doğrula
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          BASE: ${{ vars.G17_ARTIFACT_BASE }}
+        run: |
+          set -euo pipefail
+          curl -fsSL "$BASE/gobek17-app.zip" -o gobek17-app.zip
+          curl -fsSL "$BASE/bootstrap.cjs"   -o bootstrap.cjs
+          curl -fsSL "$BASE/package.json"    -o package.json
+          GOT="$(sha256sum gobek17-app.zip | cut -d' ' -f1)"
+          EXP="${{ steps.manifest.outputs.appsha }}"
+          if [ "$GOT" != "$EXP" ]; then
+            echo "SHA UYUŞMUYOR: beklenen $EXP, gelen $GOT"; exit 1
+          fi
+          echo "SHA doğrulandı: $GOT"
+
+      - name: Yalnız 3 dosyayı commit et
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name  "okey17-deploy-bridge"
+          git config user.email "deploy-bridge@users.noreply.github.com"
+          git add -- bootstrap.cjs gobek17-app.zip package.json
+          git commit -m "Deploy OKEY17 ${{ steps.manifest.outputs.build }}"
+          git push origin HEAD:main            # force-push YOK, yalnız main'e ileri commit
+          
