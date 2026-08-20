@@ -1,0 +1,67 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+const AdmZip = require('adm-zip');
+
+const ROOT = __dirname;
+const ARCHIVE = path.join(ROOT, 'gobek17-app.zip');
+const APP = path.join(ROOT, '.gobek17-app');
+const MARKER = path.join(APP, '.extracted-ok');
+
+function fail(msg) {
+  console.error('[G17 BOOT]', msg);
+  process.exit(1);
+}
+
+if (!fs.existsSync(ARCHIVE)) fail('gobek17-app.zip bulunamadı.');
+
+try {
+  if (!fs.existsSync(MARKER)) {
+    fs.rmSync(APP, { recursive: true, force: true });
+    fs.mkdirSync(APP, { recursive: true });
+    console.log('[G17 BOOT] Uygulama arşivi açılıyor...');
+    new AdmZip(ARCHIVE).extractAllTo(APP, true);
+    fs.writeFileSync(MARKER, String(Date.now()));
+  }
+} catch (e) {
+  fail('Arşiv açılamadı: ' + (e && e.stack || e));
+}
+
+const domain = String(process.env.RAILWAY_PUBLIC_DOMAIN || '').trim();
+if (domain) {
+  const base = 'https://' + domain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  process.env.G17_PUBLIC_BASE_URL = process.env.G17_PUBLIC_BASE_URL || base;
+  process.env.G17_ALLOWED_ORIGINS = process.env.G17_ALLOWED_ORIGINS || ('null,' + base);
+}
+
+process.env.G17_STORE = process.env.G17_STORE || 'file';
+process.env.G17_REPLICA_COUNT = process.env.G17_REPLICA_COUNT || '1';
+process.env.G17_AUTH_MODE = process.env.G17_AUTH_MODE || 'required';
+process.env.G17_ALLOW_REGISTRATION = process.env.G17_ALLOW_REGISTRATION || '1';
+process.env.G17_MODERATION = process.env.G17_MODERATION || '0';
+process.env.G17_PASSWORD_MIN = process.env.G17_PASSWORD_MIN || '10';
+process.env.G17_TRUST_PROXY = process.env.G17_TRUST_PROXY || '1';
+
+const entry = path.join(APP, 'server.cjs');
+if (!fs.existsSync(entry)) fail('Arşiv içinde server.cjs bulunamadı.');
+
+console.log('[G17 BOOT] Authority başlatılıyor:', entry);
+
+const child = spawn(process.execPath, [entry], {
+  cwd: APP,
+  env: process.env,
+  stdio: 'inherit'
+});
+
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, () => {
+    try { child.kill(sig); } catch (_) {}
+  });
+}
+
+child.on('exit', (code, signal) => {
+  if (signal) console.error('[G17 BOOT] Child signal:', signal);
+  process.exit(code == null ? 1 : code);
+});
