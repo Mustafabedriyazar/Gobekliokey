@@ -1,0 +1,76 @@
+OKEY17 / GÖBEK17 — QA / CONFLICT GUARD REPORT
+Build: gobek17-161-final-gameplay-ui-polish
+Parent canonical: gobek17-160-end-overlay-priority.zip
+Date: 2026-08-20
+Status: PASS — eligible for canonical promotion
+
+1. SCOPE
+- Presentation-only final gameplay/UI polish.
+- No canonical rule change.
+- No rack/grid/meld coordinate-system change.
+
+2. BROWSER / MOBILE LANDSCAPE
+Viewports:
+- 768x356
+- 915x412
+- 1536x712
+- 1842x854
+
+PASS:
+- page/console errors: 0
+- duplicate DOM IDs: 0
+- E.check: clean
+- 78x108 rack, 13+2 worst-width distribution: no overlap
+- immutable middle-process guard: PASS
+- bad process self penalty: 120 in blue-12 test
+- FREE-grid meld safety envelope: PASS
+- atomic 47->40 meld reflow: uniform first-frame pitch
+- 120 repeated sync/layout cycles: meldVisualAudit.ok = true
+- transform/computed-transform/transient leaks on real meld nodes: 0
+- penalty FIFO queue: two simultaneous penalties each retain full screen lifecycle
+- Live Report feed/mini sync: PASS
+
+3. 30 CONSECUTIVE REAL BOT-PLAYED HAND END FLOW
+- hands: 30/30
+- end overlay visible/unblocked: 30/30
+- penalty blocking: 0/30
+- correct DEVAM ET / BAŞLAT: 30/30
+- continuation/new-game transition: 30/30
+- DEVAM ET: 27
+- BAŞLAT: 3
+- errors: 0
+
+4. CANONICAL RULE REGRESSION
+PASS:
+- qa/test-v152-rules.cjs
+- qa/test-v153-side-take.cjs
+- qa/test-v157-immutable-body.cjs
+- qa/test-v157-authority.cjs
+
+5. SERVER-AUTHORITY / MULTIPLAYER
+PASS:
+- direct authority suite
+- Node HTTP authority
+- browser/client SDK
+- 4-client authoritative roundtrip (47 actions)
+
+6. BOT REGRESSION
+- INDIVIDUAL: 25 games / 225 hands / 19,332 actions / 0 failures
+- TEAM: 25 games / 225 hands / 19,337 actions / 0 failures
+- TOTAL: 50 games / 450 hands / 38,669 actions / 0 failures
+
+7. CORE BLOCK INTEGRITY
+- Engine block SHA-256: 6d7dd3ddd8229d3a186294a204e6357b9b08ce9e6c23e67b94fb4abc7f8e4909
+  byte-identical to v160.
+- Bot block SHA-256: c77ef4d9a75cf6e9a33a0cd46eeef1bc0079f980d50d6b4dfa3f441368cb2460
+  byte-identical to v160.
+
+8. VISUAL INSPECTION ARTIFACTS
+- qa/v161_rack_915.png
+- qa/v161_meld_915.png
+- qa/v161_penalty_915.png
+- qa/v161_end_915.png
+- qa/v161_live_915.png
+
+9. FINAL VERDICT
+PASS. v161 is presentation-only polish on the v160 canonical gameplay foundation.

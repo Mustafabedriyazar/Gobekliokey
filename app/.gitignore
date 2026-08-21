@@ -1,0 +1,15 @@
+node_modules/
+.vercel/
+.g17-state.json
+.g17-identity.json
+*.log
+qa/
+index.v166.backup.html
+# v170 — runtime/test state artiklari ASLA artifact'a girmez.
+# NOT: kalici dosya ADLARI (or. matchmaking-v169.json) BILEREK degistirilmedi;
+# production geriye donuk uyumlulugu korunur.
+.g17-state/
+server/.g17-state/
+**/.g17-state/
+*.tmp-*
+__pycache__/

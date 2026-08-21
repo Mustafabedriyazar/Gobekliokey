@@ -1,0 +1,60 @@
+OKEY17 / GÖBEK17 — QA / CONFLICT GUARD REPORT v160
+Build: gobek17-160-end-overlay-priority
+Parent: gobek17-159-conflict-guard-hardening.zip
+Date: 2026-08-20
+
+ROOT CAUSE
+- penaltyScreen z-index 196 could remain active when handEndUI scheduled endOverlay (z-index 170).
+- Result: endOverlay was actually opened but visually covered by the 3-second penalty layer.
+
+FIX
+- endOverlay z-index: 170 -> 260.
+- handEndUI() atomically cancels penalty screen timer, queue, pulse and legacy penalty flash.
+- openEndOverlay() repeats the cancellation as a belt-and-suspenders guard.
+- notifyPenaltyEvent() refuses to launch transient penalty UI after handOver or while endOverlay is open.
+- end-of-hand penalty data remains in the canonical report/ledger.
+
+30 CONSECUTIVE REAL HAND TEST (915x412)
+- hands run: 30
+- bot actions: 2484
+- end panel visible/unblocked: 30/30
+- penalty layers blocking end panel: 0/30
+- correct DEVAM ET / BASLAT button: 30/30
+- continuation/new-game transition OK: 30/30
+- DEVAM ET occurrences: 27
+- BASLAT occurrences: 3
+- errors: 0
+
+BROWSER REGRESSION
+- 768x356 PASS
+- 915x412 PASS
+- 1536x712 PASS
+- 1842x854 PASS
+- penalty FIFO queue PASS
+- immutable meld body / illegal middle process +x10 PASS
+- free-grid meld safety envelope PASS
+- atomic meld reflow PASS
+- multiplayer ledger delta/dedup PASS
+
+CANONICAL RULE REGRESSION
+- v152 targeted rules PASS
+- v153 side-take PASS
+- v157 immutable body PASS
+- v157 authority PASS
+- direct authority PASS
+- HTTP authority PASS
+- client SDK PASS
+- 4-client roundtrip PASS
+
+BOT REGRESSION
+- individual: 25/25 games, 225 hands, 19239 actions, failures 0
+- team: 25/25 games, 225 hands, 18531 actions, failures 0
+- combined: 450 hands, 37770 actions, failures 0
+
+CORE PRESERVATION
+- canonical engine block byte-identical to v159:
+  6d7dd3ddd8229d3a186294a204e6357b9b08ce9e6c23e67b94fb4abc7f8e4909
+- strategic bot block byte-identical to v159:
+  c77ef4d9a75cf6e9a33a0cd46eeef1bc0079f980d50d6b4dfa3f441368cb2460
+
+FINAL VERDICT: PASS

@@ -1,0 +1,17 @@
+{
+  "name": "gobek17-online",
+  "private": true,
+  "version": "1.70.0",
+  "description": "GÖBEK17 v170 real Ranked matchmaking authority + single-file frontend",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "cd server && npm test"
+  },
+  "dependencies": {
+    "redis": ">=4.6.0 <6"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

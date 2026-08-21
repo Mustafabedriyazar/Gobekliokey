@@ -1,0 +1,18 @@
+{
+  "name": "gobek17-authority-server",
+  "private": true,
+  "version": "1.70.0",
+  "description": "G17MP/1 production authority with real Ranked TEAM/INDIVIDUAL matchmaking, separate persistent rating/leaderboard, account security, durable profiles, Redis fencing and moderation",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node packaging-guard.cjs && node test-authority.cjs && node test-v162-hardening.cjs && node test-v163-runtime.cjs && node test-v164-auth-moderation.cjs && node test-v164-client-auth.cjs && node test-v164-redis-identity.cjs && node test-v164-account-restart.cjs && node test-v165-recovery-chat-profile.cjs && node test-v169-ranked-matchmaking.cjs && node test-v170-ranked-flow.cjs && node test-v170-redis-settlement.cjs && node test-v170-redis-real.cjs",
+    "admin": "node admin-cli.cjs"
+  },
+  "dependencies": {
+    "redis": ">=4.6.0 <6"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
