@@ -11,16 +11,6 @@ const ARCHIVE = path.join(ROOT, 'gobek17-app.zip');
 const APP = path.join(ROOT, '.gobek17-app');
 const MARKER = path.join(APP, '.extracted-sha256');
 
-// Single source of truth: surum etiketi package.json 'version' alanindan turetilir.
-let VERSION_TAG = 'v169';
-try {
-  const pkg = require('./package.json');
-  const [maj, min] = String((pkg && pkg.version) || '').split('.');
-  if (maj && min && Number.isFinite(Number(maj)) && Number.isFinite(Number(min))) {
-    VERSION_TAG = 'v' + (Number(maj) * 100 + Number(min));
-  }
-} catch (_) {}
-
 function fail(msg) {
   console.error('[G17 BOOT]', msg);
   process.exit(1);
@@ -34,7 +24,7 @@ try {
   if (archiveSha !== extractedSha) {
     fs.rmSync(APP, { recursive: true, force: true });
     fs.mkdirSync(APP, { recursive: true });
-    console.log(`[G17 BOOT] ${VERSION_TAG} uygulama arşivi açılıyor:`, archiveSha.slice(0, 12));
+    console.log('[G17 BOOT] v169 uygulama arşivi açılıyor:', archiveSha.slice(0, 12));
     new AdmZip(ARCHIVE).extractAllTo(APP, true);
     fs.writeFileSync(MARKER, archiveSha);
   }
