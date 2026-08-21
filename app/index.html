@@ -1762,7 +1762,7 @@ body.meld-holding .tr.mld{touch-action:none}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-170-production-ranked-flow";
+var BUILD="gobek17-170-v170-acilis-banner-surumu-package-json-v";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -6104,7 +6104,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-170-production-ranked-flow'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-170-v170-acilis-banner-surumu-package-json-v'};
 })(window);
 </script>
 <script>
@@ -6368,7 +6368,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-170-production-ranked-flow',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-170-v170-acilis-banner-surumu-package-json-v',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();resumeSession()},0);
 })(window);
 </script>

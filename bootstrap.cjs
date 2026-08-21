@@ -7,6 +7,16 @@ const { spawn } = require('child_process');
 const AdmZip = require('adm-zip');
 
 const ROOT = __dirname;
+
+// Sürüm etiketi tek doğruluk kaynağından (package.json version) türetilir.
+// require başarısız olursa (paketleme/zip senaryosu) açılış kırılmaz, sabit fallback kullanılır.
+let BUILD = 'v170';
+try {
+  const { version } = require('./package.json');
+  const [maj, min] = String(version).split('.');
+  if (maj && min) BUILD = `v${maj}${String(min).padStart(2, '0')}`;
+} catch (_) {}
+
 const ARCHIVE = path.join(ROOT, 'gobek17-app.zip');
 const APP = path.join(ROOT, '.gobek17-app');
 const MARKER = path.join(APP, '.extracted-sha256');
@@ -24,7 +34,7 @@ try {
   if (archiveSha !== extractedSha) {
     fs.rmSync(APP, { recursive: true, force: true });
     fs.mkdirSync(APP, { recursive: true });
-    console.log('[G17 BOOT] v169 uygulama arşivi açılıyor:', archiveSha.slice(0, 12));
+    console.log('[G17 BOOT] ' + BUILD + ' uygulama arşivi açılıyor:', archiveSha.slice(0, 12));
     new AdmZip(ARCHIVE).extractAllTo(APP, true);
     fs.writeFileSync(MARKER, archiveSha);
   }
