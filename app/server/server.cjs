@@ -12,6 +12,7 @@ const {IdentityService,sha256:identitySha}=require('./identity-service.cjs');
 const {SecurityAudit}=require('./security-audit.cjs');
 const {FileMatchmakingStore,RedisMatchmakingStore,MatchmakingService}=require('./matchmaking.cjs');
 const {computeRankedDeltas}=require('./ranked-rating.cjs');
+const {MetaService}=require('./meta-service.cjs');
 
 const CFG=runtimeConfig();
 const PORT=Number(process.env.PORT||process.env.G17_PORT||8787);
@@ -41,6 +42,8 @@ const identity=new IdentityService(identityStore);
 const matchmakingPersistEnabled=require.main===module?String(process.env.G17_MATCHMAKING_PERSISTENCE||'1')!=='0':String(process.env.G17_MATCHMAKING_PERSISTENCE||'0')==='1';
 const matchmakingStore=CFG.storeMode==='redis'?new RedisMatchmakingStore():new FileMatchmakingStore({enabled:matchmakingPersistEnabled});
 let matchmaking;
+const metaPersistEnabled=require.main===module?String(process.env.G17_META_PERSISTENCE||'1')!=='0':String(process.env.G17_META_PERSISTENCE||'0')==='1';
+const meta=new MetaService({enabled:metaPersistEnabled,file:path.join(__dirname,'data','g17-meta-store.json')});
 const audit=new SecurityAudit();
 let registry;
 registry=new RoomRegistry({onChange:()=>{if(CFG.storeMode==='file')store.saveRegistry(registry)}});
@@ -68,7 +71,7 @@ function scheduleDisconnect(room,seat){const k=`${room.id}:${seat}`;clearDiscTim
 function safeStoreStatus(){const s=store.status?store.status():{};if(CFG.production&&s.file)s.file='[redacted]';return s}
 function safeIdentityStatus(){const s=identity.status?identity.status():{};if(CFG.production&&s.file)s.file='[redacted]';return s}
 function safeMatchmakingStatus(){const s=matchmaking&&matchmaking.statusInfo?matchmaking.statusInfo():{};if(CFG.production&&s.file)s.file='[redacted]';return s}
-function readyReport(){const reasons=[...CFG.errors];if(!runtimeReady)reasons.push(runtimeError?'STORE_INIT_FAILED':'STORE_INITIALIZING');if(!CFG.authDisabled&&!identityReady)reasons.push(identityError?'IDENTITY_INIT_FAILED':'IDENTITY_INITIALIZING');if(!matchmakingReady)reasons.push(matchmakingError?'MATCHMAKING_INIT_FAILED':'MATCHMAKING_INITIALIZING');if(draining)reasons.push('DRAINING');if(CFG.storeMode==='redis'&&!store.connected)reasons.push('REDIS_NOT_CONNECTED');if(!CFG.authDisabled&&CFG.storeMode==='redis'&&!identityStore.connected)reasons.push('IDENTITY_REDIS_NOT_CONNECTED');if(CFG.storeMode==='redis'&&!matchmakingStore.connected)reasons.push('MATCHMAKING_REDIS_NOT_CONNECTED');return{ok:reasons.length===0,reasons,build:'gobek17-171-v171-master17-ui-premium-ses-animasyon-h',instanceId:CFG.instanceId,store:CFG.storeMode,replicas:CFG.replicaCount,authMode:CFG.authMode,moderation:CFG.moderationEnabled,rankedK:RANKED_K}}
+function readyReport(){const reasons=[...CFG.errors];if(!runtimeReady)reasons.push(runtimeError?'STORE_INIT_FAILED':'STORE_INITIALIZING');if(!CFG.authDisabled&&!identityReady)reasons.push(identityError?'IDENTITY_INIT_FAILED':'IDENTITY_INITIALIZING');if(!matchmakingReady)reasons.push(matchmakingError?'MATCHMAKING_INIT_FAILED':'MATCHMAKING_INITIALIZING');if(draining)reasons.push('DRAINING');if(CFG.storeMode==='redis'&&!store.connected)reasons.push('REDIS_NOT_CONNECTED');if(!CFG.authDisabled&&CFG.storeMode==='redis'&&!identityStore.connected)reasons.push('IDENTITY_REDIS_NOT_CONNECTED');if(CFG.storeMode==='redis'&&!matchmakingStore.connected)reasons.push('MATCHMAKING_REDIS_NOT_CONNECTED');return{ok:reasons.length===0,reasons,build:'gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv',instanceId:CFG.instanceId,store:CFG.storeMode,replicas:CFG.replicaCount,authMode:CFG.authMode,moderation:CFG.moderationEnabled,rankedK:RANKED_K}}
 function prometheus(){const up=readyReport().ok?1:0,rooms=registry.rooms.size;return [
   '# HELP g17_ready Runtime readiness','# TYPE g17_ready gauge',`g17_ready ${up}`,
   '# HELP g17_rooms_local Rooms loaded on this instance','# TYPE g17_rooms_local gauge',`g17_rooms_local ${rooms}`,
@@ -162,6 +165,17 @@ matchmaking=new MatchmakingService(matchmakingStore,{createMatch:async({matchId,
 async function roomAndSeat(req,id){const got=await acquireRoom(id);if(!got.ok)return got;const room=got.room,st=room.seatByToken(token(req));if(!st)return{ok:false,err:'UNAUTHORIZED',status:401,room};return{ok:true,room,seat:st.seat}}
 function withDurableBroadcast(room,fn){if(CFG.storeMode!=='redis')return fn();room.suppressBroadcast=true;room.pendingBroadcast=false;return fn()}
 async function flushDurable(room){await settleMatchProfile(room);if(CFG.storeMode!=='redis')return;await persistRedisRoom(room);room.suppressBroadcast=false;if(room.pendingBroadcast&&typeof room.flushBroadcast==='function')room.flushBroadcast()}
+async function handleMetaRequest(req,res,parts,u){
+  const a=await authFromReq(req,true);if(!a.ok)return json(req,res,a.status,{ok:false,err:a.err,banUntil:a.banUntil});
+  const accountId=a.identity.accountId,hint={displayName:a.identity.user&&(a.identity.user.displayName||a.identity.user.username)};
+  const op=parts[1]||'';
+  if(req.method==='GET'&&op==='profile')return json(req,res,200,{ok:true,profile:meta.getProfile(accountId,hint)});
+  if(req.method==='GET'&&op==='wallet')return json(req,res,200,{ok:true,wallet:meta.getWallet(accountId)});
+  if(req.method==='POST'&&op==='wallet'&&parts[2]==='tx'){const b=await readJson(req);const r=meta.applyWalletTx(accountId,{txId:b.txId,amount:b.amount,reason:b.reason});return json(req,res,r.ok?200:(r.err==='INSUFFICIENT_BALANCE'?409:422),r)}
+  if(req.method==='GET'&&op==='league')return json(req,res,200,{ok:true,league:meta.getLeague(accountId)});
+  if(req.method==='GET'&&op==='tournaments')return json(req,res,200,{ok:true,tournaments:meta.listTournaments()});
+  return json(req,res,404,{ok:false,err:'NOT_FOUND'});
+}
 
 const runtimeInit=(async()=>{
   try{
@@ -179,7 +193,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     const u=new URL(req.url,`http://${req.headers.host||'localhost'}`),parts=u.pathname.split('/').filter(Boolean);
     if(req.method==='OPTIONS'){const o=allowedOrigin(req);if(o===null)return json(req,res,403,{ok:false,err:'ORIGIN_NOT_ALLOWED'});baseHeaders(req,res);res.writeHead(204);return res.end()}
-    if(req.method==='GET'&&u.pathname==='/health/live')return json(req,res,200,{ok:true,service:'G17 authority',build:'gobek17-171-v171-master17-ui-premium-ses-animasyon-h',instanceId:CFG.instanceId,uptimeMs:Date.now()-metrics.startedAt});
+    if(req.method==='GET'&&u.pathname==='/health/live')return json(req,res,200,{ok:true,service:'G17 authority',build:'gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv',instanceId:CFG.instanceId,uptimeMs:Date.now()-metrics.startedAt});
     if(req.method==='GET'&&(u.pathname==='/health'||u.pathname==='/health/ready')){await runtimeInit;const rr=readyReport();return json(req,res,rr.ok?200:503,{...rr,protocol:'G17MP/1',rooms:registry.rooms.size,persistence:safeStoreStatus(),identity:CFG.authDisabled?{enabled:false}:safeIdentityStatus(),matchmaking:safeMatchmakingStatus(),time:Date.now()})}
     if(req.method==='GET'&&u.pathname==='/metrics')return text(req,res,200,prometheus(),'text/plain; version=0.0.4; charset=utf-8');
     await runtimeInit;
@@ -187,7 +201,7 @@ const server=http.createServer(async(req,res)=>{
     const origin=allowedOrigin(req);if(origin===null)return json(req,res,403,{ok:false,err:'ORIGIN_NOT_ALLOWED'});
     if(CFG.requireHttps&&!secureRequest(req,CFG))return json(req,res,426,{ok:false,err:'HTTPS_REQUIRED'});
     const ip=clientIp(req,CFG),authKey=token(req),rateKey=authKey?(ip+'|'+identitySha(authKey).slice(0,20)):ip,rl=(req.method==='POST'&&u.pathname.endsWith('/action')?actionLimiter:limiter).take(rateKey);if(!rl.ok){metrics.rateLimited++;res.setHeader('Retry-After',String(Math.max(1,Math.ceil((rl.reset-Date.now())/1000))));return json(req,res,429,{ok:false,err:'RATE_LIMITED'})}
-    if(req.method==='GET'&&u.pathname==='/v1/protocol')return json(req,res,200,{ok:true,protocol:'G17MP/1',authority:'server',transport:'HTTP+SSE',build:'gobek17-171-v171-master17-ui-premium-ses-animasyon-h',instanceId:CFG.instanceId,store:CFG.storeMode,authMode:CFG.authMode,moderation:CFG.moderationEnabled,features:['server-seed-commit-reveal','hashed-seat-token-at-rest','revision-lock','idempotent-action-id','action-id-fingerprint','hidden-rack-projection','ordered-snapshot-guard','reconnect-snapshot','durable-room-state','restart-recovery','bot-takeover','tournament-forfeit','redis-shared-state-optional','fenced-room-owner-lease','owner-aware-client-routing','readiness-health','prometheus-metrics','rate-limit','proxy-https-guard','account-register-login','scrypt-password-hash','opaque-rotating-session','account-seat-binding','account-seat-reclaim','security-audit','player-report','admin-sanctions','backup-recovery-codes','password-change','server-authoritative-chat','server-enforced-mute','chat-moderation','durable-player-profile','idempotent-wallet-admin','match-stat-settlement','ranked-matchmaking','ranked-room-allowlist','separate-team-individual-rating','ranked-leaderboard','ranked-result-transport','settlement-crash-recovery']});
+    if(req.method==='GET'&&u.pathname==='/v1/protocol')return json(req,res,200,{ok:true,protocol:'G17MP/1',authority:'server',transport:'HTTP+SSE',build:'gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv',instanceId:CFG.instanceId,store:CFG.storeMode,authMode:CFG.authMode,moderation:CFG.moderationEnabled,features:['server-seed-commit-reveal','hashed-seat-token-at-rest','revision-lock','idempotent-action-id','action-id-fingerprint','hidden-rack-projection','ordered-snapshot-guard','reconnect-snapshot','durable-room-state','restart-recovery','bot-takeover','tournament-forfeit','redis-shared-state-optional','fenced-room-owner-lease','owner-aware-client-routing','readiness-health','prometheus-metrics','rate-limit','proxy-https-guard','account-register-login','scrypt-password-hash','opaque-rotating-session','account-seat-binding','account-seat-reclaim','security-audit','player-report','admin-sanctions','backup-recovery-codes','password-change','server-authoritative-chat','server-enforced-mute','chat-moderation','durable-player-profile','idempotent-wallet-admin','match-stat-settlement','ranked-matchmaking','ranked-room-allowlist','separate-team-individual-rating','ranked-leaderboard','ranked-result-transport','settlement-crash-recovery']});
     if(req.method==='GET'&&u.pathname==='/v1/ranked/leaderboard'){const mode=String(u.searchParams.get('mode')||'TEAM').toUpperCase()==='INDIVIDUAL'?'INDIVIDUAL':'TEAM',limit=Math.max(1,Math.min(100,Number(u.searchParams.get('limit')||50)));return json(req,res,200,{ok:true,mode,leaderboard:await identity.leaderboard(mode,limit)})}
     if(parts[0]==='v1'&&parts[1]==='matchmaking'){
       const a=await authFromReq(req,true);if(!a.ok)return json(req,res,a.status,{ok:false,err:a.err,banUntil:a.banUntil});const ml=matchmakingLimiter.take(a.identity.accountId);if(!ml.ok){metrics.rateLimited++;return json(req,res,429,{ok:false,err:'MATCHMAKING_RATE_LIMITED'})}const op=parts[2]||'';
@@ -265,6 +279,7 @@ const server=http.createServer(async(req,res)=>{
       }
       return json(req,res,404,{ok:false,err:'NOT_FOUND'});
     }
+    if(parts[0]==='meta')return handleMetaRequest(req,res,parts,u);
     if(req.method==='GET'){
       if(u.pathname==='/'||u.pathname==='/index.html')return serveFile(req,res,'index.html');
       return serveFile(req,res,u.pathname.slice(1));
@@ -280,4 +295,4 @@ const leaseTimer=setInterval(async()=>{if(CFG.storeMode!=='redis'||!runtimeReady
 async function start(){await runtimeInit;if(CFG.storeMode==='file')armRecovery();return new Promise((resolve,reject)=>{server.once('error',reject);server.listen(PORT,HOST,()=>{server.removeListener('error',reject);console.log(`G17 authority v170 listening on http://${HOST}:${server.address().port} · instance=${CFG.instanceId} · store=${CFG.storeMode} · auth=${CFG.authMode} · ready=${readyReport().ok}`);resolve(server)})})}
 async function stop(){if(draining)return;draining=true;clearInterval(leaseTimer);clearInterval(pruneTimer);try{if(CFG.storeMode==='file')store.saveRegistry(registry);else{for(const [id,own] of ownership){try{await store.releaseLease(id,CFG.instanceId,own.fence)}catch(_){}}await store.close()}}catch(_){}try{if(!CFG.authDisabled)await identity.close()}catch(_){}try{await matchmaking.close()}catch(_){}return new Promise(resolve=>server.close(()=>resolve()))}
 if(require.main===module){start().catch(e=>{console.error(e);process.exitCode=1});const halt=()=>{stop().finally(()=>process.exit(0));setTimeout(()=>process.exit(1),5000).unref()};process.once('SIGTERM',halt);process.once('SIGINT',halt)}
-module.exports={server,registry,store,identity,identityStore,matchmaking,matchmakingStore,CFG,metrics,ownership,runtimeInit,readyReport,start,stop,armRecovery,acquireRoom,createRoom,matchProfileRows,settleMatchProfile};
+module.exports={server,registry,store,identity,identityStore,matchmaking,matchmakingStore,meta,CFG,metrics,ownership,runtimeInit,readyReport,start,stop,armRecovery,acquireRoom,createRoom,matchProfileRows,settleMatchProfile};

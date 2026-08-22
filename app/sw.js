@@ -1,4 +1,4 @@
-var C="gobek17-171-v171-master17-ui-premium-ses-animasyon-h";
+var C="gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv";
 var A=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png","./multiplayer-client.js","./multiplayer-bridge.js"];
 self.addEventListener("install",function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(A)}).then(function(){return self.skipWaiting()}))});
 self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==C}).map(function(k){return caches.delete(k)}))}).then(function(){return self.clients.claim()}))});
