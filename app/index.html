@@ -10,6 +10,126 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <title>Göbek 17</title>
+<script>
+/* MASTER17 UI — premium multimedya cilasi: WebAudio ses efektleri, dokunsal geri
+   bildirim ve per/tas gecis tetikleyicileri. Motor/EBOT bloklarina dokunmaz; yalnizca
+   mevcut DOM/siniflarin (.tr/.rbtn/#deckV/#ind/#rack) gozlemiyle calisir. */
+(function(){
+  "use strict";
+  var SK="g17_soundEnabled";
+  var snd={on:true};
+  try{var sv=localStorage.getItem(SK);snd.on=sv===null?true:sv==="1";}catch(e){}
+  function save(){try{localStorage.setItem(SK,snd.on?"1":"0");}catch(e){}}
+  var actx=null;
+  function ctx(){
+    if(!snd.on)return null;
+    if(!actx){
+      var AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return null;
+      try{actx=new AC();}catch(e){return null;}
+    }
+    if(actx.state==="suspended"){try{actx.resume();}catch(e){}}
+    return actx;
+  }
+  function tone(freq,dur,type,gain,delay){
+    var a=ctx();if(!a)return;
+    try{
+      var t0=a.currentTime+(delay||0);
+      var o=a.createOscillator();var g=a.createGain();
+      o.type=type||"sine";o.frequency.setValueAtTime(freq,t0);
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(gain==null?.12:gain,t0+.008);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+      o.connect(g);g.connect(a.destination);
+      o.start(t0);o.stop(t0+dur+.02);
+    }catch(e){}
+  }
+  function vib(ms){
+    if(!snd.on)return;
+    try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}
+  }
+  var S={
+    draw:function(){tone(520,.07,"triangle",.10);tone(700,.05,"triangle",.06,.03);vib(8);},
+    discard:function(){tone(300,.09,"square",.05);tone(180,.11,"sine",.08,.02);vib(12);},
+    indicator:function(){tone(660,.10,"sine",.11);tone(880,.14,"sine",.09,.06);tone(990,.16,"triangle",.06,.12);vib(16);},
+    process:function(){tone(440,.06,"sawtooth",.05);tone(660,.07,"sawtooth",.05,.05);vib(10);},
+    finish:function(){tone(523,.12,"triangle",.10);tone(659,.12,"triangle",.09,.09);tone(784,.16,"triangle",.09,.18);tone(1047,.22,"triangle",.08,.27);vib([14,40,14,40,26]);}
+  };
+  function pulse(el,cls,dur){
+    if(!el)return;
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function(){el.classList.remove(cls);},dur||420);
+  }
+  function ready(fn){
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fn);
+    else fn();
+  }
+  ready(function(){
+    var deck=document.getElementById("deckV");
+    if(deck)deck.addEventListener("pointerup",function(){S.draw();},{passive:true});
+    document.addEventListener("click",function(ev){
+      var b=ev.target&&ev.target.closest?ev.target.closest(".rbtn"):null;
+      if(!b)return;
+      if(b.classList.contains("rfinish")){S.finish();}
+      else if(b.classList.contains("rproc")){S.process();pulse(b,"cmd-pulse",300);}
+    },true);
+    var rack=document.getElementById("rack");
+    if(rack&&window.MutationObserver){
+      new MutationObserver(function(muts){
+        muts.forEach(function(m){
+          m.addedNodes&&m.addedNodes.forEach(function(n){
+            if(n.nodeType===1&&n.classList&&n.classList.contains("tr")&&n.parentElement&&n.parentElement.id==="rack"){
+              pulse(n,"tile-deal",260);
+            }
+          });
+        });
+      }).observe(rack,{childList:true,subtree:true});
+    }
+    var stage=document.getElementById("stage");
+    if(stage&&window.MutationObserver){
+      new MutationObserver(function(muts){
+        muts.forEach(function(m){
+          if(m.type!=="attributes"||m.attributeName!=="class")return;
+          var n=m.target;
+          if(!n.classList||!n.classList.contains("tr"))return;
+          var was=(m.oldValue||"").indexOf("drag")!==-1;
+          var is=n.classList.contains("drag");
+          if(was&&!is){
+            setTimeout(function(){
+              if(!n.isConnected){S.discard();}
+            },380);
+          }
+        });
+      }).observe(stage,{attributes:true,attributeFilter:["class"],attributeOldValue:true,subtree:true});
+    }
+    var indSpan=document.querySelector("#ind span");
+    if(indSpan&&window.MutationObserver){
+      var lastTxt=indSpan.textContent;
+      new MutationObserver(function(){
+        var t=indSpan.textContent;
+        if(t&&t!==lastTxt){lastTxt=t;S.indicator();pulse(document.getElementById("ind"),"gosterge-flash",520);}
+      }).observe(indSpan,{characterData:true,childList:true,subtree:true});
+    }
+    var tgl=document.createElement("div");
+    tgl.id="g17SndTgl";
+    tgl.setAttribute("role","button");
+    tgl.setAttribute("aria-label","Ses efektleri");
+    tgl.title="Ses efektleri";
+    function paint(){
+      tgl.textContent=snd.on?"\uD83D\uDD0A":"\uD83D\uDD07";
+      tgl.classList.toggle("off",!snd.on);
+    }
+    paint();
+    tgl.addEventListener("click",function(){
+      snd.on=!snd.on;save();paint();
+      if(snd.on)tone(660,.07,"sine",.10);
+    });
+    document.body.appendChild(tgl);
+  });
+})();
+</script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#2c1554;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent;font-family:Arial,Helvetica,sans-serif}
 body{width:100vw;height:100vh;height:100dvh}
@@ -52,6 +172,10 @@ body.relaying .tr{transition:none!important}
 body.dragging .coin:after,body.dragging .rbtn.hot,body.dragging #ind,body.dragging #indW .lz,body.dragging #deckV.hot .deckHalo,body.dragging #deckV.hot .dpGem,body.dragging .proc-target-opp{animation-play-state:paused!important}
 
 .tr{width:78px;height:108px;border-radius:12px;touch-action:none;transition:left .16s cubic-bezier(.2,1.32,.42,1),top .16s cubic-bezier(.2,1.32,.42,1),transform .09s ease-out,box-shadow .12s ease-out}
+.tr.tile-deal{animation:tileDealIn .26s cubic-bezier(.2,1.35,.4,1)}
+@keyframes tileDealIn{0%{transform:translateY(-14px) scale(.9);opacity:.35}60%{transform:translateY(2px) scale(1.03);opacity:1}100%{transform:translateY(0) scale(1)}}
+.rbtn.cmd-pulse{animation:cmdPulse .3s ease-out}
+@keyframes cmdPulse{0%{transform:scale(1)}45%{transform:scale(.96)}100%{transform:scale(1)}}
 .tr.lift{z-index:60;box-shadow:0 10px 16px rgba(0,0,0,.42),0 2px 4px rgba(0,0,0,.25),inset 0 2px 2px rgba(255,255,255,.9),inset 0 -3px 4px rgba(160,120,70,.38),inset 0 0 0 1px rgba(255,255,255,.32)}
 .tr.drag{transition:box-shadow .12s ease-out;z-index:60;box-shadow:0 16px 26px rgba(0,0,0,.5),0 4px 8px rgba(0,0,0,.28),inset 0 2px 2px rgba(255,255,255,.9),inset 0 -3px 4px rgba(160,120,70,.38),inset 0 0 0 1px rgba(255,255,255,.32)}
 .tm{width:46px;height:66px;border-radius:8px;pointer-events:none}
@@ -70,7 +194,7 @@ body.dragging .coin:after,body.dragging .rbtn.hot,body.dragging #ind,body.draggi
 .dot{position:absolute;left:50%;bottom:16%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e2604f,#c0392b 60%,#8f2418);box-shadow:inset 0 -1px 2px rgba(0,0,0,.35),0 1px 1px rgba(255,255,255,.5)}
 .cr{color:#cf372b}.cb{color:#2d64bc}.ck{color:#2b2926}.cy{color:#e2921d}.cg{color:#2f9e58}
 /* ---- BUTONLAR ---- */
-.btn{position:absolute;background:linear-gradient(180deg,#9cc75e 0%,#79a83f 45%,#5c8f2e 100%);border:4px solid #d9a833;border-radius:20px;box-shadow:0 0 0 3px #8a5a1a,0 8px 12px rgba(0,0,0,.45),inset 0 3px 0 rgba(255,255,255,.35),inset 0 -6px 8px rgba(0,60,0,.25);z-index:7;box-sizing:border-box;cursor:pointer}
+.btn{position:absolute;background:linear-gradient(180deg,#9cc75e 0%,#79a83f 45%,#5c8f2e 100%);border:4px solid #d9a833;border-radius:20px;box-shadow:0 0 0 3px #8a5a1a,0 8px 12px rgba(0,0,0,.45),0 20px 34px rgba(6,2,14,.26),inset 0 3px 0 rgba(255,255,255,.35),inset 0 -6px 8px rgba(0,60,0,.25);z-index:7;box-sizing:border-box;cursor:pointer}
 .btn:before{content:"";position:absolute;left:6px;right:6px;top:5px;height:42%;border-radius:13px;background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,0));pointer-events:none;transition:opacity .08s}
 .btn{transition:box-shadow .08s ease-out,transform .08s ease-out}
 .btn.dn{transform:translateY(2px);box-shadow:0 0 0 3px #8a5a1a,0 3px 5px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.2),inset 0 -3px 6px rgba(0,50,0,.3);filter:brightness(1.06)}
@@ -106,6 +230,9 @@ body.dragging .coin:after,body.dragging .rbtn.hot,body.dragging #ind,body.draggi
 .strip{height:48px;background:rgba(22,10,44,.78);border:1px solid rgba(255,255,255,.07);border-radius:10px;display:flex;align-items:center;gap:14px;padding:0 16px;box-sizing:border-box;color:#efe9ff;font-weight:700;font-size:24px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .cell{background:rgba(255,255,255,.13);border-radius:8px;padding:3px 11px;font-weight:900;color:#fff}
 .ava{border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 32%,#3b2b52,#241638 78%);box-shadow:0 0 0 7px #e2b23c,0 0 0 11px #8a5a1a,0 6px 12px rgba(0,0,0,.5),inset 0 0 0 3px rgba(255,255,255,.14),inset 0 -10px 16px rgba(0,0,0,.35)}
+.ava.hot{box-shadow:0 0 0 7px #ffe9a0,0 0 0 11px #d5a23a,0 0 22px rgba(255,212,90,.6),0 6px 14px rgba(0,0,0,.5),inset 0 0 0 3px rgba(255,255,255,.22),inset 0 -10px 16px rgba(0,0,0,.32);animation:avaHotPulse 1.7s ease-in-out infinite}
+@keyframes avaHotPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.1)}}
+body.dragging .ava.hot{animation:none}
 .ava i{position:absolute;display:block}
 
 /* v115 — HUD avatar parity: top-center opponent now gets a real avatar medallion,
@@ -300,6 +427,10 @@ box-shadow:0 8px 22px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14),0 0 26
 #indW .ped i{position:absolute;left:50%;transform:translateX(-50%);border-radius:50%}
 #indW .pd1{top:2px;width:78%;height:22px;background:radial-gradient(ellipse at 50% 45%,rgba(190,130,255,.55),rgba(120,60,220,.18) 62%,transparent 76%)}
 #indW .pd2{top:8px;width:56%;height:15px;background:linear-gradient(180deg,#f6dfa0,#c08c22 48%,#6d4507);box-shadow:0 3px 7px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.6)}
+#indW{overflow:hidden}
+#indW:after{content:"";position:absolute;left:-40%;top:0;width:35%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-18deg);animation:indwShine 5.5s linear infinite}
+@keyframes indwShine{0%,82%{left:-40%}100%{left:130%}}
+body.dragging #indW:after{animation-play-state:paused}
 #indW .pd3{top:14px;width:40%;height:9px;background:linear-gradient(180deg,#3a1a5e,#1d0a38);box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
 #indW .lz{top:11px;width:7px;height:7px;background:#b98cff;box-shadow:0 0 8px #a56bff;margin-left:-26px;animation:lzp 2.4s ease-in-out infinite}
 #indW .lz.l2{margin-left:0;animation-delay:.35s;background:#ffd977;box-shadow:0 0 9px #ffb84d}
@@ -433,8 +564,15 @@ body.dragging .tr.okey-back{animation:none!important;transform:none!important}
 #chat i{width:9px;height:9px;border-radius:50%;background:#7a4d10}
 #ind{animation:breath 4.4s ease-in-out infinite}
 @keyframes breath{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}
+#ind.gosterge-flash{animation:gostFlash .5s ease-out}
+@keyframes gostFlash{0%{transform:scale(1);filter:brightness(1)}35%{transform:scale(1.09);filter:brightness(1.35)}100%{transform:scale(1);filter:brightness(1)}}
+.hand-end-panel-in{animation:handEndIn .28s cubic-bezier(.2,1.3,.4,1)}
+@keyframes handEndIn{0%{transform:translateY(18px) scale(.96);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+#g17SndTgl{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:999;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;cursor:pointer;pointer-events:auto;-webkit-tap-highlight-color:transparent;user-select:none;background:linear-gradient(180deg,var(--felt-hi,#7447ad),var(--felt,#512883));border:2px solid var(--gold,#d5a23a);box-shadow:0 4px 10px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .12s ease-out,box-shadow .12s ease-out}
+#g17SndTgl:active{transform:scale(.9)}
+#g17SndTgl.off{filter:grayscale(.65) brightness(.8);border-color:rgba(255,255,255,.35)}
 @media (prefers-reduced-motion:reduce){
-#ind,.coin:after,#rotIc{animation:none!important}
+#ind,.coin:after,#rotIc,.ava.hot,#indW:after{animation:none!important}
 .tr{transition-duration:.06s,.06s,.05s,.06s}
 }
 .qlow #ind,.qlow .coin:after{animation:none!important}
@@ -1762,7 +1900,7 @@ body.meld-holding .tr.mld{touch-action:none}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-170-v170-acilis-banner-surumu-package-json-v";
+var BUILD="gobek17-171-v171-master17-ui-premium-ses-animasyon-h";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -6104,7 +6242,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-170-v170-acilis-banner-surumu-package-json-v'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-171-v171-master17-ui-premium-ses-animasyon-h'};
 })(window);
 </script>
 <script>
@@ -6368,7 +6506,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-170-v170-acilis-banner-surumu-package-json-v',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-171-v171-master17-ui-premium-ses-animasyon-h',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();resumeSession()},0);
 })(window);
 </script>
