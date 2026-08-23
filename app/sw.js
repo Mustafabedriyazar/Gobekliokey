@@ -1,4 +1,4 @@
-var C="gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv";
+var C="gobek17-173-v173-rack-bırakmada-insert-shift-yerleşiırakmada-insert-shift-yerleşi";
 var A=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png","./multiplayer-client.js","./multiplayer-bridge.js"];
 self.addEventListener("install",function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(A)}).then(function(){return self.skipWaiting()}))});
 self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==C}).map(function(k){return caches.delete(k)}))}).then(function(){return self.clients.claim()}))});

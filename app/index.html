@@ -1900,7 +1900,7 @@ body.meld-holding .tr.mld{touch-action:none}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv";
+var BUILD="gobek17-173-v173-rack-bırakmada-insert-shift-yerleşiırakmada-insert-shift-yerleşi";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -4003,19 +4003,34 @@ function bindDrag(t){
       var row=p.y>ROWSPLIT?1:0;
       var i=Math.round((p.x-SLOT0-CX)/PITCH);
       if(i<0)i=0;if(i>SLOTS-1)i=SLOTS-1;
-      res=rackDrop(RACKS,FREE,row,i,t,src);
-      t.area="rack";t.row=row;t.slot=i;
-      e.classList.remove("tg");
+      if(src.area==="rack")RACKS[src.row][src.slot]=null;
+      var line=RACKS[row],target=-1,rtype="empty";
+      if(line[i]){
+        rtype="insert";
+        var left=-1,right=-1;
+        for(var gd=1;gd<SLOTS;gd++){
+          var li=i-gd;if(li>=0&&!line[li])left=li;
+          var ri=i+gd;if(ri<SLOTS&&!line[ri])right=ri;
+          if(left>=0||right>=0)break;
+        }
+        if(left>=0&&right>=0)target=(i-left<=right-i)?left:right;
+        else if(left>=0)target=left;else if(right>=0)target=right;
+      }else{target=i}
+      if(target<0){
+        res={type:"reject"};
+        if(src.area==="board"){t.area="board";t.fx=src.fx;t.fy=src.fy;t.lx=src.lx;t.ly=src.ly;FREE.push(t);e.classList.add("tg")}
+        else{t.area="rack";t.row=src.row;t.slot=src.slot;RACKS[src.row][src.slot]=t;e.classList.remove("tg")}
+      }else{
+        if(target<i){for(var sk=target;sk<i;sk++)line[sk]=line[sk+1]}
+        else if(target>i){for(var sk=target;sk>i;sk--)line[sk]=line[sk-1]}
+        line[i]=t;
+        res={type:rtype};
+        t.area="rack";t.row=row;t.slot=i;
+        e.classList.remove("tg");
+      }
     }else{
       if(src.area==="board"){t.area="board";t.fx=src.fx;t.fy=src.fy;t.lx=src.lx;t.ly=src.ly;FREE.push(t)}
       else{t.area="rack";RACKS[src.row][src.slot]=t;t.row=src.row;t.slot=src.slot}
-    }
-    if(res&&res.type==="swap"){
-      var o=res.occ;
-      o.area=src.area;
-      if(src.area==="board"){o.el.classList.add("tg")}
-      else{o.row=src.row;o.slot=src.slot;o.el.classList.remove("tg")}
-      setTimeout(function(){sfx("snap");buzz(5)},210);
     }
     if(commit&&boardMotion){
       try{
@@ -6259,7 +6274,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-173-v173-rack-bırakmada-insert-shift-yerleşi'};
 })(window);
 </script>
 <script>
@@ -6528,7 +6543,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-172-v172-meta-motor-profil-cuzdan-lig-turnuv',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-173-v173-rack-bırakmada-insert-shift-yerleşi',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();resumeSession()},0);
 })(window);
 </script>
