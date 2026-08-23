@@ -1900,7 +1900,7 @@ body.meld-holding .tr.mld{touch-action:none}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-173-v173-rack-bırakmada-insert-shift-yerleşiırakmada-insert-shift-yerleşi";
+var BUILD="gobek17-174-v174-i-şlek-taş-kuralı-workable-discard-ırakmada-insert-shift-yerleşiırakmada-insert-shift-yerleşi";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -2095,6 +2095,7 @@ var CFG={
   OWN_MELD_REPARTITION:false,
   MAX_REAL_PER_PROCESS:1
 };
+var WORKABLE_DISCARD_PENALTY=250;
 var st=null,LOG=[],LED=[],SEEDB=0,SEEDSEQ=0;
 /* v147 — production seed authority. QA/tests keep explicit deterministic seeds; normal games get a fresh seed. */
 function mixSeed32(x){x=(x>>>0)+0x9e3779b9;x=Math.imul(x^(x>>>16),0x21f0aaad);x=Math.imul(x^(x>>>15),0x735a2d97);return (x^(x>>>15))>>>0}
@@ -2288,7 +2289,8 @@ function discardMajorPenaltyKind(tile,willFinish){
 }
 function applyDiscardMajorPenalty(p,tile,willFinish){
   var k=discardMajorPenaltyKind(tile,willFinish);if(!k)return null;
-  var e=pen(p,p,[tile],k.type,CFG.MAJOR_PENALTY);e.label=k.label;e.targets=k.targets;return e;
+  var amt=k.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:CFG.MAJOR_PENALTY;
+  var e=pen(p,p,[tile],k.type,amt);e.label=k.label;e.targets=k.targets;return e;
 }
 function badOpenPenalty(p,reason){
   if(!st||st.handOver)return{ok:false,err:"el aktif değil"};
@@ -2357,7 +2359,7 @@ function check(){
     if(st.winner!=null&&fs.finishUid&&(!st.currentDiscard||st.currentDiscard.tile.uid!==fs.finishUid))specialErr.push("finish_uid_not_current_discard");
   }
   var majorErr=[],majorTypes={WORKABLE_DISCARD:1,OKEY_DISCARD:1,OKEY_HELD_END:1,BAD_OPEN_ATTEMPT:1};
-  for(var li=0;li<LED.length;li++){var le=LED[li];if(!majorTypes[le.type])continue;if(le.amount!==CFG.MAJOR_PENALTY)majorErr.push(le.type+":amount="+le.amount);if(le.type==="WORKABLE_DISCARD"&&(!le.targets||!le.targets.length))majorErr.push("WORKABLE_DISCARD:no_target");if(le.type==="BAD_OPEN_ATTEMPT"&&le.tiles&&le.tiles.length)majorErr.push("BAD_OPEN_ATTEMPT:has_tile")}
+  for(var li=0;li<LED.length;li++){var le=LED[li];if(!majorTypes[le.type])continue;var wantAmt=le.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:CFG.MAJOR_PENALTY;if(le.amount!==wantAmt)majorErr.push(le.type+":amount="+le.amount);if(le.type==="WORKABLE_DISCARD"&&(!le.targets||!le.targets.length))majorErr.push("WORKABLE_DISCARD:no_target");if(le.type==="BAD_OPEN_ATTEMPT"&&le.tiles&&le.tiles.length)majorErr.push("BAD_OPEN_ATTEMPT:has_tile")}
   var matchErr=[],teamErr=[];
   if(st.teamMode){var tcNow=normalizeTeamsConfig(st.teams);if(!tcNow.ok||!tcNow.teamMode)teamErr.push("invalid_active_teams");if(!st.teamForfeitHandWins||st.teamForfeitHandWins.length!==2)teamErr.push("bad_forfeit_win_state")}
   if(st.gameFinished){
@@ -2453,6 +2455,7 @@ function a_take(p){
   if(st.players[p].hasDrawn)return{ok:false,err:"bu turda zaten çektin"};
   var cd=st.currentDiscard;
   if(cd.by!==takeSourceSeat(p))return{ok:false,err:"yalnız senden önce oynayanın son taşı alınabilir"};
+  if(workableDiscardTargets(cd.tile).length)return{ok:false,err:"işlek taş yandan alınamaz"};
   st.discardPile.pop();st.currentDiscard=st.discardPile.length?st.discardPile[st.discardPile.length-1]:null;
   st.pending={tile:cd.tile,by:cd.by,byPairOpener:st.players[cd.by].opened&&st.players[cd.by].openingType==="PAIR"};
   st.players[p].hasDrawn=true;st.turnState="ACTION";
@@ -6274,7 +6277,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-173-v173-rack-bırakmada-insert-shift-yerleşi'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-174-v174-i-şlek-taş-kuralı-workable-discard-ırakmada-insert-shift-yerleşi'};
 })(window);
 </script>
 <script>
@@ -6543,7 +6546,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-173-v173-rack-bırakmada-insert-shift-yerleşi',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-174-v174-i-şlek-taş-kuralı-workable-discard-ırakmada-insert-shift-yerleşi',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();resumeSession()},0);
 })(window);
 </script>

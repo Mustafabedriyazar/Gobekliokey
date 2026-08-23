@@ -13,6 +13,7 @@ var CFG={
   OWN_MELD_REPARTITION:false,
   MAX_REAL_PER_PROCESS:1
 };
+var WORKABLE_DISCARD_PENALTY=250;
 var st=null,LOG=[],LED=[],SEEDB=0,SEEDSEQ=0;
 /* v147 — production seed authority. QA/tests keep explicit deterministic seeds; normal games get a fresh seed. */
 function mixSeed32(x){x=(x>>>0)+0x9e3779b9;x=Math.imul(x^(x>>>16),0x21f0aaad);x=Math.imul(x^(x>>>15),0x735a2d97);return (x^(x>>>15))>>>0}
@@ -206,7 +207,8 @@ function discardMajorPenaltyKind(tile,willFinish){
 }
 function applyDiscardMajorPenalty(p,tile,willFinish){
   var k=discardMajorPenaltyKind(tile,willFinish);if(!k)return null;
-  var e=pen(p,p,[tile],k.type,CFG.MAJOR_PENALTY);e.label=k.label;e.targets=k.targets;return e;
+  var amt=k.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:CFG.MAJOR_PENALTY;
+  var e=pen(p,p,[tile],k.type,amt);e.label=k.label;e.targets=k.targets;return e;
 }
 function badOpenPenalty(p,reason){
   if(!st||st.handOver)return{ok:false,err:"el aktif değil"};
@@ -275,7 +277,7 @@ function check(){
     if(st.winner!=null&&fs.finishUid&&(!st.currentDiscard||st.currentDiscard.tile.uid!==fs.finishUid))specialErr.push("finish_uid_not_current_discard");
   }
   var majorErr=[],majorTypes={WORKABLE_DISCARD:1,OKEY_DISCARD:1,OKEY_HELD_END:1,BAD_OPEN_ATTEMPT:1};
-  for(var li=0;li<LED.length;li++){var le=LED[li];if(!majorTypes[le.type])continue;if(le.amount!==CFG.MAJOR_PENALTY)majorErr.push(le.type+":amount="+le.amount);if(le.type==="WORKABLE_DISCARD"&&(!le.targets||!le.targets.length))majorErr.push("WORKABLE_DISCARD:no_target");if(le.type==="BAD_OPEN_ATTEMPT"&&le.tiles&&le.tiles.length)majorErr.push("BAD_OPEN_ATTEMPT:has_tile")}
+  for(var li=0;li<LED.length;li++){var le=LED[li];if(!majorTypes[le.type])continue;var wantAmt=le.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:CFG.MAJOR_PENALTY;if(le.amount!==wantAmt)majorErr.push(le.type+":amount="+le.amount);if(le.type==="WORKABLE_DISCARD"&&(!le.targets||!le.targets.length))majorErr.push("WORKABLE_DISCARD:no_target");if(le.type==="BAD_OPEN_ATTEMPT"&&le.tiles&&le.tiles.length)majorErr.push("BAD_OPEN_ATTEMPT:has_tile")}
   var matchErr=[],teamErr=[];
   if(st.teamMode){var tcNow=normalizeTeamsConfig(st.teams);if(!tcNow.ok||!tcNow.teamMode)teamErr.push("invalid_active_teams");if(!st.teamForfeitHandWins||st.teamForfeitHandWins.length!==2)teamErr.push("bad_forfeit_win_state")}
   if(st.gameFinished){
@@ -371,6 +373,7 @@ function a_take(p){
   if(st.players[p].hasDrawn)return{ok:false,err:"bu turda zaten çektin"};
   var cd=st.currentDiscard;
   if(cd.by!==takeSourceSeat(p))return{ok:false,err:"yalnız senden önce oynayanın son taşı alınabilir"};
+  if(workableDiscardTargets(cd.tile).length)return{ok:false,err:"işlek taş yandan alınamaz"};
   st.discardPile.pop();st.currentDiscard=st.discardPile.length?st.discardPile[st.discardPile.length-1]:null;
   st.pending={tile:cd.tile,by:cd.by,byPairOpener:st.players[cd.by].opened&&st.players[cd.by].openingType==="PAIR"};
   st.players[p].hasDrawn=true;st.turnState="ACTION";
