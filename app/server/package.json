@@ -1,7 +1,7 @@
 {
   "name": "gobek17-authority-server",
   "private": true,
-  "version": "1.75.0",
+  "version": "1.76.0",
   "description": "G17MP/1 production authority with real Ranked TEAM/INDIVIDUAL matchmaking, separate persistent rating/leaderboard, account security, durable profiles, Redis fencing and moderation",
   "main": "server.cjs",
   "scripts": {
