@@ -1,0 +1,6 @@
+.g17-state/
+node_modules/
+*.log
+qa/
+*.tmp-*
+__pycache__/

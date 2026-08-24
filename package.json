@@ -1,13 +1,14 @@
 {
-  "name": "gobek17-online-railway-bootstrap",
+  "name": "gobek17-online",
   "private": true,
-  "version": "1.78.0",
-  "description": "3-file Railway bootstrap for GÖBEK17 v169 Ranked matchmaking",
+  "version": "1.82.0",
+  "description": "GÖBEK17 v182 real account screens + email login + casual online matchmaking + v181 60 FPS + PB hardening",
+  "main": "server.cjs",
   "scripts": {
-    "start": "node bootstrap.cjs"
+    "start": "node server.cjs",
+    "test": "cd server && npm test"
   },
   "dependencies": {
-    "adm-zip": "^0.5.16",
     "redis": ">=4.6.0 <6"
   },
   "engines": {
