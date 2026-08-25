@@ -6487,7 +6487,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
   function continueAfterAuth(after){if(after==='join')return roomCodeUI();if(after==='ranked')return rankedUI();if(after==='quick')return quickMatchUI(S.mmMode||'TEAM');if(after==='profile')return accountUI();if(after==='stats')return statsUI();return createRoomUI()}
   function showRecoveryCodes(codes,after){var list=(codes||[]).join('  ');modal('<h2>KURTARMA KODLARI</h2><p class="metaNote">Bu kodlar yalnız şimdi gösterilir. Güvenli bir yere kaydet. Her şifre kurtarmada kodlar yenilenir.</p><textarea class="metaInput" id="g17RecoveryCodes" readonly style="min-height:112px">'+esc((codes||[]).join('\n'))+'</textarea><div class="metaActionRow"><button class="metaMiniBtn" id="g17RecoveryCopy">KODLARI KOPYALA</button><button class="metaMiniBtn" id="g17RecoveryContinue">DEVAM</button></div>');setTimeout(function(){var cp=document.getElementById('g17RecoveryCopy'),go=document.getElementById('g17RecoveryContinue');if(cp)cp.onclick=function(){try{navigator.clipboard.writeText((codes||[]).join('\n'));say('KODLAR KOPYALANDI')}catch(_){say(list,3000)}};if(go)go.onclick=function(){continueAfterAuth(after)}},0)}
   function recoveryUI(after){modal('<h2>HESABI KURTAR</h2><p class="metaNote">Kayıt sırasında verilen tek kullanımlık kurtarma kodlarından birini gir.</p><input class="metaInput" id="g17RecUser" maxlength="160" autocomplete="username" inputmode="email" placeholder="E-posta veya kullanıcı adı"><input class="metaInput" id="g17RecCode" maxlength="20" autocomplete="off" placeholder="XXXX-XXXX-XXXX"><input class="metaInput" id="g17RecPass" maxlength="128" type="password" autocomplete="new-password" placeholder="Yeni şifre"><div class="metaActionRow"><button class="metaMiniBtn" id="g17RecGo">ŞİFREYİ YENİLE</button><button class="metaMiniBtn" id="g17RecBack">GERİ</button></div><p class="metaNote" id="g17RecMsg"></p>');setTimeout(function(){var go=document.getElementById('g17RecGo'),bk=document.getElementById('g17RecBack'),msg=document.getElementById('g17RecMsg');if(bk)bk.onclick=function(){authUI(after)};if(go)go.onclick=async function(){go.disabled=true;var r=await accountRecover((document.getElementById('g17RecUser')||{}).value,(document.getElementById('g17RecCode')||{}).value,(document.getElementById('g17RecPass')||{}).value);if(!r.ok){if(msg)msg.textContent=authErr(r);go.disabled=false;return}showRecoveryCodes(r.recoveryCodes,after)}} ,0)}
-  function authUI(after){
+  function authUI(after){if(window.OK17ACC&&window.OK17ACC.open)return window.OK17ACC.open('gate',after);
     modal('<div class="g17AccountShell"><div class="g17AccountHero"><div class="g17AccountMark"><div class="g17AccountOrb">✉</div><div><div class="g17AccountTitle">OKEY17 HESABI</div><div class="g17AccountSub">Gerçek sunucu hesabın · maçların, profilin ve Ranked puanın bu hesaba bağlanır.</div></div></div></div><div class="g17AuthGrid"><div class="g17Field"><label>E-posta / mevcut kullanıcı adı</label><input class="metaInput" id="g17AuthIdentity" maxlength="160" type="email" inputmode="email" autocomplete="email" placeholder="ornek@mail.com"></div><div class="g17Field"><label>Şifre</label><input class="metaInput" id="g17AuthPass" maxlength="128" type="password" autocomplete="current-password" placeholder="En az 10 karakter"></div></div><div class="g17Field"><label>Oyuncu adı · yalnız yeni kayıt için</label><input class="metaInput" id="g17AuthDisplay" maxlength="24" autocomplete="nickname" placeholder="Masada görünecek ad"></div><div class="g17AccountActions"><button class="g17PremiumBtn" id="g17AuthLogin">✉ MAIL İLE GİRİŞ</button><button class="g17PremiumBtn secondary" id="g17AuthRegister">YENİ HESAP OLUŞTUR</button></div><div class="metaActionRow"><button class="metaMiniBtn" id="g17AuthRecover">HESABI KURTAR</button></div><p class="metaNote" id="g17AuthMsg">Yeni hesapta e-posta zorunludur. Eski hesaplar kullanıcı adıyla da giriş yapabilir.</p></div>');
     setTimeout(function(){var u=document.getElementById('g17AuthIdentity'),pw=document.getElementById('g17AuthPass'),d=document.getElementById('g17AuthDisplay'),msg=document.getElementById('g17AuthMsg'),li=document.getElementById('g17AuthLogin'),rg=document.getElementById('g17AuthRegister'),rc=document.getElementById('g17AuthRecover');async function go(reg){var ident=String(u&&u.value||'').trim();if(!ident){if(msg)msg.textContent='E-POSTA VEYA KULLANICI ADI GİR';return}if(reg&&ident.indexOf('@')<1){if(msg)msg.textContent='YENİ HESAP İÇİN GEÇERLİ E-POSTA GEREKİR';return}if(li)li.disabled=true;if(rg)rg.disabled=true;if(msg)msg.textContent='SUNUCUYA GÜVENLİ BAĞLANTI KURULUYOR…';var r=await accountLogin(ident,pw&&pw.value,d&&d.value,reg);if(!r.ok){if(msg)msg.textContent=authErr(r);if(li)li.disabled=false;if(rg)rg.disabled=false;return}if(reg&&r.recoveryCodes){showRecoveryCodes(r.recoveryCodes,after);return}if(msg)msg.textContent='GİRİŞ BAŞARILI · PROFİL YÜKLENİYOR';setTimeout(function(){continueAfterAuth(after)},180)}if(li)li.onclick=function(){go(false)};if(rg)rg.onclick=function(){go(true)};if(rc)rc.onclick=function(){recoveryUI(after)};if(pw)pw.addEventListener('keydown',function(e){if(e.key==='Enter')go(false)})},0)
   }
@@ -6532,7 +6532,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   function pct(n,d){n=Number(n)||0;d=Number(d)||0;return d?Math.round(n*100/d):0}
   function statTile(v,label){return '<div class="g17StatTile"><b>'+esc(v)+'</b><span>'+esc(label)+'</span></div>'}
-  async function accountUI(){return onlineGate(async function(){if(!hasAuth())return authUI('profile');try{var c=await makeClient(),me=await c.me();if(!me.ok){clearAuth();return authUI('profile')}saveAuth(c);var u=me.user||{},p=me.profile||{},w=p.wallet||{},rk=p.ranked||{},st=p.stats||{},initial=String(u.displayName||'O').trim().charAt(0).toUpperCase()||'O';modal('<div class="g17AccountShell"><div class="g17AccountHero"><div class="g17AccountMark"><div class="g17AccountOrb">'+esc(initial)+'</div><div><div class="g17AccountTitle">'+esc(u.displayName||'OYUNCU')+'</div><div class="g17AccountSub">'+esc(u.email||u.username||'')+' · '+esc(p.playerId||u.id||'')+'</div></div></div></div><div class="g17StatGrid">'+statTile((w.chips||0).toLocaleString('tr-TR'),'CHIP')+statTile((w.gems||0).toLocaleString('tr-TR'),'GEM')+statTile(Number(st.matches)||0,'MAÇ')+statTile(Number(st.wins)||0,'GALİBİYET')+statTile(pct(st.wins,st.matches)+'%','KAZANMA')+statTile(Number(st.bigWins)||0,'BÜYÜK EL')+'</div><div class="metaInfoGrid">'+ratingCard('EŞLİ RANKED',rk.TEAM)+ratingCard('BİREYSEL RANKED',rk.INDIVIDUAL)+'</div><div class="g17ProfileRow"><span>BİO</span><strong>'+esc(p.bio||'Henüz bio yok')+'</strong></div><div class="g17AccountActions"><button class="g17PremiumBtn" id="g17AccountStats">İSTATİSTİKLER</button><button class="g17PremiumBtn secondary" id="g17AccountEdit">PROFİLİ DÜZENLE</button></div><div class="metaActionRow"><button class="metaMiniBtn" id="g17AccountLogout">HESAPTAN ÇIK</button></div></div>');setTimeout(function(){var stB=document.getElementById('g17AccountStats'),ed=document.getElementById('g17AccountEdit'),lo=document.getElementById('g17AccountLogout');if(stB)stB.onclick=statsUI;if(ed)ed.onclick=function(){profileEditUI(p)};if(lo)lo.onclick=async function(){lo.disabled=true;await logoutAccount();clearAuth();say('HESAPTAN ÇIKILDI');authUI('profile')}},0)}catch(e){say(netError(e),2200)}})}
+  async function accountUI(){if(window.OK17ACC&&window.OK17ACC.open)return window.OK17ACC.open('hub');return onlineGate(async function(){if(!hasAuth())return authUI('profile');try{var c=await makeClient(),me=await c.me();if(!me.ok){clearAuth();return authUI('profile')}saveAuth(c);var u=me.user||{},p=me.profile||{},w=p.wallet||{},rk=p.ranked||{},st=p.stats||{},initial=String(u.displayName||'O').trim().charAt(0).toUpperCase()||'O';modal('<div class="g17AccountShell"><div class="g17AccountHero"><div class="g17AccountMark"><div class="g17AccountOrb">'+esc(initial)+'</div><div><div class="g17AccountTitle">'+esc(u.displayName||'OYUNCU')+'</div><div class="g17AccountSub">'+esc(u.email||u.username||'')+' · '+esc(p.playerId||u.id||'')+'</div></div></div></div><div class="g17StatGrid">'+statTile((w.chips||0).toLocaleString('tr-TR'),'CHIP')+statTile((w.gems||0).toLocaleString('tr-TR'),'GEM')+statTile(Number(st.matches)||0,'MAÇ')+statTile(Number(st.wins)||0,'GALİBİYET')+statTile(pct(st.wins,st.matches)+'%','KAZANMA')+statTile(Number(st.bigWins)||0,'BÜYÜK EL')+'</div><div class="metaInfoGrid">'+ratingCard('EŞLİ RANKED',rk.TEAM)+ratingCard('BİREYSEL RANKED',rk.INDIVIDUAL)+'</div><div class="g17ProfileRow"><span>BİO</span><strong>'+esc(p.bio||'Henüz bio yok')+'</strong></div><div class="g17AccountActions"><button class="g17PremiumBtn" id="g17AccountStats">İSTATİSTİKLER</button><button class="g17PremiumBtn secondary" id="g17AccountEdit">PROFİLİ DÜZENLE</button></div><div class="metaActionRow"><button class="metaMiniBtn" id="g17AccountLogout">HESAPTAN ÇIK</button></div></div>');setTimeout(function(){var stB=document.getElementById('g17AccountStats'),ed=document.getElementById('g17AccountEdit'),lo=document.getElementById('g17AccountLogout');if(stB)stB.onclick=statsUI;if(ed)ed.onclick=function(){profileEditUI(p)};if(lo)lo.onclick=async function(){lo.disabled=true;await logoutAccount();clearAuth();say('HESAPTAN ÇIKILDI');authUI('profile')}},0)}catch(e){say(netError(e),2200)}})}
   function profileEditUI(profile){profile=profile||{};modal('<div class="g17AccountShell"><div class="g17AccountHero"><div class="g17AccountTitle">PROFİLİ DÜZENLE</div><div class="g17AccountSub">Değişiklik doğrudan hesabına kaydedilir.</div></div><div class="g17Field"><label>Bio</label><textarea class="metaInput" id="g17ProfileBio" maxlength="160" style="min-height:90px;resize:none">'+esc(profile.bio||'')+'</textarea></div><div class="g17Field"><label>Avatar kodu</label><input class="metaInput" id="g17ProfileAvatar" maxlength="40" value="'+esc(profile.avatar||'default')+'" placeholder="default"></div><div class="g17AccountActions"><button class="g17PremiumBtn" id="g17ProfileSave">KAYDET</button><button class="g17PremiumBtn secondary" id="g17ProfileBack">GERİ</button></div><p class="metaNote" id="g17ProfileMsg"></p></div>');setTimeout(function(){var sv=document.getElementById('g17ProfileSave'),bk=document.getElementById('g17ProfileBack'),msg=document.getElementById('g17ProfileMsg');if(bk)bk.onclick=accountUI;if(sv)sv.onclick=async function(){sv.disabled=true;try{var c=S.client||await makeClient(),r=await c.updateProfile((document.getElementById('g17ProfileBio')||{}).value,(document.getElementById('g17ProfileAvatar')||{}).value);if(!r.ok){if(msg)msg.textContent=authErr(r);sv.disabled=false;return}if(msg)msg.textContent='PROFİL KAYDEDİLDİ';setTimeout(accountUI,180)}catch(e){if(msg)msg.textContent=netError(e);sv.disabled=false}}},0)}
   async function statsUI(){return onlineGate(async function(){if(!hasAuth())return authUI('stats');try{var c=await makeClient(),me=await c.me();if(!me.ok){clearAuth();return authUI('stats')}var p=me.profile||{},st=p.stats||{},rk=p.ranked||{};modal('<div class="g17AccountShell"><div class="g17AccountHero"><div class="g17AccountTitle">GERÇEK İSTATİSTİKLER</div><div class="g17AccountSub">Sunucuda tamamlanan maçlardan kalıcı olarak hesaplanır.</div></div><div class="g17StatGrid">'+statTile(Number(st.matches)||0,'MAÇ')+statTile(Number(st.wins)||0,'GALİBİYET')+statTile(Number(st.ties)||0,'BERABERE')+statTile(Number(st.hands)||0,'EL')+statTile(Number(st.handWins)||0,'EL GALİBİYETİ')+statTile(Number(st.bigWins)||0,'BÜYÜK EL')+statTile(Number(st.totalPenalty)||0,'TOPLAM CEZA')+statTile(Number(st.majorCount)||0,'BÜYÜK CEZA')+statTile(Number(st.processPenalty)||0,'İŞLEME CEZASI')+'</div><div class="metaInfoGrid">'+ratingCard('EŞLİ 2v2',rk.TEAM)+ratingCard('BİREYSEL 4\'LÜ',rk.INDIVIDUAL)+'</div><div class="g17AccountActions"><button class="g17PremiumBtn" id="g17StatsProfile">PROFİLE DÖN</button><button class="g17PremiumBtn secondary" id="g17StatsRank">RANKED</button></div></div>');setTimeout(function(){var a=document.getElementById('g17StatsProfile'),b=document.getElementById('g17StatsRank');if(a)a.onclick=accountUI;if(b)b.onclick=rankedUI},0)}catch(e){say(netError(e),2200)}})}
 
@@ -6715,5 +6715,346 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
   setTimeout(function(){scrubLegacyLocalSecrets();resumeSession()},0);
 })(window);
 </script>
+<!--OK17ACC-V183-BAS-->
+<style id="ok17AccCss">
+#ok17AccOv{position:fixed;inset:0;z-index:13000;display:none;background:rgba(10,4,20,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:calc(8px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left))}
+#ok17AccOv.on{display:flex}
+#ok17AccOv,#ok17AccOv *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
+#ok17AccOv input{user-select:text;-webkit-user-select:text}
+.ok17Card{position:relative;width:min(920px,100%);max-height:calc(var(--ok17vh,100dvh) - 16px);overflow:auto;overscroll-behavior:contain;background:linear-gradient(160deg,#2b1147 0%,#1c0a33 55%,#160726 100%);border:2px solid #caa24d;border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.55),inset 0 0 40px rgba(255,205,105,.05);color:#f3e3bd;padding:16px 16px 12px}
+.ok17Hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.ok17Ic{flex:0 0 auto;width:52px;height:52px;border-radius:14px;background:linear-gradient(160deg,#8a3df0,#5b1fae);border:1.5px solid #e9c66f;display:flex;align-items:center;justify-content:center;font-size:26px}
+.ok17Ttl{font-size:22px;font-weight:800;letter-spacing:.5px;color:#f6c95d;text-shadow:0 1px 0 #000}
+.ok17Sub{font-size:12.5px;color:#d8c39a;margin-top:3px;line-height:1.35;max-width:560px}
+.ok17X{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:1.5px solid #caa24d;background:#31164f;color:#f2d489;font-size:17px;font-weight:800;cursor:pointer;line-height:1}
+.ok17X:active{transform:scale(.94)}
+.ok17Back{width:38px;height:38px;border-radius:12px;border:1.5px solid #caa24d;background:#31164f;color:#f2d489;font-size:17px;font-weight:800;cursor:pointer;flex:0 0 auto}
+.ok17Cols{display:flex;gap:14px;align-items:stretch}
+.ok17Col{flex:1 1 0;min-width:0;background:rgba(255,255,255,.03);border:1px solid rgba(224,186,104,.45);border-radius:16px;padding:12px}
+.ok17ColT{font-size:12px;font-weight:800;letter-spacing:1.2px;color:#f0c568;text-align:center;margin:2px 0 12px}
+.ok17Or{align-self:center;flex:0 0 auto;width:54px;height:54px;border:1.5px solid #caa24d;border-radius:12px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;background:#241040;margin:0 2px}
+.ok17Or span{transform:rotate(-45deg);font-size:12px;font-weight:800;color:#f0c568}
+.ok17Btn{display:flex;align-items:center;gap:10px;width:100%;border-radius:14px;border:1.5px solid #caa24d;padding:11px 12px;margin:8px 0;cursor:pointer;text-align:left;font-size:14.5px;font-weight:800;line-height:1.2}
+.ok17Btn small{display:block;font-weight:400;font-size:11.5px;opacity:.85;margin-top:2px}
+.ok17Btn:disabled{opacity:.45;cursor:default}
+.ok17BtnMail{background:linear-gradient(160deg,#7a34d6,#4d1a92);color:#fff}
+.ok17BtnGold{background:linear-gradient(160deg,#c9902e,#8a5d12);color:#fff;justify-content:center;text-align:center;flex-direction:column;gap:2px}
+.ok17BtnGhost{background:#31164f;color:#f2d489;justify-content:center}
+.ok17GWrap{background:#fff;border-radius:14px;border:1.5px solid #e9c66f;padding:6px;margin:8px 0;min-height:52px;display:flex;align-items:center;justify-content:center}
+.ok17In{width:100%;border-radius:12px;border:1.5px solid #b490e0;background:#221039;color:#f7ecd2;padding:11px 12px;font-size:14.5px;margin:6px 0;outline:none}
+.ok17In::placeholder{color:#9c86b8}
+.ok17InRow{position:relative}
+.ok17Cnt{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:#bfa77a}
+.ok17Msg{font-size:12.5px;line-height:1.4;border-radius:10px;padding:8px 10px;margin:6px 0;display:none}
+.ok17Msg.on{display:block}
+.ok17Msg.err{background:#4a1626;border:1px solid #d06a7c;color:#ffd9df}
+.ok17Msg.ok{background:#123a2a;border:1px solid #4fbf8f;color:#c9f5df}
+.ok17Msg.inf{background:#241a44;border:1px solid #8a6fd0;color:#e2d6ff}
+.ok17Ft{display:flex;align-items:center;gap:10px;border:1px solid rgba(224,186,104,.45);border-radius:14px;padding:9px 12px;margin-top:12px;font-size:12px;color:#e6d4a8;line-height:1.4}
+.ok17FtI{flex:0 0 auto;width:26px;height:26px;border-radius:50%;border:1.5px solid #caa24d;display:flex;align-items:center;justify-content:center;font-weight:800;color:#f0c568}
+.ok17Build{position:absolute;left:14px;bottom:8px;font-size:10px;color:#8f7a52;letter-spacing:.5px}
+.ok17Link{background:none;border:none;color:#cfa9ff;text-decoration:underline;font-size:12px;cursor:pointer;padding:4px 2px}
+.ok17Skel{height:14px;border-radius:7px;background:linear-gradient(90deg,#3a1c60 25%,#4c2a78 50%,#3a1c60 75%);background-size:200% 100%;animation:ok17sk 1.1s linear infinite;margin:10px 0}
+@keyframes ok17sk{0%{background-position:200% 0}100%{background-position:0 0}}
+/* HESABIM */
+.ok17HLay{display:flex;gap:12px;min-height:0}
+.ok17Nav{flex:0 0 168px;display:flex;flex-direction:column;gap:7px}
+.ok17NavB{border:1.5px solid #caa24d;border-radius:12px;background:#31164f;color:#f2d489;padding:10px 10px;font-size:12.5px;font-weight:800;text-align:left;cursor:pointer;letter-spacing:.4px}
+.ok17NavB.act{background:linear-gradient(160deg,#c9902e,#8a5d12);color:#fff}
+.ok17NavB.out{margin-top:auto;color:#ffd9df;border-color:#d06a7c;background:#3d1428}
+.ok17Main{flex:1 1 0;min-width:0}
+.ok17PHd{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.ok17Av{width:64px;height:64px;border-radius:50%;border:2px solid #e9c66f;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;flex:0 0 auto}
+.ok17PNm{font-size:19px;font-weight:800;color:#fff}
+.ok17PEm{font-size:12.5px;color:#d8c39a;margin-top:2px}
+.ok17Badge{display:inline-block;font-size:10.5px;font-weight:800;border-radius:9px;padding:2px 8px;margin-left:6px;vertical-align:1px}
+.ok17Badge.ok{background:#123a2a;border:1px solid #4fbf8f;color:#7fe8b6}
+.ok17Badge.no{background:#3d2a12;border:1px solid #c9902e;color:#f0c568}
+.ok17Grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.ok17Tile{border:1px solid rgba(224,186,104,.5);border-radius:14px;background:rgba(255,255,255,.03);padding:11px 12px;min-height:74px}
+.ok17TileT{font-size:11px;font-weight:800;letter-spacing:1px;color:#f0c568;margin-bottom:6px}
+.ok17Big{font-size:22px;font-weight:800;color:#fff}
+.ok17Sm{font-size:11.5px;color:#cdb98d;margin-top:3px}
+.ok17Row3{display:flex;gap:8px;text-align:center}
+.ok17Row3>div{flex:1}
+.ok17Win{color:#7fe8b6}.ok17Lose{color:#ff9aa8}
+.ok17None{font-size:12px;color:#a08c62;font-style:italic}
+.ok17Hist{border-bottom:1px dashed rgba(224,186,104,.3);padding:7px 2px;font-size:12.5px;display:flex;justify-content:space-between;gap:8px}
+.ok17QRow{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(224,186,104,.3);padding:9px 2px;font-size:13px;cursor:pointer;color:#f3e3bd}
+.ok17QRow:active{opacity:.7}
+@media (max-width:640px){.ok17Cols{flex-direction:column}.ok17Or{transform:rotate(45deg) scale(.8);margin:2px auto}.ok17HLay{flex-direction:column}.ok17Nav{flex-direction:row;flex-wrap:wrap;flex-basis:auto}.ok17NavB{flex:1 1 30%;padding:8px 6px;font-size:11px;text-align:center}.ok17NavB.out{margin-top:0}}
+@media (max-height:480px){.ok17Card{padding:10px 12px 8px;border-radius:16px}.ok17Hd{margin-bottom:8px}.ok17Ic{width:40px;height:40px;font-size:20px}.ok17Ttl{font-size:17px}.ok17Sub{font-size:11px}.ok17Btn{padding:8px 10px;margin:6px 0;font-size:13px}.ok17In{padding:8px 10px}.ok17Ft{display:none}.ok17Av{width:46px;height:46px;font-size:19px}}
+.ok17Codes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.ok17Codes code{background:#1d0f33;border:1px solid #4a2d73;border-radius:8px;padding:7px 8px;font-size:13px;letter-spacing:.6px;text-align:center;color:#ffd97a;user-select:text;-webkit-user-select:text}
+</style>
+<script id="ok17AccJs">
+(function(g){'use strict';
+if (g.OK17ACC) return;
+var d=g.document, SKEY='g17_account_session_v165', SKEY_LS='g17_account_session_v183_copy';
+/*J5-SESS*/ function normSess(resp){ resp=resp||{}; var s=resp.session||resp;
+  var access=s.accessToken||s.token||resp.accessToken||resp.token||null;
+  var refresh=s.refreshToken||resp.refreshToken||null;
+  var acc=resp.account||s.account||null, user=resp.user||s.user||null;
+  if(!user&&acc) user={ publicId:acc.publicId||null, username:acc.username||null, displayName:acc.name||acc.username||null, email:acc.email||null };
+  if(user&&!user.displayName) user.displayName=user.username||user.name||null;
+  try{ if(user&&user.displayName) g.localStorage.setItem('g17_player_name', String(user.displayName).slice(0,24)); }catch(_){}
+  return { accessToken:access, refreshToken:refresh, user:user, savedAt:Date.now(), token:access, account:acc||user, v:'v183' }; }
+function readSess(){ try{ return JSON.parse(g.sessionStorage.getItem(SKEY)||'null'); }catch(_){ return null; } }
+function writeSess(s){ try{ g.sessionStorage.setItem(SKEY, JSON.stringify(s)); }catch(_){}
+  try{ g.localStorage.setItem(SKEY_LS, JSON.stringify(s)); }catch(_){} }
+function clearSess(){ try{ g.sessionStorage.removeItem(SKEY); }catch(_){}
+  try{ g.localStorage.removeItem(SKEY_LS); }catch(_){} }
+(function restore(){ try{ if(!g.sessionStorage.getItem(SKEY)){ var c=g.localStorage.getItem(SKEY_LS); if(c) g.sessionStorage.setItem(SKEY,c); } }catch(_){}
+})();
+function tok(){ var s=readSess(); return s&&(s.accessToken||s.token)||null; }
+function api(method,path,body,auth){ var h={'Content-Type':'application/json'}; if(auth!==false){ var t=tok(); if(t) h['Authorization']='Bearer '+t; }
+  return g.fetch(path,{method:method,headers:h,body:body?JSON.stringify(body):undefined}).then(function(r){ return r.text().then(function(x){ var j=null; try{ j=JSON.parse(x); }catch(_){}
+    return { status:r.status, json:j, text:x }; }); }); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function fmtN(n){ if(n==null||isNaN(n)) return '—'; try{ return Number(n).toLocaleString('tr-TR'); }catch(_){ return String(n); } }
+function fmtD(ts){ if(!ts) return '—'; var t=Number(ts); if(t<2e10) t*=1000; var dt=new Date(t); if(isNaN(dt)) return '—';
+  return ('0'+dt.getDate()).slice(-2)+'.'+('0'+(dt.getMonth()+1)).slice(-2)+'.'+dt.getFullYear(); }
+function avColor(seed){ var h=0,s=String(seed||'?'); for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; var HUES=[265,285,20,200,150,330,45,230]; return 'hsl('+HUES[h%HUES.length]+',62%,42%)'; }
+function initialOf(a){ var n=(a&&(a.name||a.email)||'?').trim(); return (n[0]||'?').toUpperCase(); }
+/* viewport (keyboard/landscape safe) */
+function vpSync(){ var h=(g.visualViewport&&g.visualViewport.height)||g.innerHeight; d.documentElement.style.setProperty('--ok17vh', h+'px'); }
+if (g.visualViewport){ g.visualViewport.addEventListener('resize',vpSync); g.visualViewport.addEventListener('scroll',vpSync); }
+g.addEventListener('resize',vpSync); g.addEventListener('orientationchange',function(){ setTimeout(vpSync,120); });
+/* root */
+var ov=null, cfg=null, view='boot', sum=null, tab='genel', histBack=false, pendingAfter=null, lastAuthResp=null;
+function root(){ if(ov) return ov; ov=d.createElement('div'); ov.id='ok17AccOv';
+  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+  d.body.appendChild(ov); vpSync(); return ov; }
+function open(mode,after){ pendingAfter=(typeof after==='function')?after:null; root(); ov.classList.add('on');
+  try{ if(!histBack){ g.history.pushState({ok17acc:1},''); histBack=true; } }catch(_){}
+  boot(); }
+function close(){ if(!ov) return; pendingAfter=null; if(lastAuthResp){ try{ writeSess(normSess(lastAuthResp)); }catch(_){} lastAuthResp=null; } ov.classList.remove('on'); view='boot';
+  if(histBack){ histBack=false; try{ g.history.back(); }catch(_){} } }
+g.addEventListener('popstate',function(){ if(ov&&ov.classList.contains('on')){ histBack=false; pendingAfter=null; ov.classList.remove('on'); view='boot'; } });
+g.addEventListener('keydown',function(e){ if(e.key==='Escape'&&ov&&ov.classList.contains('on')){ e.stopPropagation(); close(); } },true);
+function card(inner,noX){ return '<div class="ok17Card" role="dialog" aria-modal="true">'+(noX?'':'<button class="ok17X" data-a="close" aria-label="Kapat">✕</button>')+inner+'<div class="ok17Build">BUILD v183</div></div>'; }
+function paint(html){ root().innerHTML=card(html); wire(); }
+function msg(id,cls,text){ var el=d.getElementById(id); if(!el) return; el.className='ok17Msg on '+cls; el.textContent=text; }
+function msgOff(id){ var el=d.getElementById(id); if(el) el.className='ok17Msg'; }
+/* ---------- BOOT ---------- */
+function boot(){ view='boot';
+  paint('<div class="ok17Hd"><div class="ok17Ic">✉</div><div><div class="ok17Ttl">OKEY17 HESABI</div><div class="ok17Sub">Hesap bilgileri yükleniyor…</div></div></div><div class="ok17Skel"></div><div class="ok17Skel" style="width:70%"></div><div class="ok17Skel" style="width:45%"></div>');
+  var pCfg = cfg ? Promise.resolve({json:cfg,status:200}) : api('GET','/v1/auth/config',null,false);
+  pCfg.then(function(rc){ if(rc.json) cfg=rc.json;
+    if(!tok()){ return showLogin(); }
+    return api('GET','/v1/account/summary').then(function(r){
+      if(r.status===200&&r.json){ sum=r.json; if(pendingAfter){ var f=pendingAfter; pendingAfter=null; close(); try{ f(); }catch(_){} return; } return showHesabim(); }
+      if(r.status===401){ clearSess(); return showLogin('Oturum süresi doldu, yeniden giriş yap.'); }
+      return showErr('Hesap özeti alınamadı ('+r.status+').'); });
+  }).catch(function(){ if(!tok()) showLogin('Sunucuya ulaşılamadı — giriş yine de denenebilir.'); else showErr('Sunucuya ulaşılamadı.'); });
+}
+function showCodes(codes){ view='codes';
+  paint('<div class="ok17Hd"><div class="ok17Ic">🔑</div><div><div class="ok17Ttl">YENİ KURTARMA KODLARIN</div><div class="ok17Sub">Bu kodlar yalnız BİR KEZ gösterilir — güvenli bir yere kaydet. Eski kodların geçersiz oldu.</div></div></div><div class="ok17Codes">'+(codes||[]).map(function(c){ return '<code>'+esc(c)+'</code>'; }).join('')+'</div><button class="ok17Btn ok17BtnGold" data-a="codesok">KAYDETTİM, DEVAM ET</button>'); }
+function showErr(t){ view='err';
+  paint('<div class="ok17Hd"><div class="ok17Ic">⚠</div><div><div class="ok17Ttl">OKEY17 HESABI</div><div class="ok17Sub">'+esc(t)+'</div></div></div><button class="ok17Btn ok17BtnGhost" data-a="boot">TEKRAR DENE</button>'); }
+/* ---------- LOGIN (Image 3) ---------- */
+function showLogin(note){ view='login';
+  var gReady=cfg&&cfg.googleReady, mReady=cfg&&cfg.mailerReady, pmin=(cfg&&cfg.passwordMin)||10;
+  paint(
+  '<div class="ok17Hd"><div class="ok17Ic">✉</div><div><div class="ok17Ttl">OKEY17 HESABI</div><div class="ok17Sub">Gerçek sunucu hesabın · maçların, profilin ve Ranked puanın bu hesaba bağlanır.</div></div></div>'
+  +(note?'<div id="ok17MsgTop" class="ok17Msg on inf">'+esc(note)+'</div>':'')
+  +'<div class="ok17Cols">'
+  +'<div class="ok17Col"><div class="ok17ColT">— HIZLI VE ŞİFRESİZ GİRİŞ —</div>'
+    +'<div class="ok17GWrap" id="ok17GBox">'+(gReady?'<div id="ok17GBtn"></div>':'<div style="color:#555;font-size:12.5px;text-align:center;padding:6px">Google girişi henüz yapılandırılmadı<br><small>(sunucuda GOOGLE_CLIENT_ID bekleniyor)</small></div>')+'</div>'
+    +'<button class="ok17Btn ok17BtnMail" data-a="mailmode" '+(mReady?'':'disabled')+'><span style="font-size:19px">✉</span><span>E-Posta ile Şifresiz Giriş<small>'+(mReady?'Koda e-posta ile giriş yap':'E-posta servisi henüz yapılandırılmadı')+'</small></span></button>'
+    +'<div id="ok17MailBox" style="display:none">'
+      +'<input class="ok17In" id="ok17MEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta adresin">'
+      +'<button class="ok17Btn ok17BtnGhost" data-a="mailstart" id="ok17MSend">KOD GÖNDER</button>'
+      +'<div id="ok17CodeBox" style="display:none"><input class="ok17In" id="ok17MCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 haneli kod">'
+      +'<button class="ok17Btn ok17BtnGold" data-a="mailverify">GİRİŞ YAP</button></div>'
+      +'<div id="ok17MMsg" class="ok17Msg"></div>'
+    +'</div>'
+    +'<button class="ok17Link" data-a="oldmode">Eski hesabın mı var? Kullanıcı adı + şifre ile giriş</button>'
+    +'<div id="ok17OldBox" style="display:none">'
+      +'<input class="ok17In" id="ok17OId" autocomplete="username" placeholder="Kullanıcı adı veya e-posta">'
+      +'<input class="ok17In" id="ok17OPw" type="password" autocomplete="current-password" placeholder="Şifre">'
+      +'<button class="ok17Btn ok17BtnGhost" data-a="oldlogin">GİRİŞ YAP</button>'
+      +'<button class="ok17Link" data-a="recover">Hesabı kurtar (kurtarma kodu)</button>'
+      +'<div id="ok17RecBox" style="display:none">'
+      +'<input class="ok17In" id="ok17RecUser" autocomplete="username" placeholder="Kullanıcı adı">'
+      +'<input class="ok17In" id="ok17RecCode" autocomplete="one-time-code" placeholder="Kurtarma kodu">'
+      +'<input class="ok17In" id="ok17RecPw" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az '+pmin+' karakter)">'
+      +'<button class="ok17Btn ok17BtnGhost" data-a="dorecover">HESABI KURTAR</button>'
+      +'<div id="ok17RecMsg" class="ok17Msg"></div>'
+      +'</div>'
+      +'<div id="ok17OMsg" class="ok17Msg"></div>'
+    +'</div>'
+  +'</div>'
+  +'<div class="ok17Or"><span>veya</span></div>'
+  +'<div class="ok17Col"><div class="ok17ColT">— MANUEL HESAP OLUŞTUR —</div>'
+    +'<input class="ok17In" id="ok17REmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta adresiniz">'
+    +'<div class="ok17InRow"><input class="ok17In" id="ok17RName" maxlength="15" autocomplete="nickname" placeholder="Oyuncu adınız (isteğe bağlı)"><span class="ok17Cnt" id="ok17RCnt">0/15</span></div>'
+    +'<input class="ok17In" id="ok17RPw" type="password" autocomplete="new-password" placeholder="Şifre (en az '+pmin+' karakter)">'
+    +'<button class="ok17Btn ok17BtnGold" data-a="register"><span style="font-size:16px">🔒</span><span>ŞİFRE İLE HESAP OLUŞTUR</span><small>Manuel hesap oluştur ve şifre belirle</small></button>'
+    +'<div id="ok17RMsg" class="ok17Msg"></div>'
+  +'</div>'
+  +'</div>'
+  +'<div class="ok17Ft"><div class="ok17FtI">i</div><div>Google ve e-posta ile şifresiz giriş yapabilirsiniz. Manuel hesap oluştururken şifre belirleyebilirsiniz. Yeni hesapta e-posta zorunludur; eski hesaplar kullanıcı adıyla da giriş yapabilir.</div></div>');
+  if(gReady) mountGoogle();
+  var rn=d.getElementById('ok17RName'); if(rn) rn.addEventListener('input',function(){ var c=d.getElementById('ok17RCnt'); if(c) c.textContent=rn.value.length+'/15'; });
+}
+/* Google GIS */
+var gisLoading=false;
+function mountGoogle(){ var box=d.getElementById('ok17GBtn'); if(!box) return;
+  function render(){ try{ g.google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: onGoogleCred, ux_mode:'popup', auto_select:false });
+      g.google.accounts.id.renderButton(box,{ type:'standard', theme:'outline', size:'large', text:'continue_with', shape:'pill', width: Math.min(300, box.clientWidth||300), locale:'tr' });
+    }catch(e){ box.innerHTML='<div style="color:#a33;font-size:12px;text-align:center">Google başlatılamadı: '+esc(e&&e.message)+'</div>'; } }
+  if(g.google&&g.google.accounts&&g.google.accounts.id) return render();
+  if(gisLoading) return; gisLoading=true;
+  var s=d.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.defer=true;
+  s.onload=render; s.onerror=function(){ gisLoading=false; box.innerHTML='<div style="color:#a33;font-size:12px;text-align:center">Google betiği yüklenemedi — bağlantıyı kontrol et</div>'; };
+  d.head.appendChild(s);
+}
+function onGoogleCred(resp){ if(!resp||!resp.credential) return;
+  api('POST','/v1/auth/google',{ idToken: resp.credential },false).then(function(r){
+    if(r.status===200&&r.json&&r.json.ok){ writeSess(normSess(r.json)); sum=null; boot(); }
+    else { showLogin('Google girişi başarısız: '+((r.json&&r.json.error)||r.status)); }
+  }).catch(function(){ showLogin('Google girişi sırasında ağ hatası.'); });
+}
+/* actions */
+var resendAt=0;
+function wire(){ ov.querySelectorAll('[data-a]').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); act(b.getAttribute('data-a'),b); }); }); }
+function act(a,btn){
+  if(a==='close') return close();
+  if(a==='boot') return boot();
+  if(a==='mailmode'){ var x=d.getElementById('ok17MailBox'); if(x) x.style.display = x.style.display==='none'?'block':'none'; return; }
+  if(a==='oldmode'){ var y=d.getElementById('ok17OldBox'); if(y) y.style.display = y.style.display==='none'?'block':'none'; return; }
+  if(a==='recover'){ var rb=d.getElementById('ok17RecBox'); if(rb) rb.style.display = rb.style.display==='none'?'block':'none'; return; }
+  if(a==='dorecover'){ var ru=((d.getElementById('ok17RecUser')||{}).value||'').trim().toLowerCase(); var rc=((d.getElementById('ok17RecCode')||{}).value||'').trim(); var rp2=(d.getElementById('ok17RecPw')||{}).value||''; var pm2=(cfg&&cfg.passwordMin)||10;
+    if(!ru||!rc) return msg('ok17RecMsg','err','Kullanıcı adı ve kurtarma kodu gerekli.');
+    if(rp2.length<pm2) return msg('ok17RecMsg','err','Yeni şifre en az '+pm2+' karakter olmalı.');
+    msg('ok17RecMsg','inf','Kurtarılıyor…');
+    api('POST','/v1/auth/recover',{ username: ru, recoveryCode: rc, newPassword: rp2 },false).then(function(r){
+      if(r.status===200&&r.json&&r.json.ok){ lastAuthResp=r.json; showCodes(r.json.recoveryCodes||[]); }
+      else msg('ok17RecMsg','err','Kurtarma başarısız ('+((r.json&&r.json.error)||r.status)+').');
+    }).catch(function(){ msg('ok17RecMsg','err','Ağ hatası.'); }); return; }
+  if(a==='codesok'){ if(lastAuthResp){ try{ writeSess(normSess(lastAuthResp)); }catch(_){} lastAuthResp=null; } sum=null; return boot(); }
+  if(a==='mailstart'){ var em=(d.getElementById('ok17MEmail')||{}).value||''; em=em.trim().toLowerCase();
+    if(!/^\S+@\S+\.\S+$/.test(em)) return msg('ok17MMsg','err','Geçerli bir e-posta gir.');
+    if(Date.now()<resendAt) return msg('ok17MMsg','inf','Kod zaten gönderildi — '+Math.ceil((resendAt-Date.now())/1000)+' sn sonra tekrar deneyebilirsin.');
+    msg('ok17MMsg','inf','Kod gönderiliyor…');
+    api('POST','/v1/auth/email/start',{ email: em },false).then(function(r){
+      if(r.status===200){ resendAt=Date.now()+60000; var cb=d.getElementById('ok17CodeBox'); if(cb) cb.style.display='block'; msg('ok17MMsg','ok','Kod e-postana gönderildi (10 dk geçerli).'); var ci=d.getElementById('ok17MCode'); if(ci) ci.focus(); }
+      else if(r.status===503) msg('ok17MMsg','err','E-posta servisi sunucuda yapılandırılmamış.');
+      else if(r.status===429) msg('ok17MMsg','err','Çok sık denendi — biraz bekle.');
+      else msg('ok17MMsg','err','Kod gönderilemedi ('+((r.json&&r.json.error)||r.status)+').');
+    }).catch(function(){ msg('ok17MMsg','err','Ağ hatası.'); }); return; }
+  if(a==='mailverify'){ var em2=((d.getElementById('ok17MEmail')||{}).value||'').trim().toLowerCase(); var cd=((d.getElementById('ok17MCode')||{}).value||'').trim();
+    if(!/^\d{6}$/.test(cd)) return msg('ok17MMsg','err','6 haneli kodu gir.');
+    msg('ok17MMsg','inf','Doğrulanıyor…');
+    api('POST','/v1/auth/email/verify',{ email: em2, code: cd },false).then(function(r){
+      if(r.status===200&&r.json&&r.json.ok){ writeSess(normSess(r.json)); sum=null; boot(); }
+      else if(r.json&&r.json.error==='CODE_WRONG') msg('ok17MMsg','err','Kod yanlış ('+(r.json.left||0)+' hak kaldı).');
+      else if(r.json&&r.json.error==='CODE_EXPIRED') msg('ok17MMsg','err','Kodun süresi doldu — yeni kod iste.');
+      else if(r.json&&r.json.error==='CODE_LOCKED') msg('ok17MMsg','err','Çok fazla yanlış deneme — yeni kod iste.');
+      else msg('ok17MMsg','err','Giriş başarısız ('+((r.json&&r.json.error)||r.status)+').');
+    }).catch(function(){ msg('ok17MMsg','err','Ağ hatası.'); }); return; }
+  if(a==='oldlogin'){ var oi=((d.getElementById('ok17OId')||{}).value||'').trim(); var op=(d.getElementById('ok17OPw')||{}).value||'';
+    if(!oi||!op) return msg('ok17OMsg','err','Kullanıcı adı ve şifre gerekli.');
+    msg('ok17OMsg','inf','Giriş yapılıyor…');
+    api('POST','/v1/auth/email/login',{ identifier: oi, password: op },false).then(function(r){
+      if(r.status===200&&r.json&&r.json.ok){ writeSess(normSess(r.json)); sum=null; boot(); }
+      else if(r.json&&r.json.error==='ACCOUNT_BANNED') msg('ok17OMsg','err','Hesap yasaklı.');
+      else msg('ok17OMsg','err','Giriş başarısız ('+((r.json&&(r.json.error||r.json.message))||r.status)+').');
+    }).catch(function(){ msg('ok17OMsg','err','Ağ hatası.'); }); return; }
+  if(a==='register'){ var re=((d.getElementById('ok17REmail')||{}).value||'').trim().toLowerCase(); var rn2=((d.getElementById('ok17RName')||{}).value||'').trim(); var rp=(d.getElementById('ok17RPw')||{}).value||'';
+    var pmin=(cfg&&cfg.passwordMin)||10;
+    if(!/^\S+@\S+\.\S+$/.test(re)) return msg('ok17RMsg','err','Yeni hesapta e-posta zorunlu.');
+    if(rp.length<pmin) return msg('ok17RMsg','err','Şifre en az '+pmin+' karakter olmalı.');
+    msg('ok17RMsg','inf','Hesap oluşturuluyor…');
+    api('POST','/v1/auth/email/register',{ email: re, name: rn2||null, password: rp },false).then(function(r){
+      if((r.status===201||r.status===200)&&r.json&&r.json.ok){ writeSess(normSess(r.json)); sum=null; boot(); }
+      else if(r.json&&r.json.error==='EMAIL_TAKEN') msg('ok17RMsg','err','Bu e-posta zaten kayıtlı — soldan giriş yap.');
+      else if(r.json&&r.json.error==='PASSWORD_POLICY') msg('ok17RMsg','err','Şifre en az '+((r.json&&r.json.min)||pmin)+' karakter olmalı.');
+      else msg('ok17RMsg','err','Oluşturulamadı ('+((r.json&&(r.json.error||r.json.message))||r.status)+').');
+    }).catch(function(){ msg('ok17RMsg','err','Ağ hatası.'); }); return; }
+  /* HESABIM actions */
+  if(a==='tab'){ tab=btn.getAttribute('data-t')||'genel'; return showHesabim(); }
+  if(a==='logout'){ api('POST','/v1/auth/logout',{}).catch(function(){}).then(function(){ clearSess(); sum=null; boot(); }); return; }
+  if(a==='refresh'){ sum=null; return boot(); }
+  if(a==='linkgoogle'){ return linkGoogleFlow(); }
+  if(a==='chname'){ return changeName(); }
+  if(a==='chpass'){ tab='ayarlar'; return showHesabim(); }
+  if(a==='dopass'){ return doPass(); }
+  if(a==='back'){ if(view==='hesabim'&&tab!=='genel'){ tab='genel'; return showHesabim(); } return close(); }
+}
+function linkGoogleFlow(){ if(!(cfg&&cfg.googleReady)) return alert('Google sunucuda henüz yapılandırılmadı.');
+  function go(){ try{ g.google.accounts.id.initialize({ client_id: cfg.googleClientId, callback:function(resp){ if(!resp||!resp.credential) return;
+      api('POST','/v1/auth/link/google',{ idToken: resp.credential }).then(function(r){ if(r.status===200){ sum=null; boot(); } else alert('Bağlanamadı: '+((r.json&&r.json.error)||r.status)); }); }, ux_mode:'popup' });
+    g.google.accounts.id.prompt(); }catch(e){ alert('Google başlatılamadı.'); } }
+  if(g.google&&g.google.accounts&&g.google.accounts.id) return go();
+  var s=d.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=go; d.head.appendChild(s);
+}
+function changeName(){ var cur=sum&&sum.account&&sum.account.name||''; var nv=g.prompt('Yeni oyuncu adı (en fazla 15):',cur); if(nv==null) return; nv=nv.trim().slice(0,15); if(!nv) return;
+  api('PATCH','/v1/profile/me',{ name: nv }).then(function(r){ if(r.status===200){ sum=null; boot(); }
+    else if(r.status===404||r.status===405){ api('POST','/v1/profile/me',{ name: nv }).then(function(r2){ if(r2.status===200){ sum=null; boot(); } else alert('İsim değiştirme sunucuda desteklenmiyor ('+r2.status+').'); }); }
+    else alert('İsim değiştirilemedi ('+((r.json&&r.json.error)||r.status)+').'); }); }
+function doPass(){ var o=(d.getElementById('ok17PwOld')||{}).value||''; var n=(d.getElementById('ok17PwNew')||{}).value||''; var pmin=(cfg&&cfg.passwordMin)||10;
+  if(n.length<pmin) return msg('ok17SetMsg','err','Yeni şifre en az '+pmin+' karakter olmalı.');
+  /*J5-PASS*/ api('POST','/v1/auth/password',{ currentPassword:o, newPassword:n }).then(function(r){
+    if(r.status===200) msg('ok17SetMsg','ok','Şifre güncellendi.');
+    else msg('ok17SetMsg','err','Şifre değiştirilemedi ('+((r.json&&(r.json.error||r.json.message))||r.status)+').'); }).catch(function(){ msg('ok17SetMsg','err','Ağ hatası.'); }); }
+/* ---------- HESABIM (Image 2, gerçek veri) ---------- */
+function showHesabim(){ view='hesabim'; var s=sum||{}; var a=s.account||{};
+  var nm=a.name||a.email||'Oyuncu', em=a.email||null, ver=a.emailVerified!==false&&!!em, gl=!!a.googleLinked;
+  var st=s.stats, wr=(st&&st.played)?Math.round(100*(st.won||0)/st.played):null;
+  var NAV=[['genel','🏠 GENEL BAKIŞ'],['ligim','🏆 LİGİM'],['istatistik','📊 İSTATİSTİKLER'],['gecmis','🕘 MAÇ GEÇMİŞİ'],['ayarlar','⚙ AYARLAR']];
+  var nav=NAV.map(function(x){ return '<button class="ok17NavB'+(tab===x[0]?' act':'')+'" data-a="tab" data-t="'+x[0]+'">'+x[1]+'</button>'; }).join('')
+    +'<button class="ok17NavB out" data-a="logout">⎋ ÇIKIŞ YAP</button>';
+  var hd='<div class="ok17Hd" style="margin-bottom:8px"><button class="ok17Back" data-a="back" aria-label="Geri">‹</button><div class="ok17Ttl" style="align-self:center">HESABIM</div></div>'
+    +'<div class="ok17PHd"><div class="ok17Av" style="background:'+avColor(a.id||nm)+'">'+esc(initialOf(a))+'</div>'
+    +'<div><div class="ok17PNm">'+esc(nm)+' <button class="ok17Link" data-a="chname" title="İsim değiştir">✎</button></div>'
+    +'<div class="ok17PEm">'+(em?esc(em):'e-posta yok')+(em?('<span class="ok17Badge '+(ver?'ok':'no')+'">'+(ver?'✓ Doğrulandı':'Doğrulanmadı')+'</span>'):'')+'</div></div>'
+    +'<button class="ok17Link" style="margin-left:auto" data-a="refresh">⟳ yenile</button></div>';
+  var body='';
+  function tile(t,inner){ return '<div class="ok17Tile"><div class="ok17TileT">'+t+'</div>'+inner+'</div>'; }
+  function none(t){ return '<div class="ok17None">'+(t||'henüz veri yok')+'</div>'; }
+  if(tab==='genel'){
+    body='<div class="ok17Grid">'
+    + tile('LİGİM', s.league?('<div class="ok17Big">'+esc(s.league.tier||s.league.name||'—')+'</div><div class="ok17Sm">🏆 '+fmtN(s.league.points!=null?s.league.points:(s.ranked&&s.ranked.rating))+(s.league.seasonEndsInDays!=null?(' · Sezon sonu: '+s.league.seasonEndsInDays+' gün'):'')+'</div>'):none('lig verisi yok'))
+    + tile('MAÇ İSTATİSTİKLERİ', st?('<div class="ok17Row3"><div><div class="ok17Big">'+fmtN(st.played)+'</div><div class="ok17Sm">OYNANAN</div></div><div><div class="ok17Big ok17Win">'+fmtN(st.won)+'</div><div class="ok17Sm">KAZANILAN'+(wr!=null?' (%'+wr+')':'')+'</div></div><div><div class="ok17Big ok17Lose">'+fmtN(st.lost)+'</div><div class="ok17Sm">KAYBEDİLEN</div></div></div>'):none('maç verisi yok'))
+    + tile('CHİP BAKİYESİ', s.wallet?('<div class="ok17Big">🟢 '+fmtN(s.wallet.chips!=null?s.wallet.chips:s.wallet.balance)+'</div>'):none('cüzdan verisi yok'))
+    + tile('RANK PUANI', s.ranked?('<div class="ok17Big">⭐ '+fmtN(s.ranked.rating!=null?s.ranked.rating:s.ranked.points)+'</div>'):none('rank verisi yok'))
+    + tile('HESAP BİLGİLERİ','<div class="ok17Sm">✉ '+(em?esc(em):'—')+'</div><div class="ok17Sm" style="margin-top:5px">G Google: '+(gl?'<span class="ok17Win">Bağlı ✓</span>':'<button class="ok17Link" data-a="linkgoogle">Bağla</button>')+'</div><div class="ok17Sm" style="margin-top:5px">📅 Oluşturma: '+fmtD(a.createdAt||a.created)+'</div>')
+    +'</div>';
+  } else if(tab==='ligim'){
+    body=tile('LİGİM', s.league?('<div class="ok17Big">'+esc(s.league.tier||s.league.name||'—')+'</div><div class="ok17Sm">Puan: '+fmtN(s.league.points)+(s.league.rank!=null?(' · Sıra: '+fmtN(s.league.rank)):'')+'</div>'):none('lig verisi yok'))
+      + tile('RANK PUANI', s.ranked?('<div class="ok17Big">⭐ '+fmtN(s.ranked.rating)+'</div><div class="ok17Sm">Ranked derecelendirmesi sunucudan geliyor.</div>'):none('rank verisi yok'));
+  } else if(tab==='istatistik'){
+    body=tile('MAÇ İSTATİSTİKLERİ', st?('<div class="ok17Row3"><div><div class="ok17Big">'+fmtN(st.played)+'</div><div class="ok17Sm">OYNANAN</div></div><div><div class="ok17Big ok17Win">'+fmtN(st.won)+'</div><div class="ok17Sm">KAZANILAN</div></div><div><div class="ok17Big ok17Lose">'+fmtN(st.lost)+'</div><div class="ok17Sm">KAYBEDİLEN</div></div></div>'+(wr!=null?'<div class="ok17Sm" style="margin-top:8px;text-align:center">Kazanma oranı: %'+wr+'</div>':'')):none('istatistik verisi yok'));
+  } else if(tab==='gecmis'){
+    var h=s.history;
+    body=tile('MAÇ GEÇMİŞİ', (h&&h.length)?h.slice(0,12).map(function(m){ return '<div class="ok17Hist"><span>'+fmtD(m.at||m.time)+'</span><span>'+(m.placement!=null?(m.placement+'. sıra'):(m.result||''))+'</span><span class="'+((m.delta||0)>=0?'ok17Win':'ok17Lose')+'">'+((m.delta||0)>=0?'+':'')+fmtN(m.delta)+'</span></div>'; }).join(''):none('maç geçmişi verisi yok'));
+  } else if(tab==='ayarlar'){
+    body=tile('HIZLI İŞLEMLER','<div class="ok17QRow" data-a="chname">✎ İsim Değiştir <span>›</span></div><div class="ok17QRow" data-a="linkgoogle">G Google '+(gl?'Bağlı ✓':'Bağla')+' <span>›</span></div>')
+    + tile('ŞİFRE DEĞİŞTİR','<input class="ok17In" id="ok17PwOld" type="password" autocomplete="current-password" placeholder="Mevcut şifre (şifresiz hesapta boş bırak)"><input class="ok17In" id="ok17PwNew" type="password" autocomplete="new-password" placeholder="Yeni şifre"><button class="ok17Btn ok17BtnGold" data-a="dopass">ŞİFREYİ GÜNCELLE</button><div id="ok17SetMsg" class="ok17Msg"></div>');
+  }
+  if(s.missing&&s.missing.length&&tab==='genel'){ body+='<div class="ok17Sm" style="margin-top:8px;opacity:.7">Sunucudan gelmeyen alanlar: '+esc(s.missing.join(', '))+'</div>'; }
+  paint(hd+'<div class="ok17HLay"><div class="ok17Nav">'+nav+'</div><div class="ok17Main">'+body+'</div></div>');
+  var qs=ov.querySelectorAll('.ok17QRow'); for(var i=0;i<qs.length;i++)(function(q){ q.addEventListener('click',function(e){ e.stopPropagation(); act(q.getAttribute('data-a'),q); }); })(qs[i]);
+}
+/* ---------- legacy hijack (broken account UI → this module) ---------- */
+function legacyRootOf(el){ var n=el; for(var i=0;i<12&&n&&n!==d.body;i++){ var cs; try{ cs=g.getComputedStyle(n); }catch(_){ break; }
+    if(cs&&cs.position==='fixed') return n; n=n.parentNode; } return el; }
+function hideLegacy(){ var probe=d.getElementById('g17AuthIdentity')||d.getElementById('g17AccountStats');
+  if(!probe) return false; var r=legacyRootOf(probe);
+  if(r&&r.style.display!=='none'){ r.style.setProperty('display','none','important'); return true; } return false; }
+var mo=null;
+function armHijack(){ hideLegacy();
+  if(mo||!g.MutationObserver) return;
+  mo=new MutationObserver(function(){ if(hideLegacy()&&!(ov&&ov.classList.contains('on'))) open(); });
+  try{ mo.observe(d.body,{ subtree:true, attributes:true, attributeFilter:['style','class'], childList:true }); }catch(_){}
+}
+if(d.readyState==='loading') d.addEventListener('DOMContentLoaded',armHijack); else armHijack();
+g.OK17ACC={ open:open, close:close, isOpen:function(){ return !!(ov&&ov.classList.contains('on')); }, refresh:function(){ sum=null; if(g.OK17ACC.isOpen()) boot(); }, session:readSess, version:'v183' };
+})(window);
+</script>
+<!--OK17ACC-V183-SON-->
+
 </body>
 </html>
