@@ -118,7 +118,8 @@ s6.pending={tile:mkT('CX1','y',5),by:E6.takeSourceSeat(0)};
 s6.players[0].rack.push(mkT('CY4','y',4),mkT('CY6','y',6),mkT('DB11','b',11),mkT('DB12','b',12),mkT('DB13','b',13));
 var op2=E6.open(0,[['CY4','CX1','CY6'],['DB11','DB12','DB13']],'SERIES');
 T('m3-open',!!(op2&&op2.ok));
-T('m3-fee',!!(op2&&op2.takeFeed)&&op2.takeFeed.amount===600&&(s6.players[0].handPenalty||0)===600&&!s6.pending);
+var expFee6=(function(){var c=s6.indicator&&s6.indicator.color;return c==='k'?400:c==='r'?500:c==='y'?600:c==='b'?1000:600})();
+T('m3-fee-handokey',!!(op2&&op2.takeFeed)&&op2.takeFeed.amount===expFee6&&(s6.players[0].handPenalty||0)===expFee6&&!s6.pending);
 T('m25-label',!!(op2&&op2.takeFeed)&&op2.takeFeed.label==='ISLEK CEZASI'&&typeof op2.takeFeed.ord==='number'&&op2.takeFeed.tiles&&op2.takeFeed.tiles[0]==='CX1');
 var own=E6.process(1,'mX',['DB11']);
 T('m31-owner',!(own&&own.ok));
@@ -212,5 +213,39 @@ T('vC-fallback-swap',!!(ot1&&ot1.ok)&&gotJok&&mS.tiles.length===3&&(mS.ftC||0)==
 var ot2=EE.okeyTake(0,'mS1','RB9');
 var sig1=mS.tiles.map(function(x){return x&&x.uid}).join(',');
 T('vC-idempotent',!(ot2&&ot2.ok)&&sig1==='SB8,RB9,SB10');
-console.log('v186-rules3: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
+
+var CM7={k:400,r:500,y:600,b:1000};
+var okOpen=true;
+(function(){var cols=['k','r','y','b'];
+for(var ci=0;ci<4;ci++){
+ var pr=mkE(140+ci),Ex=pr[0],sx=pr[1];
+ sx.indicator=mkT('IO'+ci,cols[ci],5);
+ sx.players[0].opened=false;sx.players[0].openingType=null;sx.players[0].hasDrawn=true;sx.lastOpenTotal=0;
+ sx.pending={tile:mkT('PO'+ci,ci%2?'r':'b',6),by:Ex.takeSourceSeat(0)};
+ sx.players[0].rack=[mkT('OA'+ci,ci%2?'r':'b',5),mkT('OB'+ci,ci%2?'r':'b',7),mkT('OC'+ci,'k',11),mkT('OD'+ci,'k',12),mkT('OE'+ci,'k',13),mkT('OF'+ci,'y',1)];
+ var h0=sx.players[0].handPenalty||0;
+ var ro=Ex.open(0,[['OA'+ci,'PO'+ci,'OB'+ci],['OC'+ci,'OD'+ci,'OE'+ci]],'SERIES');
+ if(!(ro&&ro.ok&&ro.takeFeed&&ro.takeFeed.amount===CM7[cols[ci]]&&(sx.players[0].handPenalty||0)===h0+CM7[cols[ci]]))okOpen=false;
+}})();
+T('v7A-open-handokey-4renk',okOpen);
+var okS=true,baseAmt=null,sameOpp=true,pendClean=true,meldOnce=true;
+(function(){var cols=['k','r','y','b'];
+for(var ci=0;ci<4;ci++){
+ var pr=mkE(150+ci),Ex=pr[0],sx=pr[1];
+ sx.indicator=mkT('IP'+ci,cols[ci],5);
+ var mm={id:'mP'+ci,kind:'series',owner:1,tiles:[mkT('QA'+ci,'b',5),mkT('QB'+ci,'b',6),mkT('QC'+ci,'b',7)],processAdds:0,openLen:3,ha:sx.handIndex};
+ sx.melds.push(mm);
+ sx.players[0].opened=true;sx.players[0].hasDrawn=true;
+ sx.pending={tile:mkT('PP'+ci,'b',8),by:Ex.takeSourceSeat(0)};
+ var rp=Ex.process(0,'mP'+ci,['PP'+ci]);
+ if(!(rp&&rp.ok&&rp.takePenalty&&rp.takePenalty.amount===CM7[cols[ci]]))okS=false;
+ if(sx.pending)pendClean=false;
+ var cnt=0;for(var qq=0;qq<mm.tiles.length;qq++)if(mm.tiles[qq].uid==='PP'+ci)cnt++;
+ if(cnt!==1||mm.tiles.length!==4)meldOnce=false;
+ if(rp&&rp.ok){if(baseAmt===null)baseAmt=rp.amount;else if(rp.amount!==baseAmt)sameOpp=false}
+}})();
+T('v7B-series-sidetake-handokey',okS);
+T('v7C-opponent-process-degismedi',sameOpp&&baseAmt!==null);
+T('v7D-series-pending-temiz-tek-kopya',pendClean&&meldOnce);
+console.log('v187-rules1: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
 process.exit(fail?1:0);

@@ -631,7 +631,7 @@ function a_process(p,meldId,uids){
   var allReps=jokerReps(m.tiles,tableMeldValid(m)||plan.v);for(i=0;i<m.tiles.length;i++){if(isJok(m.tiles[i]))m.tiles[i].rep=allReps[m.tiles[i].uid]||m.tiles[i].rep||null}
   m.color=(plan.v&&plan.v.color)||m.color;m.form=(plan.v&&plan.v.form)||m.form||null;
   var amt=0;for(i=0;i<tiles.length;i++)amt+=tv(tiles[i])*10;var tgt=m.owner,seriesTeamFree=(tgt!==p&&sameTeam(p,tgt)),appliedAmt=seriesTeamFree?0:amt;if(tgt!==p&&!seriesTeamFree)pen(p,tgt,tiles,"PROCESS",amt);
-  var takePenalty=null;if(usedPend&&st.pending){var pd=st.pending;st.pending=null;takePenalty=pen(p,p,[pd.tile],"DISCARD_TAKEN_USED",tv(pd.tile)*10);takePenalty.from=pd.by}
+  var takePenalty=null;if(usedPend&&st.pending){var pd=st.pending;st.pending=null;takePenalty=pen(p,p,[pd.tile],"DISCARD_TAKEN_USED",handOkeyPenalty());takePenalty.from=pd.by;takePenalty.label="ISLEK CEZASI"}
   ev("PROCESS",p,{meld:meldId,n:tiles.length,amount:appliedAmt,rawAmount:amt,split:false,created:null,teamFree:seriesTeamFree,target:tgt,processAdds:m.processAdds,takePenalty:takePenalty?takePenalty.amount:0});
   return{ok:true,amount:appliedAmt,rawAmount:amt,split:false,created:null,target:tgt,teamFree:seriesTeamFree,processAdds:m.processAdds,takePenalty:takePenalty,oldUids:oldUids};
 }
