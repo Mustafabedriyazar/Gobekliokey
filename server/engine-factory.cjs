@@ -162,7 +162,7 @@ function seriesEndpointPlan(m,tiles){
   var used=meldTurnFeeds(m);if(used+tiles.length>2)return null;
   var base=tableMeldValid(m);if(!base||base.kind!=="series")return null;
   if(m.form==="male"){var mm=m.tiles.concat(tiles),mv=grpValid(mm);if(!mv||mv.kind!=="series"||mv.form!=="male")return null;return{v:mv,left:[],right:tiles.slice(),reps:jokerReps(mm,mv)}}
-  var seq=base.nums||[],L=seq.length,n=tiles.length;if(!seq.length||L+n>7)return null;var start=seq[0],end=seq[seq.length-1],best=null;
+  var seq=base.nums||[],L=seq.length,n=tiles.length;if(!seq.length||L+n>13)return null;var start=seq[0],end=seq[seq.length-1],best=null;
   function perm(a){if(a.length<2)return[a.slice()];return[a.slice(),[a[1],a[0]]]}
   var perms=perm(tiles);
   for(var li=0;li<=n;li++){var ri=n-li,ns=start-li,ne=end+ri;if(ns<1||ne>13)continue;
@@ -380,7 +380,7 @@ function a_take(p){
   ev("TAKE_DISCARD",p,{uid:cd.tile.uid,from:cd.by});
   return{ok:true,tile:cd.tile};
 }
-function a_okeyTake(p,meldId,candUid,jokUid){ var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g}; var P=st.players[p];if(!P||!P.hasDrawn)return{ok:false,err:"once tas cekmelisin"}; var m=null;for(var i=0;i<st.melds.length;i++)if(st.melds[i].id===meldId){m=st.melds[i];break} if(!m)return{ok:false,err:"per bulunamadi"}; var ci=-1;for(i=0;i<P.rack.length;i++)if(String(P.rack[i].uid)===String(candUid)){ci=i;break} if(ci<0)return{ok:false,err:"tas elinde degil"}; var cand=P.rack[ci]; if(isJok(cand,st))return{ok:false,err:"okey ile okey alinmaz"}; var ji=-1;for(i=0;i<m.tiles.length;i++)if(isJok(m.tiles[i],st)){ji=i;break} if(ji<0)return{ok:false,err:"perde okey yok"}; var jok=m.tiles[ji]; var trial=m.tiles.slice();trial[ji]=cand; var ok2=false; if(m.kind==="series"){var tv2=tableMeldValid({id:m.id,kind:"series",tiles:trial,openLen:m.openLen});ok2=!!(tv2&&tv2.kind==="series")} else if(m.kind==="pair"){var gv=grpValid(trial);ok2=!!(gv&&gv.kind==="pair")} if(!ok2)return{ok:false,err:"aday tas okeyin yerini legal dolduramiyor"}; m.tiles[ji]=cand;P.rack.splice(ci,1);P.rack.push(jok); ev("OKEY_TAKE",p,{meld:m.id,slot:ji,inUid:cand.uid,outUid:jok.uid}); return{ok:true,meld:m.id,slot:ji,tookUid:jok.uid,gaveUid:cand.uid}; } function handOkeyPenalty(){var c=st&&st.indicator&&st.indicator.color;return c==="k"?400:c==="r"?500:c==="y"?600:c==="b"?1000:600} function tilePenaltyAmount(t){if(!t)return 0;if(t.isFake)return 800;var c=t.color;if(c==="k")return 400;if(c==="r")return 500;if(c==="y")return 600;if(c==="b")return 1000;return tv(t)*10}
+function a_okeyTake(p,meldId,candUid,jokUid){ var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g}; var P=st.players[p];if(!P||!P.hasDrawn)return{ok:false,err:"once tas cekmelisin"}; var m=null;for(var i=0;i<st.melds.length;i++)if(st.melds[i].id===meldId){m=st.melds[i];break} if(!m)return{ok:false,err:"per bulunamadi"}; var ci=-1;for(i=0;i<P.rack.length;i++)if(String(P.rack[i].uid)===String(candUid)){ci=i;break} if(ci<0)return{ok:false,err:"tas elinde degil"}; var cand=P.rack[ci]; if(isJok(cand,st))return{ok:false,err:"okey ile okey alinmaz"}; var ji=-1;for(i=0;i<m.tiles.length;i++)if(isJok(m.tiles[i],st)){ji=i;break} if(ji<0)return{ok:false,err:"perde okey yok"}; if(jokUid!=null){var jf=-1;for(i=0;i<m.tiles.length;i++)if(String(m.tiles[i].uid)===String(jokUid)&&isJok(m.tiles[i],st)){jf=i;break} if(jf<0)return{ok:false,err:"hedef okey bulunamadi"}; ji=jf;} var jok=m.tiles[ji]; var trial=m.tiles.slice();trial[ji]=cand; var ok2=false; if(m.kind==="series"){var tv2=tableMeldValid({id:m.id,kind:"series",tiles:trial,openLen:m.openLen});ok2=!!(tv2&&tv2.kind==="series")} else if(m.kind==="pair"){var gv=grpValid(trial);ok2=!!(gv&&gv.kind==="pair")} if(!ok2)return{ok:false,err:"aday tas okeyin yerini legal dolduramiyor"}; m.tiles[ji]=cand;P.rack.splice(ci,1);P.rack.push(jok); ev("OKEY_TAKE",p,{meld:m.id,slot:ji,inUid:cand.uid,outUid:jok.uid}); return{ok:true,meld:m.id,slot:ji,tookUid:jok.uid,gaveUid:cand.uid}; } function handOkeyPenalty(){var c=st&&st.indicator&&st.indicator.color;return c==="k"?400:c==="r"?500:c==="y"?600:c==="b"?1000:600} function tilePenaltyAmount(t){if(!t)return 0;if(t.isFake)return 800;var c=t.color;if(c==="k")return 400;if(c==="r")return 500;if(c==="y")return 600;if(c==="b")return 1000;return tv(t)*10}
 function a_takePenalty(p){ if(!st.pending)return a_takeCancel(p); var _P=st.players[p],_rk=_P.rack,_w=_rk&&_rk.length?_rk[0].uid:null; if(_w==null)return{ok:false,err:"atilacak tas yok"}; var rd=a_discard(p,_w); if(rd&&rd.ok){rd.turnEnded=true} return rd; }
 function a_keepTakenPenalty(p){
   var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g};
@@ -550,7 +550,7 @@ function a_open(p,groupsUids,mode,orderedManual){
     if(!mode)return{ok:false,err:"önce açılış modunu seç: 51 SERİ AÇ ya da 52 ÇİFT AÇ"};
     var pe=openingPolicy(mode,groups.map(function(g){return g.v.kind}));
     if(pe)return{ok:false,err:pe};
-    var _kafaN=0;for(var _ki=0;_ki<groupsUids.length;_ki++)_kafaN+=(groupsUids[_ki]||[]).length;var _hand=P.rack.length+((st.pending&&st.turnIndex===p)?1:0);var _kafa=_hand>=14&&_kafaN>=_hand-1; var minNeed=openNeed(mode);
+    var _kafaN=0;for(var _ki=0;_ki<groupsUids.length;_ki++)_kafaN+=(groupsUids[_ki]||[]).length;var _hand=P.rack.length+((st.pending&&st.turnIndex===p)?1:0);var _kafa=_hand>=14&&_kafaN>=_hand-1&&!P.opened&&!P.fedAny; var minNeed=openNeed(mode);
     if(total<minNeed&&!_kafa)return{ok:false,err:"açılış "+total+" — "+(mode==="PAIR"?"ÇİFT için en az ":"en az ")+minNeed+" gerekir"};
     if(CFG.KATLAMALI&&st.lastOpenTotal>50&&total<=st.lastOpenTotal&&!_kafa)return{ok:false,err:"katlamalı: önceki açılışı ("+st.lastOpenTotal+") geçmelisin"};
     if(st.pending&&!usedPend)return{ok:false,err:"yerden alınan taş bu açılışta kullanılmalı"};
@@ -576,7 +576,7 @@ function a_open(p,groupsUids,mode,orderedManual){
     var openTiles=normalizeOpenedMeldTiles(gr.tiles,gr.v);st.melds.push({id:nextMeldId(),owner:p,kind:gr.v.kind,form:gr.v.form||null,color:gr.v.color,tiles:openTiles,ha:st.handIndex,openLen:openTiles.length,processAdds:0});
   }
   if(!P.opened){
-    P.opened=true;P.openingType=mode||(allPair?"PAIR":"SERIES");P.openingColor=groups[0].v.color;
+    P.opened=true;P.openingType=mode||(allPair?"PAIR":"SERIES");P.openingColor=groups[0].v.color;if(_kafa)P.kafaOpen=true;
     st.lastOpenTotal=total;
   }
   var takeFeed=null;
@@ -627,7 +627,7 @@ function a_process(p,meldId,uids){
   var plan=seriesEndpointPlan(m,tiles);if(!plan){if(meldTurnFeeds(m)+tiles.length>2)return{ok:false,err:"bu pere toplam en fazla 2 taş işlenebilir"};return{ok:false,err:"taş yalnız perin en soluna veya en sağına işlenebilir; açık per bölünmez/değişmez"}}
   var usedPend=false;for(i=0;i<tiles.length;i++){var t=tiles[i],ix=findT(p,t.uid);if(ix>=0)st.players[p].rack.splice(ix,1);else if(st.pending&&st.pending.tile.uid===t.uid)usedPend=true}
   /* Açılmış perin eski taş dizisi aynen korunur; yalnız endpoint taşları eklenir. */
-  var oldUids=m.tiles.map(function(t){return t.uid}),left=plan.left||[],right=plan.right||[];m.tiles=left.concat(m.tiles,right);m.ftC=meldTurnFeeds(m)+tiles.length;m.ftK=st.turnCount;m.processAdds=meldProcessAdds(m)+tiles.length;if(m.openLen==null)m.openLen=oldUids.length;
+  var oldUids=m.tiles.map(function(t){return t.uid}),left=plan.left||[],right=plan.right||[];m.tiles=left.concat(m.tiles,right);st.players[p].fedAny=true;m.ftC=meldTurnFeeds(m)+tiles.length;m.ftK=st.turnCount;m.processAdds=meldProcessAdds(m)+tiles.length;if(m.openLen==null)m.openLen=oldUids.length;
   var allReps=jokerReps(m.tiles,tableMeldValid(m)||plan.v);for(i=0;i<m.tiles.length;i++){if(isJok(m.tiles[i]))m.tiles[i].rep=allReps[m.tiles[i].uid]||m.tiles[i].rep||null}
   m.color=(plan.v&&plan.v.color)||m.color;m.form=(plan.v&&plan.v.form)||m.form||null;
   var amt=0;for(i=0;i<tiles.length;i++)amt+=tv(tiles[i])*10;var tgt=m.owner,seriesTeamFree=(tgt!==p&&sameTeam(p,tgt)),appliedAmt=seriesTeamFree?0:amt;if(tgt!==p&&!seriesTeamFree)pen(p,tgt,tiles,"PROCESS",amt);
@@ -675,7 +675,7 @@ function finishSpecialMeta(winner,finishTile){
   if(winner==null)return meta;
   var P=st.players[winner],wp=partnerOf(winner);
   /* v146: eşli KAFA yalnız rakip takımın iki oyuncusuna bakar; partnerin açılması/açmaması sonucu değiştirmez. */
-  meta.kafa=st.players.every(function(q,i){return i===winner||(wp>=0&&i===wp)||!q.opened});
+  meta.kafa=!!(P&&P.kafaOpen);
   meta.pairFinish=!!(P&&P.opened&&P.openingType==="PAIR");
   meta.okeyFinish=!!(finishTile&&isJok(finishTile,st));
   if(meta.kafa){meta.count++;meta.labels.push("KAFA")}

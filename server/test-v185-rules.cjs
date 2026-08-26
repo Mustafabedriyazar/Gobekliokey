@@ -178,7 +178,8 @@ T('vB1-kafa-open-bypass',!!(ro&&ro.ok));
 var rd2=EB2.discard(0,'KLAST');
 T('vB1-finish',!!(rd2&&rd2.ok)&&sB.handOver===true);
 var fs=sB.finishSpecial||{};
-T('vB1-nokafa-label',!(fs.labels&&fs.labels.indexOf('KAFA')>=0));
+/* v187 kanonik: KAFA kazananin kendi gecmisine baglidir; rakibin acmis olmasi KAFA'yi iptal etmez (v186 varsayimi gecersiz). */
+T('vB1-kafa-rakip-acmis-etkilemez',!!(fs.labels&&fs.labels.indexOf('KAFA')>=0)&&fs.multiplier===2);
 var ftc1=0;for(mi2=0;mi2<sB.melds.length;mi2++)ftc1+=(sB.melds[mi2].ftC||0);
 T('vB-nofeed',ftc1===ftc0);
 var pC=mkE(78),EC=pC[0],sC=pC[1];
@@ -247,5 +248,62 @@ for(var ci=0;ci<4;ci++){
 T('v7B-series-sidetake-handokey',okS);
 T('v7C-opponent-process-degismedi',sameOpp&&baseAmt!==null);
 T('v7D-series-pending-temiz-tek-kopya',pendClean&&meldOnce);
-console.log('v187-rules1: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
+
+function kafaHand(sx,pfx){var rk=[];for(var b=0;b<4;b++)rk.push(mkT(pfx+'S'+b,'b',5+b));for(b=0;b<4;b++)rk.push(mkT(pfx+'R'+b,'r',9+b));for(b=0;b<3;b++)rk.push(mkT(pfx+'Y'+b,'y',1+b));for(b=0;b<3;b++)rk.push(mkT(pfx+'K'+b,'k',11+b));rk.push(mkT(pfx+'L','k',1));sx.players[0].rack=rk;sx.players[0].hasDrawn=true;return rk}
+function kafaGroups(pfx){return [[pfx+'S0',pfx+'S1',pfx+'S2',pfx+'S3'],[pfx+'R0',pfx+'R1',pfx+'R2',pfx+'R3'],[pfx+'Y0',pfx+'Y1',pfx+'Y2'],[pfx+'K0',pfx+'K1',pfx+'K2']]}
+var pK=mkE(210),EK=pK[0],sK=pK[1];
+for(var pj=0;pj<sK.players.length;pj++){sK.players[pj].opened=false;sK.players[pj].openingType=null;sK.players[pj].fedAny=false;sK.players[pj].kafaOpen=false}
+sK.lastOpenTotal=140;kafaHand(sK,'KA');
+var rk1=EK.open(0,kafaGroups('KA'),'SERIES');
+var rd1=(rk1&&rk1.ok)?EK.discard(0,'KAL'):null;
+var fsK=sK.finishSpecial||{};
+T('k1-esik-bypass-kafa',!!(rd1&&rd1.ok)&&sK.handOver===true&&!!fsK.kafa&&fsK.multiplier===2);
+var pL=mkE(211),EL=pL[0],sL=pL[1];
+for(pj=0;pj<sL.players.length;pj++){sL.players[pj].opened=false;sL.players[pj].openingType=null;sL.players[pj].fedAny=false;sL.players[pj].kafaOpen=false}
+sL.players[1].opened=true;sL.players[1].openingType='SERIES';sL.lastOpenTotal=101;kafaHand(sL,'KB');
+var rk2=EL.open(0,kafaGroups('KB'),'SERIES');
+var rd2=(rk2&&rk2.ok)?EL.discard(0,'KBL'):null;
+var fsL=sL.finishSpecial||{};
+T('k2-rakip-acmis-yine-kafa',!!(rd2&&rd2.ok)&&!!fsL.kafa&&fsL.multiplier===2);
+var pM=mkE(212),EM=pM[0],sM=pM[1];
+for(pj=0;pj<sM.players.length;pj++){sM.players[pj].opened=false;sM.players[pj].fedAny=false;sM.players[pj].kafaOpen=false}
+sM.players[0].fedAny=true;sM.lastOpenTotal=0;kafaHand(sM,'KC');
+var rk3=EM.open(0,kafaGroups('KC'),'SERIES');
+var rd3=(rk3&&rk3.ok)?EM.discard(0,'KCL'):null;
+var fsM=sM.finishSpecial||{};
+T('k3-onceden-beslemis-kafa-degil',!!(rd3&&rd3.ok)&&!fsM.kafa);
+var pN=mkE(213),EN=pN[0],sN=pN[1];
+sN.players[0].opened=false;sN.players[0].fedAny=false;sN.players[0].hasDrawn=true;sN.lastOpenTotal=0;
+sN.players[0].rack=[mkT('BX1','b',5),mkT('BX2','b',6),mkT('BX3','r',9),mkT('BX4','k',13)];
+var rbad=EN.open(0,[['BX1','BX2','BX3']],'SERIES');
+T('k4-illegal-atomik-red',!(rbad&&rbad.ok)&&sN.players[0].opened===false&&sN.players[0].rack.length===4);
+var pF=mkE(220),EF=pF[0],sF=pF[1];
+var mF={id:'mF1',kind:'series',owner:1,tiles:[mkT('FB4','b',4),mkT('FB5','b',5),mkT('FB6','b',6),mkT('FB7','b',7),mkT('FB8','b',8)],processAdds:0,openLen:5,ha:sF.handIndex};
+sF.melds.push(mF);sF.players[0].opened=true;sF.players[0].hasDrawn=true;
+sF.players[0].rack.push(mkT('FB9','b',9),mkT('FB10','b',10),mkT('FB11','b',11));
+var f1=EF.process(0,'mF1',['FB9']),f2=EF.process(0,'mF1',['FB10']);
+var sigF=mF.tiles.map(function(x){return x.uid}).join(',');
+var f3=EF.process(0,'mF1',['FB11']);
+T('f1-iki-besleme',!!(f1&&f1.ok)&&!!(f2&&f2.ok)&&mF.tiles.length===7);
+T('f2-ucuncu-red-mutasyonsuz',!(f3&&f3.ok)&&mF.tiles.map(function(x){return x.uid}).join(',')===sigF);
+sF.turnCount=(sF.turnCount||0)+1;
+var f4=EF.process(0,'mF1',['FB11']);
+T('f3-sonraki-tur-7-tavan-yok',!!(f4&&f4.ok)&&mF.tiles.length===8&&mF.tiles[7].uid==='FB11');
+var pO=mkE(230),EO=pO[0],sO=pO[1];
+var j1=null,j2=null;
+(function(){var pools=[sO.deck];for(var pp=0;pp<sO.players.length;pp++)pools.push(sO.players[pp].rack);for(var pi=0;pi<pools.length;pi++){var A=pools[pi];for(var di=0;di<A.length&&(!j1||!j2);di++){if(EO.isJok(A[di],sO)){var tk=A.splice(di,1)[0];di--;if(!j1)j1=tk;else if(!j2)j2=tk}}}})();
+T('o1-iki-okey',!!j1&&!!j2);
+var mO={id:'mO2',kind:'series',owner:1,tiles:[mkT('GB3','b',3),j1,mkT('GB5','b',5),j2,mkT('GB7','b',7)],processAdds:0,openLen:5,ha:sO.handIndex};
+sO.melds.push(mO);sO.players[0].opened=true;sO.players[0].hasDrawn=true;
+sO.players[0].rack.push(mkT('GB4','b',4),mkT('GB6','b',6),mkT('GBX','y',9));
+var ftc0=mO.ftC||0;
+var t2=EO.okeyTake(0,'mO2','GB6',j2?j2.uid:null);
+var gotJ2=false;for(var qi=0;qi<sO.players[0].rack.length;qi++)if(j2&&sO.players[0].rack[qi].uid===j2.uid)gotJ2=true;
+T('o2-hedef-slot-B',!!(t2&&t2.ok)&&gotJ2&&mO.tiles[3].uid==='GB6'&&mO.tiles[1].uid===(j1?j1.uid:'')&&(mO.ftC||0)===ftc0&&(mO.processAdds||0)===0);
+var t1=EO.okeyTake(0,'mO2','GB4',j1?j1.uid:null);
+T('o3-hedef-slot-A',!!(t1&&t1.ok)&&mO.tiles[1].uid==='GB4'&&mO.tiles.length===5);
+var sigO=mO.tiles.map(function(x){return x.uid}).join(',');
+var tbad=EO.okeyTake(0,'mO2','GBX',null);
+T('o4-yanlis-tas-red',!(tbad&&tbad.ok)&&mO.tiles.map(function(x){return x.uid}).join(',')===sigO);
+console.log('v187-rules2: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
 process.exit(fail?1:0);
