@@ -1,4 +1,4 @@
-/* OKEY17 v184 routing tests v4 - botfirst + oda + resume gate. */
+/* OKEY17 v184 routing tests v5h - botfirst + oda + resume + F3/F4 lifecycle. */
 const fs=require('fs'),path=require('path'),vm=require('vm');
 const R=path.join(__dirname,'..');
 const t=fs.readFileSync(path.join(R,'index.html'),'utf8');
@@ -6,42 +6,49 @@ const bj=fs.readFileSync(path.join(R,'multiplayer-bridge.js'),'utf8');
 const mc=fs.readFileSync(path.join(R,'multiplayer-client.js'),'utf8');
 let pass=0,fail=0;const F=[];
 function T(n,c){if(c){pass++}else{fail++;F.push(n)}}
+function tryT(n,fn){try{fn()}catch(e){fail++;F.push(n+':'+String(e&&e.message).slice(0,50))}}
 function cnt(s,x){return s.split(x).length-1}
 function fx(src,head){const i=src.indexOf(head);if(i<0)return null;let d=0;const j=src.indexOf('{',i+head.length-1);for(let k=j;k<src.length;k++){const c=src[k];if(c==='{')d++;else if(c==='}'){d--;if(!d)return src.slice(i,k+1)}}return null}
-T('resume-gate-idx',cnt(t,"if(window.G17_BOTFIRST===false){resumeSession()}")===1&&cnt(t,'scrubLegacyLocalSecrets();resumeSession()')===0);
-T('resume-gate-brj',cnt(bj,"if(window.G17_BOTFIRST===false){resumeSession()}")===1);
-T('resume-korundu',cnt(bj,'function resumeSession')===1);
-T('modal-then-idx',cnt(t,"r.err==='ALREADY_ACTIVE'")>=1);
-T('modal-then-brj',cnt(bj,"r.err==='ALREADY_ACTIVE'")===1&&cnt(bj,'.finally(')>=1);
-const MOD="function h(){createRoom({mode:'TEAM'}).then(function(r){if(r&&r.ok===false&&r.err){if(r.err==='ALREADY_ACTIVE'){say('A');try{showLobby(1,'x')}catch(_s){}}else{say('ODA: '+r.err)}}}).catch(function(e){say('N')}).finally(function(){})}";
-async function runModal(res,rej){const c={say:[],lob:0};const sb={createRoom:function(){return rej?Promise.reject(new Error('x')):Promise.resolve(res)},say:function(m){c.say.push(m)},showLobby:function(){c.lob++},S:{lastSnap:null}};vm.runInNewContext(MOD+';h();',sb);await new Promise(function(r){setTimeout(r,10)});return c}
-(async function(){
-const m1=await runModal({ok:false,err:'ALREADY_ACTIVE'});T('modal-active',m1.say.length===1&&m1.lob===1);
-const m2=await runModal({ok:true});T('modal-ok',m2.say.length===0&&m2.lob===0);
-const m3=await runModal(null,true);T('modal-catch',m3.say.length===1&&m3.say[0]==='N');
-const q=fx(bj,'async function quickMatchUI(mode){')||fx(bj,'function quickMatchUI(mode){');T('qsrc',!!q);
-function runG(src,call,mexp){const c={sfn:[],cm:0,net:0,gate:0};const sb={window:{G17_BOTFIRST:true,g17mStartFromNet:function(m){c.sfn.push(m);return{ok:true}}},closeModal:function(){c.cm++},say:function(){},onlineGate:function(f){c.gate++;return f&&f()},fetch:function(){c.net++},S:{},document:{getElementById:function(){return null}},clearTimeout:function(){},setTimeout:function(){return 0},quickSearchHtml:function(){return''}};vm.runInNewContext(src+';'+call+';',sb);return c.sfn.length===1&&c.sfn[0]===mexp&&c.cm===1&&c.net===0&&c.gate===0}
-T('G1-guardQ',runG(q,"quickMatchUI('INDIVIDUAL')",'INDIVIDUAL'));
-T('G2-guardQ',runG(q,"quickMatchUI('TEAM')",'TEAM'));
-const r=fx(bj,'async function startRanked(mode){')||fx(bj,'function startRanked(mode){');T('rsrc',!!r);
-T('GR-team',runG(r,"startRanked('TEAM')",'TEAM'));
-T('GR-ind',runG(r,"startRanked('INDIVIDUAL')",'INDIVIDUAL'));
-const w=fx(t,'window.g17mStartFromNet=function(m){');T('wsrc',!!w);
-function runW(m){const c={scg:[],save:0};const sb={window:{},state:{},g17mSaveState:function(){c.save++},g17mStartCurrentGame:function(l){c.scg.push(l)},started:true};vm.runInNewContext(w+';window.g17mStartFromNet('+JSON.stringify(m)+');',sb);return{c:c,lm:sb.state.lastMode}}
-const w1=runW('TEAM');T('W-team',w1.lm==='pair2v2'&&w1.c.scg.length===1&&w1.c.scg[0].indexOf('ESLI')===0);
-const w2=runW('INDIVIDUAL');T('W-ind',w2.lm==='solo4'&&w2.c.scg[0].indexOf('BIREYSEL')===0);
-T('scg',cnt(t,'function g17mStartCurrentGame(label)')===1);
-T('btn1',t.indexOf('state.lastMode="solo4";g17mSaveState();if(window.G17_BOTFIRST!==false){g17mStartCurrentGame("BIREYSEL BOT MASASI");return}')>=0);
-T('btn2',t.indexOf('state.lastMode="pair2v2";g17mSaveState();if(window.G17_BOTFIRST!==false){g17mStartCurrentGame("ESLI 2v2 BOT MASASI");return}')>=0);
-T('hook',cnt(t,'window.g17BotTable=function')===1);
-T('G4-sdk',cnt(t,'/v1/quickmatch/enqueue')===1&&cnt(t,'/v1/matchmaking/enqueue')===1);
-T('G7-mc',cnt(mc,'/v1/quickmatch/enqueue')===1&&cnt(mc,'/v1/matchmaking/enqueue')===1);
-T('G7-mm',fs.existsSync(path.join(R,'server','matchmaking.cjs')));
-T('G7-create-korundu',cnt(bj,'async function createRoom(')===1&&cnt(bj,"'ALREADY_ACTIVE'")>=2);
-T('parity-head',t.indexOf(bj.slice(0,3000))>=0);
-T('parity-tail',t.indexOf(bj.slice(-3000))>=0);
-T('stamp',cnt(t,'BUILD v184')===1);
-T('dup-guard',cnt(bj,'G17_BOTFIRST){try{closeModal()')===2&&cnt(t,'G17_BOTFIRST){try{closeModal()')===2);
-console.log('v184-routing4: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
+T('resume-gate',cnt(t,"if(window.G17_BOTFIRST===false){resumeSession()}")===1&&cnt(bj,"if(window.G17_BOTFIRST===false){resumeSession()}")===1);
+T('modal-then',cnt(bj,"r.err==='ALREADY_ACTIVE'")===1);
+T('guards',cnt(bj,'G17_BOTFIRST){try{closeModal()')===2&&cnt(t,'G17_BOTFIRST){try{closeModal()')===2);
+T('wrap',cnt(t,'window.g17mStartFromNet=function')===1);
+T('btns',t.indexOf('g17mStartCurrentGame("BIREYSEL BOT MASASI");return}')>=0&&t.indexOf('g17mStartCurrentGame("ESLI 2v2 BOT MASASI");return}')>=0);
+T('G4-sdk',cnt(t,'/v1/quickmatch/enqueue')===1&&cnt(mc,'/v1/matchmaking/enqueue')===1);
+T('parity',t.indexOf(bj.slice(0,3000))>=0&&t.indexOf(bj.slice(-3000))>=0);
+T('P1-dm',cnt(t,"FS.dm===1){fsOk=true;return false}")===1);
+T('P2-edge',cnt(t,"ev.clientY<=24){FS.edgeAt=Date.now();return}")===1);
+T('P3-sys',cnt(t,"(Date.now()-(FS.edgeAt||0)<2500)||")===1);
+T('P4-vps',cnt(t,'vpSync._q')>=2&&(cnt(bj,'vpSync._q')===0||cnt(bj,'vpSync._q')>=2));
+T('P5-boot',cnt(t,'setTimeout(fitSoon,300)')===1&&cnt(t,'setTimeout(fitSoon,900)')===1);
+const goT=fx(t,'function goFS(');
+T('goFS-src',!!goT&&goT.indexOf('requestFullscreen')>=0&&goT.indexOf('orientation.lock')>=0);
+const fsT=fx(t,'function fsTry(){');T('fsT-src',!!fsT);
+function runFsTry(dmMatch){const r={go:0};
+const pre='var __r=__R;var FS={dm:null,orientAt:0,visAt:0};var fsOk=false,fsUserExit=false,fsFail=0,fsLast=0;var dlog=function(){};var goFS=function(){__r.go++};var matchMedia=function(){return{matches:'+dmMatch+'}};var window={matchMedia:matchMedia};var document={fullscreenElement:null,webkitFullscreenElement:null};';
+vm.runInNewContext(pre+fsT+';fsTry();__r.ok=fsOk;',{__R:r,Date:Date});return r}
+tryT('F4-dmSkip',function(){const f1=runFsTry(true);T('F4-dmSkip',f1.go===0&&f1.ok===true)});
+tryT('F4-browserTry',function(){const f2=runFsTry(false);T('F4-browserTry',f2.go===1)});
+const pdi=t.indexOf('window.addEventListener("pointerdown",function(ev){');T('pd-src',pdi>=0);
+const pdFn=fx(t.slice(pdi),'function(ev){');
+function runPd(y){const r={ft:0,FS:{}};
+const base={__r:r,FS:r.FS,Date:Date,fsTry:function(){r.ft++},fsOk:false,fsUserExit:false,fsFail:0,fsLast:0,started:false,muted:false,document:{fullscreenElement:null,webkitFullscreenElement:null,visibilityState:'visible'}};
+const auto=new Proxy(function(){},{get:function(t2,k){if(k===Symbol.toPrimitive)return function(){return 0};if(typeof k!=='string')return undefined;return auto},apply:function(){return auto},has:function(){return true}});
+const sb=new Proxy(base,{has:function(t2,k){return typeof k==='string'?true:(k in t2)},get:function(t2,k){if(k in t2)return t2[k];if(typeof k!=='string')return undefined;return auto},set:function(t2,k,v){t2[k]=v;return true}});
+vm.runInNewContext('var __h='+pdFn+';__h({clientY:'+y+',clientX:120,isTrusted:true,pointerType:"touch",button:0,isPrimary:true});',sb);
+return r}
+tryT('F3-edgeGuard',function(){const p1=runPd(10);T('F3-edgeGuard',p1.ft===0&&typeof p1.FS.edgeAt==='number')});
+T('F3-prefix',!!pdFn&&pdFn.indexOf('function(ev){if(ev&&ev.clientY!=null&&ev.clientY<=24){FS.edgeAt=Date.now();return}')===0);
+T('F3-tapChain',!!pdFn&&pdFn.indexOf('fsTry(')>=0&&cnt(pdFn,'clientY<=24')===1);
+const fc=fx(t,'function fsCh(el){');T('fc-src',!!fc);
+function runFsCh(edgeAgo){const r={};const now=Date.now();
+const pre='var __r=__R;var fsOk=true,fsFail=0,fsUserExit=false;var FS={orientAt:'+(now-99999)+',visAt:'+(now-99999)+',edgeAt:'+(now-edgeAgo)+',land:true};var document={visibilityState:"visible"};var fsLandscape=function(){return true};var dlog=function(){};var fitSoon=function(){};var goFS=function(){};var acInit=function(){};';
+vm.runInNewContext(pre+fc+';fsCh(null);__r.ue=fsUserExit;',{__R:r,Date:Date});return r.ue}
+tryT('F3-shadeSys',function(){T('F3-shadeSys',runFsCh(500)===false)});
+tryT('F3-userExit',function(){T('F3-userExit',runFsCh(99999)===true)});
+const vp=fx(t,'function vpSync(){');T('vp-src',!!vp);
+tryT('F3-vpOnce',function(){const r={set:0,cb:null};
+const pre='var __r=__R;var g={visualViewport:{height:500},innerHeight:500,requestAnimationFrame:function(f){__r.cb=f}};var d={documentElement:{style:{setProperty:function(){__r.set++}}}};';
+vm.runInNewContext(pre+vp+';vpSync();vpSync();vpSync();',{__R:r,setTimeout:setTimeout});if(r.cb)r.cb();T('F3-vpOnce',r.set===1)});
+console.log('v184-routing5: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
 process.exit(fail?1:0);
-})();

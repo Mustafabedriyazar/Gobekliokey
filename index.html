@@ -5738,7 +5738,7 @@ function fitSoon(){
     fitStage();
   },180);
 }
-window.addEventListener("resize",fitSoon);
+window.addEventListener("resize",fitSoon);setTimeout(fitSoon,300);setTimeout(fitSoon,900);
 window.addEventListener("orientationchange",fitSoon);
 if(screen.orientation&&screen.orientation.addEventListener){screen.orientation.addEventListener("change",fitSoon)}
 if(window.visualViewport){window.visualViewport.addEventListener("resize",fitSoon)}
@@ -5764,7 +5764,7 @@ function fsCh(el){
   var was=fsOk;fsOk=!!el;
   if(fsOk){fsFail=0;fsUserExit=false;dlog("FS_ON");}
   else if(was){
-    var sys=(Date.now()-FS.orientAt<1800)||(Date.now()-FS.visAt<1800)||
+    var sys=(Date.now()-FS.orientAt<1800)||(Date.now()-FS.visAt<1800)||(Date.now()-(FS.edgeAt||0)<2500)||
             (document.visibilityState&&document.visibilityState!=="visible")||!fsLandscape();
     if(!sys)fsUserExit=true;                             /* yalnız GERÇEK kullanıcı çıkışı */
     dlog("FS_DROP",sys?"system":"user");
@@ -5791,7 +5791,7 @@ function goFS(){
   try{var p=f.call(d);if(p&&p.catch){p.catch(function(){})}}catch(x){}
   try{if(screen.orientation&&screen.orientation.lock){screen.orientation.lock("landscape").catch(function(){})}}catch(x){}
 }
-window.addEventListener("pointerdown",function(ev){
+window.addEventListener("pointerdown",function(ev){if(ev&&ev.clientY!=null&&ev.clientY<=24){FS.edgeAt=Date.now();return}
   var tg=ev.target;
   acInit();
   var m136PlayGesture=!!(tg&&tg.closest&&tg.closest("#menuPlay"));
@@ -5800,7 +5800,7 @@ window.addEventListener("pointerdown",function(ev){
   if(tg&&tg.closest&&tg.closest(".tr"))return;
   fsTry();
 },{passive:true,capture:true});
-function fsTry(){ /* tek giriş noktası: dokunuşta yeniden fullscreen dene (sonsuz döngü yok) */
+function fsTry(){if(FS.dm==null){try{FS.dm=(window.matchMedia&&(matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches))?1:0}catch(_dm){FS.dm=0}}if(FS.dm===1){fsOk=true;return false} /* tek giriş noktası: dokunuşta yeniden fullscreen dene (sonsuz döngü yok) */
   var el=document.fullscreenElement||document.webkitFullscreenElement;
   if(el){fsOk=true;return false}
   if(fsUserExit)return false;                 /* kullanıcı bilinçli çıktıysa dokunma */
@@ -6817,7 +6817,7 @@ function fmtD(ts){ if(!ts) return '—'; var t=Number(ts); if(t<2e10) t*=1000; v
 function avColor(seed){ var h=0,s=String(seed||'?'); for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; var HUES=[265,285,20,200,150,330,45,230]; return 'hsl('+HUES[h%HUES.length]+',62%,42%)'; }
 function initialOf(a){ var n=(a&&(a.name||a.email)||'?').trim(); return (n[0]||'?').toUpperCase(); }
 /* viewport (keyboard/landscape safe) */
-function vpSync(){ var h=(g.visualViewport&&g.visualViewport.height)||g.innerHeight; d.documentElement.style.setProperty('--ok17vh', h+'px'); }
+function vpSync(){ if(vpSync._q)return; vpSync._q=1; var _f=function(){ vpSync._q=0; var h=(g.visualViewport&&g.visualViewport.height)||g.innerHeight; d.documentElement.style.setProperty('--ok17vh', h+'px'); }; if(g.requestAnimationFrame){g.requestAnimationFrame(_f)}else{setTimeout(_f,16)} }
 if (g.visualViewport){ g.visualViewport.addEventListener('resize',vpSync); g.visualViewport.addEventListener('scroll',vpSync); }
 g.addEventListener('resize',vpSync); g.addEventListener('orientationchange',function(){ setTimeout(vpSync,120); });
 /* root */
