@@ -4823,7 +4823,7 @@ function commitDragProcess(t,x,y,forcedTarget){
   if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
   var target=forcedTarget||processDropTarget(t&&t.uid,x,y);if(!target)return null;
   var src={};src[t.uid]={x:x,y:y};
-  var r=E.process(HSEAT,target.id,[t.uid]);if(!r.ok)return null;
+  var r=E.process(HSEAT,target.id,[t.uid]);if(!r.ok&&E.okeyTake){var ro=E.okeyTake(HSEAT,target.id,t.uid);if(ro&&ro.ok){r=ro}}if(!r.ok)return null;
   removeVis(t);clearProcessAssist();clearSel();syncMelds();
   var animMs=animateProcessTransfer([t.uid],src,HSEAT,target.id,{stagger:0});
   if(!animMs)sfx("snap");
