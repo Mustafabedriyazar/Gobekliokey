@@ -147,7 +147,7 @@ function tableMeldValid(m){
   if(m.kind==="pair")return grpValid(m.tiles);
   if(m.kind!=="series")return null;
   if(m.form==="male"){var mv=grpValid(m.tiles);return mv&&mv.kind==="series"&&mv.form==="male"?mv:null}
-  return femaleSeriesValidExtended(m.tiles,7);
+  return femaleSeriesValidExtended(m.tiles,13);
 }
 function meldProcessAdds(m){var n=Number(m&&m.processAdds);return isFinite(n)&&n>=0?Math.floor(n):0} function meldTurnFeeds(m){if(!m||!st||m.ftK!==st.turnCount)return 0;var n=Number(m.ftC);return isFinite(n)&&n>=0?Math.floor(n):0}
 function normalizeOpenedMeldTiles(tiles,v){
@@ -269,7 +269,7 @@ function check(){
   if(st.indicator&&st.okey&&computeOkey(st.indicator)&&(st.okey.color!==computeOkey(st.indicator).color||st.okey.num!==computeOkey(st.indicator).num))okeyErr.push("okey_indicator_mismatch");
   var specialErr=[];
   if(st.finishSpecial){
-    var fs=st.finishSpecial,bc=(fs.kafa?1:0)+(fs.pairFinish?1:0)+(fs.okeyFinish?1:0),wantMul=Math.pow(2,bc);
+    var fs=st.finishSpecial,bc=(fs.kafa?1:0)+(fs.pairFinish?1:0)+(fs.okeyFinish?1:0),wantMul=(fs.kafa?2:1)*(fs.pairFinish?4:1)*(fs.okeyFinish?8:1);
     if(fs.count!==bc)specialErr.push("finish_count:"+fs.count+"!="+bc);
     if(fs.multiplier!==wantMul)specialErr.push("finish_mul:"+fs.multiplier+"!="+wantMul);
     if(!fs.labels||fs.labels.length!==bc)specialErr.push("finish_labels");
@@ -380,7 +380,7 @@ function a_take(p){
   ev("TAKE_DISCARD",p,{uid:cd.tile.uid,from:cd.by});
   return{ok:true,tile:cd.tile};
 }
-function a_okeyTake(p,meldId,candUid){ var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g}; var P=st.players[p];if(!P||!P.hasDrawn)return{ok:false,err:"once tas cekmelisin"}; var m=null;for(var i=0;i<st.melds.length;i++)if(st.melds[i].id===meldId){m=st.melds[i];break} if(!m)return{ok:false,err:"per bulunamadi"}; var ci=-1;for(i=0;i<P.rack.length;i++)if(String(P.rack[i].uid)===String(candUid)){ci=i;break} if(ci<0)return{ok:false,err:"tas elinde degil"}; var cand=P.rack[ci]; if(isJok(cand,st))return{ok:false,err:"okey ile okey alinmaz"}; var ji=-1;for(i=0;i<m.tiles.length;i++)if(isJok(m.tiles[i],st)){ji=i;break} if(ji<0)return{ok:false,err:"perde okey yok"}; var jok=m.tiles[ji]; var trial=m.tiles.slice();trial[ji]=cand; var ok2=false; if(m.kind==="series"){var tv2=tableMeldValid({id:m.id,kind:"series",tiles:trial,openLen:m.openLen});ok2=!!(tv2&&tv2.kind==="series")} else if(m.kind==="pair"){var gv=grpValid(trial);ok2=!!(gv&&gv.kind==="pair")} if(!ok2)return{ok:false,err:"aday tas okeyin yerini legal dolduramiyor"}; m.tiles[ji]=cand;P.rack.splice(ci,1);P.rack.push(jok); ev("OKEY_TAKE",p,{meld:m.id,slot:ji,inUid:cand.uid,outUid:jok.uid}); return{ok:true,meld:m.id,slot:ji,tookUid:jok.uid,gaveUid:cand.uid}; } function handOkeyPenalty(){var c=st&&st.indicator&&st.indicator.color;return c==="k"?400:c==="r"?500:c==="y"?600:c==="b"?1000:600} function tilePenaltyAmount(t){if(!t)return 0;if(t.isFake)return 800;var c=t.color;if(c==="k")return 400;if(c==="r")return 500;if(c==="y")return 600;if(c==="b")return 1000;return tv(t)*10}
+function a_okeyTake(p,meldId,candUid,jokUid){ var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g}; var P=st.players[p];if(!P||!P.hasDrawn)return{ok:false,err:"once tas cekmelisin"}; var m=null;for(var i=0;i<st.melds.length;i++)if(st.melds[i].id===meldId){m=st.melds[i];break} if(!m)return{ok:false,err:"per bulunamadi"}; var ci=-1;for(i=0;i<P.rack.length;i++)if(String(P.rack[i].uid)===String(candUid)){ci=i;break} if(ci<0)return{ok:false,err:"tas elinde degil"}; var cand=P.rack[ci]; if(isJok(cand,st))return{ok:false,err:"okey ile okey alinmaz"}; var ji=-1;for(i=0;i<m.tiles.length;i++)if(isJok(m.tiles[i],st)){ji=i;break} if(ji<0)return{ok:false,err:"perde okey yok"}; var jok=m.tiles[ji]; var trial=m.tiles.slice();trial[ji]=cand; var ok2=false; if(m.kind==="series"){var tv2=tableMeldValid({id:m.id,kind:"series",tiles:trial,openLen:m.openLen});ok2=!!(tv2&&tv2.kind==="series")} else if(m.kind==="pair"){var gv=grpValid(trial);ok2=!!(gv&&gv.kind==="pair")} if(!ok2)return{ok:false,err:"aday tas okeyin yerini legal dolduramiyor"}; m.tiles[ji]=cand;P.rack.splice(ci,1);P.rack.push(jok); ev("OKEY_TAKE",p,{meld:m.id,slot:ji,inUid:cand.uid,outUid:jok.uid}); return{ok:true,meld:m.id,slot:ji,tookUid:jok.uid,gaveUid:cand.uid}; } function handOkeyPenalty(){var c=st&&st.indicator&&st.indicator.color;return c==="k"?400:c==="r"?500:c==="y"?600:c==="b"?1000:600} function tilePenaltyAmount(t){if(!t)return 0;if(t.isFake)return 800;var c=t.color;if(c==="k")return 400;if(c==="r")return 500;if(c==="y")return 600;if(c==="b")return 1000;return tv(t)*10}
 function a_takePenalty(p){ if(!st.pending)return a_takeCancel(p); var _P=st.players[p],_rk=_P.rack,_w=_rk&&_rk.length?_rk[0].uid:null; if(_w==null)return{ok:false,err:"atilacak tas yok"}; var rd=a_discard(p,_w); if(rd&&rd.ok){rd.turnEnded=true} return rd; }
 function a_keepTakenPenalty(p){
   var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g};
@@ -582,7 +582,7 @@ function a_open(p,groupsUids,mode,orderedManual){
   var takeFeed=null;
   if(st.pending){
     var pd=st.pending;st.pending=null;
-    takeFeed=pen(p,p,[pd.tile],"DISCARD_TAKEN_USED",tilePenaltyAmount(pd.tile));takeFeed.from=pd.by;takeFeed.label="ISLEK CEZASI";
+    takeFeed=pen(p,p,[pd.tile],"DISCARD_TAKEN_USED",handOkeyPenalty());takeFeed.from=pd.by;takeFeed.label="ISLEK CEZASI";
   }
   ev("OPEN",p,{total:total,melds:groups.length,forms:groups.map(function(g){return g.v.form||g.v.kind}),takeFeed:takeFeed?takeFeed.amount:0});
   return{ok:true,total:total,takeFeed:takeFeed};
@@ -619,7 +619,7 @@ function a_process(p,meldId,uids){
     var prep=jokerReps(tiles,pp.v);for(i=0;i<tiles.length;i++){tiles[i].rep=null;if(isPairWild(tiles[i]))tiles[i].rep=prep[tiles[i].uid]||null}
     var pm={id:nextMeldId(),owner:m.owner,kind:"pair",form:null,color:pp.v.color,tiles:tiles.slice(),ha:st.handIndex,openLen:2,processAdds:0};st.melds.push(pm);
     var pairTeamFree=sameTeam(p,m.owner),pe=null,pairApplied=pairTeamFree?0:pp.amount;if(!pairTeamFree){pe=pen(p,m.owner,tiles,"PROCESS_PAIR",pp.amount);pe.label="ÇİFT İŞLEME";pe.multiplier=CFG.PAIR_PROCESS_MULTIPLIER}
-    var takePenaltyPair=null;if(usedPendPair&&st.pending){var ppd=st.pending;st.pending=null;takePenaltyPair=pen(p,p,[ppd.tile],"DISCARD_TAKEN_USED",tilePenaltyAmount(ppd.tile));takePenaltyPair.from=ppd.by;takePenaltyPair.label="ISLEK CEZASI"}
+    var takePenaltyPair=null;if(usedPendPair&&st.pending){var ppd=st.pending;st.pending=null;takePenaltyPair=pen(p,p,[ppd.tile],"DISCARD_TAKEN_USED",handOkeyPenalty());takePenaltyPair.from=ppd.by;takePenaltyPair.label="ISLEK CEZASI"}
     ev("PROCESS",p,{meld:meldId,created:pm.id,n:2,amount:pairApplied,rawAmount:pp.amount,pair:true,multiplier:CFG.PAIR_PROCESS_MULTIPLIER,teamFree:pairTeamFree,target:m.owner,takePenalty:takePenaltyPair?takePenaltyPair.amount:0});
     return{ok:true,amount:pairApplied,rawAmount:pp.amount,pair:true,created:pm.id,target:m.owner,penalty:pe,teamFree:pairTeamFree,takePenalty:takePenaltyPair};
   }
@@ -681,7 +681,7 @@ function finishSpecialMeta(winner,finishTile){
   if(meta.kafa){meta.count++;meta.labels.push("KAFA")}
   if(meta.pairFinish){meta.count++;meta.labels.push("ÇİFTTEN")}
   if(meta.okeyFinish){meta.count++;meta.labels.push("OKEYLE")}
-  meta.multiplier=Math.pow(2,meta.count);
+  meta.multiplier=(meta.kafa?2:1)*(meta.pairFinish?4:1)*(meta.okeyFinish?8:1);
   return meta;
 }
 function endPenaltyBreakdown(P,seat,winner,bigRules,prior,finishMeta){
