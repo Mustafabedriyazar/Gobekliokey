@@ -287,7 +287,7 @@ return (function(){
           if(pa){var rp=E.process(p,pa.meld,pa.uids);if(rp.ok)return"processed:"+(pa.opponent?"opp":"own")+":"+pa.target+":"+rp.amount}
         }
       }
-      var du=discardPick(p);if(!du)return"stuck:noDiscard";
+      var du=discardPick(p);if(!du){var _rk=E.st.players[p].rack;du=_rk&&_rk.length?_rk[0].uid:null}if(!du)return"stuck:noDiscard";
       var rd=E.discard(p,du);return rd.ok?"discarded":"stuck:"+rd.err;
     }
     return"idle";

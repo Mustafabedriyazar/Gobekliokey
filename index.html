@@ -2347,7 +2347,7 @@ function check(){
   st.players.forEach(function(p,i){p.rack.forEach(function(t){reg(t,"p"+i)})});
   st.melds.forEach(function(m,i){
     if(midSeen[m.id])midDup.push(m.id);midSeen[m.id]=1;
-    var vv=tableMeldValid(m);if(!vv||vv.kind!==m.kind)badMeld.push(m.id);var pa=meldProcessAdds(m),ol=(m.openLen==null?m.tiles.length-pa:Number(m.openLen));if(pa<0||pa>2||!isFinite(ol)||ol<2||m.tiles.length!==ol+pa)badMeld.push(m.id+":processMeta");
+    var vv=tableMeldValid(m);if(!vv||vv.kind!==m.kind)badMeld.push(m.id);var pa=meldProcessAdds(m),ol=(m.openLen==null?m.tiles.length-pa:Number(m.openLen));if(pa<0||meldTurnFeeds(m)>2||!isFinite(ol)||ol<2||m.tiles.length!==ol+pa)badMeld.push(m.id+":processMeta");
     m.tiles.forEach(function(t){reg(t,"m"+i)})
   });
   if(st.indicator)reg(st.indicator,"ind");
@@ -2733,11 +2733,11 @@ function a_process(p,meldId,uids){
 function a_discard(p,uid){
   var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g};
   var P=st.players[p],takePenalty=null,majorPenalty=null,keptPending=false;
-  if(!P.hasDrawn)return{ok:false,err:"önce taş çekmelisin"};
+  if(st.pending)return a_takeCancel(p);if(!P.hasDrawn)return{ok:false,err:"önce taş çekmelisin"};
   /* v153: yandan alınan taşın KENDİSİ sağa atılamaz. Başka bir rack taşı atılırsa
      pending taş ıstakada kalır ve değer×10 öz-ceza aynı transaction içinde uygulanır.
      Geri gönderme ise TAKE_PENALTY / TAKE_CANCEL yoludur. */
-  if(st.pending){return{ok:false,err:"yandan alinan tas bekliyor - islek/acilista kullan ya da yerine geri birak"}}
+  if(st.pending){return a_takeCancel(p)}
   var ix=findT(p,uid);
   if(ix<0)return{ok:false,err:"taş elinde değil"};
   var willFinish=P.rack.length===1;if(willFinish&&!P.opened)return{ok:false,err:"bitirmek için önce açmalısın"};var t=P.rack[ix];
@@ -3190,7 +3190,7 @@ var EBOT=(function(){
           if(pa){var rp=E.process(p,pa.meld,pa.uids);if(rp.ok)return"processed:"+(pa.opponent?"opp":"own")+":"+pa.target+":"+rp.amount}
         }
       }
-      var du=discardPick(p);if(!du)return"stuck:noDiscard";
+      var du=discardPick(p);if(!du){var _rk=E.st.players[p].rack;du=_rk&&_rk.length?_rk[0].uid:null}if(!du)return"stuck:noDiscard";
       var rd=E.discard(p,du);return rd.ok?"discarded":"stuck:"+rd.err;
     }
     return"idle";
@@ -6812,7 +6812,7 @@ function close(){ if(!ov) return; pendingAfter=null; if(lastAuthResp){ try{ writ
   if(histBack){ histBack=false; try{ g.history.back(); }catch(_){} } }
 g.addEventListener('popstate',function(){ if(ov&&ov.classList.contains('on')){ histBack=false; pendingAfter=null; ov.classList.remove('on'); view='boot'; } });
 g.addEventListener('keydown',function(e){ if(e.key==='Escape'&&ov&&ov.classList.contains('on')){ e.stopPropagation(); close(); } },true);
-function card(inner,noX){ return '<div class="ok17Card" role="dialog" aria-modal="true">'+(noX?'':'<button class="ok17X" data-a="close" aria-label="Kapat">✕</button>')+inner+'<div class="ok17Build">BUILD v184</div></div>'; }
+function card(inner,noX){ return '<div class="ok17Card" role="dialog" aria-modal="true">'+(noX?'':'<button class="ok17X" data-a="close" aria-label="Kapat">✕</button>')+inner+'<div class="ok17Build">BUILD v185</div></div>'; }
 function paint(html){ root().innerHTML=card(html); wire(); }
 function msg(id,cls,text){ var el=d.getElementById(id); if(!el) return; el.className='ok17Msg on '+cls; el.textContent=text; }
 function msgOff(id){ var el=d.getElementById(id); if(el) el.className='ok17Msg'; }

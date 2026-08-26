@@ -253,7 +253,7 @@ function check(){
   st.players.forEach(function(p,i){p.rack.forEach(function(t){reg(t,"p"+i)})});
   st.melds.forEach(function(m,i){
     if(midSeen[m.id])midDup.push(m.id);midSeen[m.id]=1;
-    var vv=tableMeldValid(m);if(!vv||vv.kind!==m.kind)badMeld.push(m.id);var pa=meldProcessAdds(m),ol=(m.openLen==null?m.tiles.length-pa:Number(m.openLen));if(pa<0||pa>2||!isFinite(ol)||ol<2||m.tiles.length!==ol+pa)badMeld.push(m.id+":processMeta");
+    var vv=tableMeldValid(m);if(!vv||vv.kind!==m.kind)badMeld.push(m.id);var pa=meldProcessAdds(m),ol=(m.openLen==null?m.tiles.length-pa:Number(m.openLen));if(pa<0||meldTurnFeeds(m)>2||!isFinite(ol)||ol<2||m.tiles.length!==ol+pa)badMeld.push(m.id+":processMeta");
     m.tiles.forEach(function(t){reg(t,"m"+i)})
   });
   if(st.indicator)reg(st.indicator,"ind");
@@ -638,11 +638,11 @@ function a_process(p,meldId,uids){
 function a_discard(p,uid){
   var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g};
   var P=st.players[p],takePenalty=null,majorPenalty=null,keptPending=false;
-  if(!P.hasDrawn)return{ok:false,err:"önce taş çekmelisin"};
+  if(st.pending)return a_takeCancel(p);if(!P.hasDrawn)return{ok:false,err:"önce taş çekmelisin"};
   /* v153: yandan alınan taşın KENDİSİ sağa atılamaz. Başka bir rack taşı atılırsa
      pending taş ıstakada kalır ve değer×10 öz-ceza aynı transaction içinde uygulanır.
      Geri gönderme ise TAKE_PENALTY / TAKE_CANCEL yoludur. */
-  if(st.pending){return{ok:false,err:"yandan alinan tas bekliyor - islek/acilista kullan ya da yerine geri birak"}}
+  if(st.pending){return a_takeCancel(p)}
   var ix=findT(p,uid);
   if(ix<0)return{ok:false,err:"taş elinde değil"};
   var willFinish=P.rack.length===1;if(willFinish&&!P.opened)return{ok:false,err:"bitirmek için önce açmalısın"};var t=P.rack[ix];

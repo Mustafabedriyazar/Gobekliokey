@@ -142,7 +142,7 @@ function makeAccountPlus(opts){
   }
 
   async function summaryFor(accountId){
-    const out = { build:'v184', account:null, wallet:null, league:null, ranked:null, stats:null, history:null, missing:[] };
+    const out = { build:'v185', account:null, wallet:null, league:null, ranked:null, stats:null, history:null, missing:[] };
     async function grab(name, fn){ try { if (typeof fn!=='function'){ out.missing.push(name); return null; } const v = await fn(accountId); if (v===undefined||v===null) out.missing.push(name); return (v===undefined)?null:v; } catch(e){ out.missing.push(name+':'+(e&&e.message||'ERR').slice(0,40)); return null; } }
     out.account = await grab('account', idapi.getAccount);
     if (out.account && typeof out.account==='object'){ out.account.googleLinked = (out.account.googleLinked===true) || googleLinkedFor(accountId); }
@@ -164,7 +164,7 @@ function makeAccountPlus(opts){
 
     try {
       if (p === '/v1/auth/config' && req.method === 'GET'){
-        return send(res, 200, { build:'v184', googleClientId: env.GOOGLE_CLIENT_ID || null, googleReady: !!env.GOOGLE_CLIENT_ID, mailerReady: mailerConfigured(), passwordMin: parseInt(env.G17_PASSWORD_MIN||'10',10)||10 });
+        return send(res, 200, { build:'v185', googleClientId: env.GOOGLE_CLIENT_ID || null, googleReady: !!env.GOOGLE_CLIENT_ID, mailerReady: mailerConfigured(), passwordMin: parseInt(env.G17_PASSWORD_MIN||'10',10)||10 });
       }
       if (p === '/v1/auth/google' && req.method === 'POST'){
         const b = await readBody(req) || {};
