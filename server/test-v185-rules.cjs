@@ -68,5 +68,34 @@ T('m5b-retake',!!(tk2&&tk2.ok)&&s2.pending&&s2.pending.tile.uid==='SX1');
 E2.takeCancel(1);
 var ck=E.check();
 T('m26-28',!!ck&&(!ck.dup||ck.dup.length===0)&&(!ck.midDup||ck.midDup.length===0));
-console.log('v185-rules2: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
+
+var E3=mk();E3.newGame(21);E3.startHand();
+var s3=E3.__testState();
+s3.firstRoundActive=false;s3.turnIndex=0;s3.turnState='ACTION';
+s3.players[0].hasDrawn=true;s3.players[0].opened=true;
+var jk=null;
+for(var di=0;di<s3.deck.length;di++){if(E3.isJok(s3.deck[di],s3)){jk=s3.deck.splice(di,1)[0];break}}
+T('m13-jokfound',!!jk);
+var mo=[mkT('OB8','b',8),jk,mkT('OB10','b',10)];
+var m4={id:'mO1',kind:'series',owner:1,tiles:mo,processAdds:0,openLen:3,ha:s3.handIndex};
+s3.melds.push(m4);
+s3.players[0].rack.push(mkT('OB9','b',9),mkT('OR5','r',5),mkT('OB11','b',11));
+var b0=m4.tiles.map(function(x){return x.uid}).join(',');
+var bad=E3.okeyTake(0,'mO1','OR5');
+T('m14-reject',!(bad&&bad.ok)&&m4.tiles.map(function(x){return x.uid}).join(',')===b0);
+var okt=E3.okeyTake(0,'mO1','OB9');
+T('m13-swap',!!(okt&&okt.ok)&&m4.tiles[1].uid==='OB9'&&m4.tiles[0].uid==='OB8'&&m4.tiles[2].uid==='OB10');
+var jr=false;for(var ri=0;ri<s3.players[0].rack.length;ri++){if(s3.players[0].rack[ri].uid===jk.uid)jr=true}
+T('m13-rack',jr);
+T('m16-feed0',(m4.ftC==null||E3.tilePenaltyAmount)&&(function(){return (m4.ftK===s3.turnCount?(m4.ftC||0):0)===0})());
+var q3=E3.process(0,'mO1',['OB11']);
+T('m17-feed1',!!(q3&&q3.ok)&&m4.tiles.length===4);
+var q4=E3.process(0,'mO1',[jk.uid]);
+T('m18-jokuse',!!(q4&&q4.ok)&&m4.tiles.length===5);
+var q5=E3.process(0,'mO1',['OR5']);
+T('m17-lim',!(q5&&q5.ok));
+T('m19-noreorder',m4.tiles[0].uid==='OB8'&&m4.tiles[1].uid==='OB9'&&m4.tiles[2].uid==='OB10');
+var ck3=E3.check();
+T('m26b',!!ck3&&(!ck3.dup||ck3.dup.length===0));
+console.log('v185-rules3: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
 process.exit(fail?1:0);
