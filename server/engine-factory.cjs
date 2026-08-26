@@ -227,7 +227,7 @@ function badProcessPenalty(p,uid,meldId,reason){
   var tiles=resolve(p,[uid],true);if(!tiles||tiles.length!==1)return{ok:false,err:"ceza taşı bulunamadı"};
   var m=null;for(var i=0;i<st.melds.length;i++)if(st.melds[i].id===meldId){m=st.melds[i];break}
   if(!m)return{ok:false,err:"per bulunamadı"};
-  var amount=tv(tiles[0])*10,e=pen(p,p,tiles,"BAD_PROCESS_ATTEMPT",amount);e.label="HATALI İŞLEK";e.meldId=meldId;e.detail=reason||"";
+  var amount=tilePenaltyAmount(tiles[0]),e=pen(p,p,tiles,"BAD_PROCESS_ATTEMPT",amount);e.label="HATALI İŞLEK";e.meldId=meldId;e.detail=reason||"";
   ev("BAD_PROCESS",p,{uid:uid,meld:meldId,amount:amount,reason:reason||""});
   return{ok:true,amount:amount,penalty:e,uid:uid,meldId:meldId,reason:reason||""};
 }
@@ -380,21 +380,8 @@ function a_take(p){
   ev("TAKE_DISCARD",p,{uid:cd.tile.uid,from:cd.by});
   return{ok:true,tile:cd.tile};
 }
-function a_takePenalty(p){
-  var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g};
-  if(!st.pending)return{ok:false,err:"cezaya bağlanacak yerden taş yok"};
-  /* v153 YANDAN TAŞ — GERİ GÖNDERME:
-     Alan oyuncu taş değeri×10 cezayı KENDİSİ yer. Geri gönderirse aynı fiziksel taş onu atan
-     önceki oyuncunun (solundaki kaynak koltuğun) discard alanına geri konur ve tur biter. */
-  var pd=st.pending,amount=tv(pd.tile)*10;st.pending=null;
-  var pe=pen(p,p,[pd.tile],"DISCARD_TAKE_UNUSED",amount);pe.from=pd.by;
-  st.discardPile.push({tile:pd.tile,by:pd.by,returnedBy:p});
-  st.currentDiscard=st.discardPile[st.discardPile.length-1];
-  st.players[p].hasDrawn=false;st.turnIndex=nextSeat(st.turnIndex);st.turnCount++;st.turnState="DRAW";
-  ev("TAKE_RETURN_PENALTY",p,{uid:pd.tile.uid,from:pd.by,amount:amount,next:st.turnIndex});
-  ev("TURN_START",st.turnIndex,{});
-  return{ok:true,tile:pd.tile,amount:amount,penalty:pe,returned:true,kept:false,turnEnded:true,from:pd.by,next:st.turnIndex};
-}
+function tilePenaltyAmount(t){if(!t)return 0;if(t.isFake)return 800;var c=t.color;if(c==="k")return 400;if(c==="r")return 500;if(c==="y")return 600;if(c==="b")return 1000;return tv(t)*10}
+function a_takePenalty(p){ /* v185: RETURN cezasizdir - SIDE_RETURN delege. */ return a_takeCancel(p); }
 function a_keepTakenPenalty(p){
   var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g};
   if(!st.pending)return{ok:false,err:"cezaya bağlanacak yerden taş yok"};
@@ -407,10 +394,7 @@ function a_keepTakenPenalty(p){
   ev("TAKE_KEEP_PENALTY",p,{uid:pd.tile.uid,from:pd.by,amount:amount});
   return{ok:true,tile:pd.tile,amount:amount,penalty:pe,returned:false,kept:true,turnEnded:false,from:pd.by};
 }
-function a_takeCancel(p){
-  /* v153: cezasız geri alma yoktur. CANCEL = geri gönder + aynı değer×10 ceza. */
-  return a_takePenalty(p);
-}
+function a_takeCancel(p){ var g=guard(p,["ACTION"]);if(g)return{ok:false,err:g}; if(!st.pending)return{ok:false,err:"geri birakilacak yandan tas yok"}; /* v185 SIDE_RETURN: cezasiz geri birakma - pre-take restore, tur ilerlemez. */ var pd=st.pending;st.pending=null; st.discardPile.push({tile:pd.tile,by:pd.by}); st.currentDiscard=st.discardPile[st.discardPile.length-1]; st.players[p].hasDrawn=false;st.turnState="DRAW"; ev("SIDE_RETURN",p,{uid:pd.tile.uid,from:pd.by}); return{ok:true,tile:pd.tile,amount:0,penalty:null,returned:true,turnEnded:false}; }
 function resolve(p,uids,allowPending){
   var out=[],used={};
   for(var i=0;i<uids.length;i++){
@@ -598,7 +582,7 @@ function a_open(p,groupsUids,mode,orderedManual){
   var takeFeed=null;
   if(st.pending){
     var pd=st.pending;st.pending=null;
-    takeFeed=pen(p,p,[pd.tile],"DISCARD_TAKEN_USED",(pd.tile.isFake||isJok(pd.tile)?tv(pd.tile):pd.tile.num)*10);takeFeed.from=pd.by;
+    takeFeed=pen(p,p,[pd.tile],"DISCARD_TAKEN_USED",tilePenaltyAmount(pd.tile));takeFeed.from=pd.by;
   }
   ev("OPEN",p,{total:total,melds:groups.length,forms:groups.map(function(g){return g.v.form||g.v.kind}),takeFeed:takeFeed?takeFeed.amount:0});
   return{ok:true,total:total,takeFeed:takeFeed};
@@ -635,7 +619,7 @@ function a_process(p,meldId,uids){
     var prep=jokerReps(tiles,pp.v);for(i=0;i<tiles.length;i++){tiles[i].rep=null;if(isPairWild(tiles[i]))tiles[i].rep=prep[tiles[i].uid]||null}
     var pm={id:nextMeldId(),owner:m.owner,kind:"pair",form:null,color:pp.v.color,tiles:tiles.slice(),ha:st.handIndex,openLen:2,processAdds:0};st.melds.push(pm);
     var pairTeamFree=sameTeam(p,m.owner),pe=null,pairApplied=pairTeamFree?0:pp.amount;if(!pairTeamFree){pe=pen(p,m.owner,tiles,"PROCESS_PAIR",pp.amount);pe.label="ÇİFT İŞLEME";pe.multiplier=CFG.PAIR_PROCESS_MULTIPLIER}
-    var takePenaltyPair=null;if(usedPendPair&&st.pending){var ppd=st.pending;st.pending=null;takePenaltyPair=pen(p,p,[ppd.tile],"DISCARD_TAKEN_USED",tv(ppd.tile)*10);takePenaltyPair.from=ppd.by}
+    var takePenaltyPair=null;if(usedPendPair&&st.pending){var ppd=st.pending;st.pending=null;takePenaltyPair=pen(p,p,[ppd.tile],"DISCARD_TAKEN_USED",tilePenaltyAmount(ppd.tile));takePenaltyPair.from=ppd.by}
     ev("PROCESS",p,{meld:meldId,created:pm.id,n:2,amount:pairApplied,rawAmount:pp.amount,pair:true,multiplier:CFG.PAIR_PROCESS_MULTIPLIER,teamFree:pairTeamFree,target:m.owner,takePenalty:takePenaltyPair?takePenaltyPair.amount:0});
     return{ok:true,amount:pairApplied,rawAmount:pp.amount,pair:true,created:pm.id,target:m.owner,penalty:pe,teamFree:pairTeamFree,takePenalty:takePenaltyPair};
   }
@@ -658,11 +642,7 @@ function a_discard(p,uid){
   /* v153: yandan alınan taşın KENDİSİ sağa atılamaz. Başka bir rack taşı atılırsa
      pending taş ıstakada kalır ve değer×10 öz-ceza aynı transaction içinde uygulanır.
      Geri gönderme ise TAKE_PENALTY / TAKE_CANCEL yoludur. */
-  if(st.pending){
-    if(String(uid)===String(st.pending.tile.uid))return{ok:false,err:"yandan aldığın taşı sağa atamazsın — solundaki oyuncuya geri ver veya ıstakada tutup başka taş at"};
-    if(findT(p,uid)<0)return{ok:false,err:"taş elinde değil"};
-    var kp=a_keepTakenPenalty(p);if(!kp.ok)return kp;takePenalty=kp.penalty;keptPending=true;
-  }
+  if(st.pending){return{ok:false,err:"yandan alinan tas bekliyor - islek/acilista kullan ya da yerine geri birak"}}
   var ix=findT(p,uid);
   if(ix<0)return{ok:false,err:"taş elinde değil"};
   var willFinish=P.rack.length===1;if(willFinish&&!P.opened)return{ok:false,err:"bitirmek için önce açmalısın"};var t=P.rack[ix];
