@@ -550,7 +550,7 @@ function a_open(p,groupsUids,mode,orderedManual){
     if(!mode)return{ok:false,err:"önce açılış modunu seç: 51 SERİ AÇ ya da 52 ÇİFT AÇ"};
     var pe=openingPolicy(mode,groups.map(function(g){return g.v.kind}));
     if(pe)return{ok:false,err:pe};
-    var _kafaN=0;for(var _ki=0;_ki<groupsUids.length;_ki++)_kafaN+=(groupsUids[_ki]||[]).length;var _hand=P.rack.length+((st.pending&&st.turnIndex===p)?1:0);var _kafa=_kafaN>=_hand-1; var minNeed=openNeed(mode);
+    var _kafaN=0;for(var _ki=0;_ki<groupsUids.length;_ki++)_kafaN+=(groupsUids[_ki]||[]).length;var _hand=P.rack.length+((st.pending&&st.turnIndex===p)?1:0);var _kafa=_hand>=14&&_kafaN>=_hand-1; var minNeed=openNeed(mode);
     if(total<minNeed&&!_kafa)return{ok:false,err:"açılış "+total+" — "+(mode==="PAIR"?"ÇİFT için en az ":"en az ")+minNeed+" gerekir"};
     if(CFG.KATLAMALI&&st.lastOpenTotal>50&&total<=st.lastOpenTotal&&!_kafa)return{ok:false,err:"katlamalı: önceki açılışı ("+st.lastOpenTotal+") geçmelisin"};
     if(st.pending&&!usedPend)return{ok:false,err:"yerden alınan taş bu açılışta kullanılmalı"};
