@@ -156,5 +156,46 @@ mL.ftK=sA.turnCount;mL.ftC=3;
 var ckG=EA.check();
 T('mG-turnlimit',!!ckG&&ckG.badMeld&&ckG.badMeld.indexOf('mL1:processMeta')>=0);
 mL.ftC=1;
-console.log('v186-rules1: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
+
+function mkE(seed){var E2=mk();E2.newGame(seed);E2.startHand();var s2=E2.__testState();s2.firstRoundActive=false;s2.turnIndex=0;s2.turnState='ACTION';s2.players[0].hasDrawn=true;s2.players[0].opened=true;return[E2,s2]}
+var CMAP={k:400,r:500,y:600,b:1000};var colors=['k','r','y','b'];var okA=true;
+for(var cx=0;cx<4;cx++){var pr=mkE(90+cx),Ex=pr[0],sx=pr[1];sx.indicator=mkT('IND'+cx,colors[cx],5);
+var feeds=[['FA'+cx,'r'],['FB'+cx,'b']];
+for(var fx=0;fx<2;fx++){sx.players[0].hasDrawn=false;sx.turnIndex=0;sx.turnState='ACTION';sx.pending={tile:mkT(feeds[fx][0],feeds[fx][1],7),by:Ex.takeSourceSeat(0)};sx.players[0].rack.push(mkT('DD'+cx+fx,'y',2));var h0=sx.players[0].handPenalty||0;var dd=Ex.discard(0,'DD'+cx+fx);if(!(dd&&dd.ok&&(sx.players[0].handPenalty||0)===h0+CMAP[colors[cx]]))okA=false;}}
+T('vA-handokey-4renk',okA);
+var pB=mkE(77),EB2=pB[0],sB=pB[1];
+sB.players[1].opened=true;sB.lastOpenTotal=95;
+var rk=[];for(var bi=0;bi<4;bi++)rk.push(mkT('KS'+bi,'b',5+bi));
+for(bi=0;bi<4;bi++)rk.push(mkT('KR'+bi,'r',9+bi));
+for(bi=0;bi<3;bi++)rk.push(mkT('KY'+bi,'y',1+bi));
+for(bi=0;bi<3;bi++)rk.push(mkT('KK'+bi,'k',11+bi));
+rk.push(mkT('KLAST','k',1));
+sB.players[0].rack=rk;sB.players[0].opened=false;sB.players[0].openingType=null;sB.players[0].hasDrawn=true;
+var ftc0=0;for(var mi2=0;mi2<sB.melds.length;mi2++)ftc0+=(sB.melds[mi2].ftC||0);
+var ro=EB2.open(0,[['KS0','KS1','KS2','KS3'],['KR0','KR1','KR2','KR3'],['KY0','KY1','KY2'],['KK0','KK1','KK2']],'SERIES');
+T('vB1-kafa-open-bypass',!!(ro&&ro.ok));
+var rd2=EB2.discard(0,'KLAST');
+T('vB1-finish',!!(rd2&&rd2.ok)&&sB.handOver===true);
+var fs=sB.finishSpecial||{};
+T('vB1-nokafa-label',!(fs.labels&&fs.labels.indexOf('KAFA')>=0));
+var ftc1=0;for(mi2=0;mi2<sB.melds.length;mi2++)ftc1+=(sB.melds[mi2].ftC||0);
+T('vB-nofeed',ftc1===ftc0);
+var pC=mkE(78),EC=pC[0],sC=pC[1];
+for(var pj=0;pj<sC.players.length;pj++){sC.players[pj].opened=false;sC.players[pj].openingType=null}
+sC.lastOpenTotal=120;
+var rk2=[];for(bi=0;bi<4;bi++)rk2.push(mkT('LS'+bi,'b',5+bi));
+for(bi=0;bi<4;bi++)rk2.push(mkT('LR'+bi,'r',9+bi));
+for(bi=0;bi<3;bi++)rk2.push(mkT('LY'+bi,'y',1+bi));
+for(bi=0;bi<3;bi++)rk2.push(mkT('LK'+bi,'k',11+bi));
+rk2.push(mkT('LLAST','k',1));
+sC.players[0].rack=rk2;sC.players[0].hasDrawn=true;
+var ro2=EC.open(0,[['LS0','LS1','LS2','LS3'],['LR0','LR1','LR2','LR3'],['LY0','LY1','LY2'],['LK0','LK1','LK2']],'SERIES');
+var rd3=ro2&&ro2.ok?EC.discard(0,'LLAST'):null;
+var fs2=sC.finishSpecial||{};
+T('vB2-kafa-label-x2',!!(rd3&&rd3.ok)&&sC.handOver===true&&fs2.labels&&fs2.labels.indexOf('KAFA')>=0&&fs2.count>=1);
+var pD=mkE(79),ED=pD[0],sD=pD[1];
+sD.players[0].rack=[mkT('XX1','b',5),mkT('XX2','b',6),mkT('XX3','r',9),mkT('XX4','k',13)];sD.players[0].opened=false;sD.players[0].hasDrawn=true;sD.lastOpenTotal=0;
+var rbad=ED.open(0,[['XX1','XX2','XX3']],'SERIES');
+T('vB3-illegal-reject',!(rbad&&rbad.ok));
+console.log('v186-rules2: '+pass+' PASS '+fail+' FAIL '+(F.length?F.join(','):''));
 process.exit(fail?1:0);

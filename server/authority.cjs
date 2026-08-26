@@ -149,7 +149,7 @@ class AuthoritativeRoom{
       case 'OPEN': return E.open(seat,a.groups||[],a.mode||null,!!a.orderedManual);
       case 'OPEN_ATTEMPT': return E.openAttempt(seat,a.groups||[],a.mode||null,!!a.orderedManual);
       case 'OKEY_TAKE': return E.okeyTake(seat,String(a.meldId||''),String(a.uid||''));
-      case 'PROCESS': return E.process(seat,String(a.meldId||''),Array.isArray(a.uids)?a.uids:[]);
+      case 'PROCESS': { var _r=E.process(seat,String(a.meldId||''),Array.isArray(a.uids)?a.uids:[]); if(_r&&_r.ok===false&&Array.isArray(a.uids)&&a.uids.length===1&&E.okeyTake){var _o=E.okeyTake(seat,String(a.meldId||''),a.uids[0]); if(_o&&_o.ok)return _o;} return _r; }
       case 'BAD_PROCESS_ATTEMPT': return E.badProcessPenalty(seat,String(a.uid||''),String(a.meldId||''),String(a.reason||''));
       case 'DISCARD': return E.discard(seat,String(a.uid||''));
       case 'NEXT_HAND':
