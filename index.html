@@ -6812,7 +6812,7 @@ function close(){ if(!ov) return; pendingAfter=null; if(lastAuthResp){ try{ writ
   if(histBack){ histBack=false; try{ g.history.back(); }catch(_){} } }
 g.addEventListener('popstate',function(){ if(ov&&ov.classList.contains('on')){ histBack=false; pendingAfter=null; ov.classList.remove('on'); view='boot'; } });
 g.addEventListener('keydown',function(e){ if(e.key==='Escape'&&ov&&ov.classList.contains('on')){ e.stopPropagation(); close(); } },true);
-function card(inner,noX){ return '<div class="ok17Card" role="dialog" aria-modal="true">'+(noX?'':'<button class="ok17X" data-a="close" aria-label="Kapat">✕</button>')+inner+'<div class="ok17Build">BUILD v187</div></div>'; }
+function card(inner,noX){ return '<div class="ok17Card" role="dialog" aria-modal="true">'+(noX?'':'<button class="ok17X" data-a="close" aria-label="Kapat">✕</button>')+inner+'<div class="ok17Build">BUILD v188</div></div>'; }
 function paint(html){ root().innerHTML=card(html); wire(); }
 function msg(id,cls,text){ var el=d.getElementById(id); if(!el) return; el.className='ok17Msg on '+cls; el.textContent=text; }
 function msgOff(id){ var el=d.getElementById(id); if(el) el.className='ok17Msg'; }
@@ -7036,5 +7036,84 @@ g.OK17ACC={ open:open, close:close, isOpen:function(){ return !!(ov&&ov.classLis
 </script>
 <!--OK17ACC-V183-SON-->
 
+<!--OK17INTRO-V188-BAS-->
+<style>
+#ok17iw{position:fixed;inset:0;z-index:99990;background:radial-gradient(120% 90% at 50% 8%,#2a1440 0%,#190b2b 42%,#0c0517 100%);display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .42s ease}
+#ok17iw.out{opacity:0;pointer-events:none}
+#ok17iw .lp{display:flex;flex-direction:column;align-items:center;gap:18px;transform:translateY(-4vh);transition:opacity .3s ease}
+#ok17iw .ring{width:74px;height:74px;border-radius:50%;position:relative;background:conic-gradient(from 0deg,#f3cf7a var(--p,0%),rgba(243,207,122,.14) 0)}
+#ok17iw .ring::before{content:'';position:absolute;inset:7px;border-radius:50%;background:#140826;box-shadow:inset 0 0 18px rgba(0,0,0,.8)}
+#ok17iw .ring::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(243,207,122,.35)}
+#ok17iw.ind .ring{background:conic-gradient(from var(--a,0deg),#f3cf7a 0 70deg,rgba(243,207,122,.12) 70deg 360deg)}
+#ok17iw .lt{font:600 15px/1.3 Georgia,serif;letter-spacing:.34em;color:#f0e2c0;text-shadow:0 1px 8px rgba(243,207,122,.28)}
+#ok17iw .ls{font:12px/1.3 Georgia,serif;letter-spacing:.22em;color:rgba(240,226,192,.55)}
+#ok17vid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0c0517;opacity:0;transition:opacity .38s ease}
+#ok17vid.on{opacity:1}
+.ok17pill{position:absolute;z-index:2;padding:9px 16px;border-radius:999px;border:1px solid rgba(243,207,122,.55);background:rgba(20,8,38,.72);color:#f0e2c0;font:600 13px/1 Georgia,serif;letter-spacing:.18em;opacity:0;transition:opacity .3s ease;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.ok17pill.on{opacity:1}
+#ok17skip{top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right))}
+#ok17snd{bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
+</style>
+<div id="ok17iw" class="ind"><div class="lp"><div class="ring" id="ok17ring"></div><div class="lt" id="ok17lt">YÜKLENİYOR</div><div class="ls" id="ok17ls">OKEY 17</div></div>
+<video id="ok17vid" playsinline webkit-playsinline preload="auto"></video>
+<div class="ok17pill" id="ok17skip">GEÇ ▸</div><div class="ok17pill" id="ok17snd">🔊 SESİ AÇ</div></div>
+<script>
+(function(){
+'use strict';
+if(window.__OK17INTRO)return;window.__OK17INTRO=1;
+var W=document.getElementById('ok17iw'),V=document.getElementById('ok17vid'),RG=document.getElementById('ok17ring'),LT=document.getElementById('ok17lt'),LS=document.getElementById('ok17ls'),SK=document.getElementById('ok17skip'),SN=document.getElementById('ok17snd');
+if(!W||!V)return;
+var SRC='/media/intro-v188.mp4?v=188';
+var done=false,started=false,timers=[],ang=0,indRAF=0;
+var t0=Date.now(),deadline=t0+15000,HARD=t0+45000,lastBuf=0,lastGrow=t0;
+function tm(fn,ms){var id=setTimeout(fn,ms);timers.push(id);return id}
+function bufEnd(){try{var b=V.buffered;return b&&b.length?b.end(b.length-1):0}catch(e){return 0}}
+function teardown(){if(done)return;done=true;
+ try{V.pause()}catch(e){}
+ try{V.removeAttribute('src');V.load()}catch(e){}
+ for(var i=0;i<timers.length;i++)clearTimeout(timers[i]);
+ if(indRAF)cancelAnimationFrame(indRAF);
+ W.classList.add('out');
+ setTimeout(function(){try{W.remove()}catch(e){}},460);
+ window.__OK17INTRO_DONE=1;
+ try{document.dispatchEvent(new CustomEvent('ok17introdone'))}catch(e){}
+}
+function spinInd(){if(done||started||!W.classList.contains('ind'))return;ang=(ang+4.6)%360;W.style.setProperty('--a',ang+'deg');indRAF=requestAnimationFrame(spinInd)}
+spinInd();
+function setPct(p){p=Math.max(0,Math.min(1,p));W.classList.remove('ind');RG.style.setProperty('--p',(p*100).toFixed(1)+'%');LT.textContent='OYNATMA HAZIRLIĞI';LS.textContent='%'+Math.floor(p*100)}
+var poll=setInterval(function(){
+ if(done||started){clearInterval(poll);return}
+ var now=Date.now(),be=bufEnd();
+ if(be>lastBuf+0.35){lastBuf=be;lastGrow=now;if(now>deadline-6000)deadline=Math.min(HARD,now+6000)}
+ var d=V.duration,hasD=(isFinite(d)&&d>0);
+ if(V.readyState>=1&&hasD)setPct(be/d);
+ var gateA=(V.readyState>=4);
+ var gateB=(V.readyState>=3&&hasD&&be>=Math.min(d-0.05,5.5));
+ if(hasD&&(gateA||gateB)){clearInterval(poll);start()}
+ else if(now>deadline&&now-lastGrow>8000){clearInterval(poll);teardown()}
+ else if(now>HARD){clearInterval(poll);teardown()}
+},120);
+function start(){if(started||done)return;started=true;
+ var lp=W.querySelector('.lp');if(lp)lp.style.opacity='0';
+ V.classList.add('on');
+ tm(function(){if(!done)SK.classList.add('on')},900);
+ var p;try{p=V.play()}catch(e){p=null}
+ if(p&&p.catch){p.catch(function(){if(done)return;V.muted=true;var p2;try{p2=V.play()}catch(e){p2=null}
+   if(p2&&p2.then){p2.then(function(){if(!done)SN.classList.add('on')}).catch(function(){teardown()})}else{SN.classList.add('on')}})}
+ V.addEventListener('waiting',function(){if(done)return;var w0=Date.now();
+   tm(function(){if(!done&&V.readyState<3&&Date.now()-w0>=2400)teardown()},2600)});
+}
+V.addEventListener('ended',teardown);
+V.addEventListener('error',function(){teardown()});
+SK.addEventListener('pointerup',function(e){e.preventDefault();teardown()});
+SN.addEventListener('pointerup',function(e){e.preventDefault();e.stopPropagation();V.muted=false;SN.classList.remove('on')});
+W.addEventListener('pointerup',function(){if(started&&!done&&V.muted){V.muted=false;SN.classList.remove('on')}});
+document.addEventListener('visibilitychange',function(){if(done)return;
+ if(document.hidden){try{V.pause()}catch(e){}}
+ else if(started){var pr;try{pr=V.play()}catch(e){pr=null}if(pr&&pr.catch)pr.catch(function(){})}});
+try{V.src=SRC;V.load()}catch(e){teardown()}
+})();
+</script>
+<!--OK17INTRO-V188-SON-->
 </body>
 </html>

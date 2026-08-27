@@ -67,6 +67,7 @@ async function seatBan(room,seat){const s=room&&room.seats&&room.seats[seat];if(
 async function roomReportTarget(room,reporterAccountId,targetSeat){targetSeat=Number(targetSeat);if(!Number.isInteger(targetSeat)||targetSeat<0||targetSeat>3)return{ok:false,err:'REPORT_TARGET_INVALID'};const reporter=room.seats.find(x=>x.accountId===reporterAccountId),target=room.seats[targetSeat];if(!reporter||!target||!target.accountId||target.accountId===reporterAccountId)return{ok:false,err:'REPORT_TARGET_INVALID'};return{ok:true,targetAccountId:target.accountId}}
 function readJson(req){return new Promise((resolve,reject)=>{let n=0,s='';req.setEncoding('utf8');req.on('data',c=>{n+=Buffer.byteLength(c);if(n>65536){reject(new Error('BODY_TOO_LARGE'));req.destroy();return}s+=c});req.on('end',()=>{if(!s)return resolve({});try{resolve(JSON.parse(s))}catch(_){reject(new Error('BAD_JSON'))}});req.on('error',reject)})}
 function mime(f){return f.endsWith('.html')?'text/html; charset=utf-8':f.endsWith('.js')?'application/javascript; charset=utf-8':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.png')?'image/png':'application/octet-stream'}
+const {mediaRoute}=require('./media-route.cjs');
 function serveFile(req,res,name){const allowed=new Set(['index.html','multiplayer-client.js','multiplayer-bridge.js','manifest.webmanifest','icon-192.png','icon-512.png','sw.js']);if(!allowed.has(name))return json(req,res,404,{ok:false,err:'NOT_FOUND'});const p=path.join(ROOT,name);fs.readFile(p,(e,b)=>{if(e)return json(req,res,404,{ok:false,err:'NOT_FOUND'});baseHeaders(req,res);res.writeHead(200,{'Content-Type':mime(name),'Content-Length':b.length,'Cache-Control':name==='index.html'||name==='sw.js'?'no-cache':'public, max-age=3600'});res.end(b)})}
 function clearDiscTimer(roomId,seat){const k=`${roomId}:${seat}`,t=disconnectTimers.get(k);if(t){clearTimeout(t);disconnectTimers.delete(k)}}
 function scheduleDisconnect(room,seat){const k=`${room.id}:${seat}`;clearDiscTimer(room.id,seat);const t=setTimeout(async()=>{disconnectTimers.delete(k);if(!room.hasActiveSubscriber(seat)){room.suppressBroadcast=CFG.storeMode==='redis';room.disconnect(seat);await settleMatchProfile(room);if(CFG.storeMode==='redis')try{await flushDurable(room)}catch(_){}if(room.context==='TOURNAMENT'){const ft=setTimeout(async()=>{room.suppressBroadcast=CFG.storeMode==='redis';room.expireDisconnect(seat);await settleMatchProfile(room);if(CFG.storeMode==='redis')try{await flushDurable(room)}catch(_){}},90000);ft.unref&&ft.unref()}}},3000);t.unref&&t.unref();disconnectTimers.set(k,t)}
@@ -192,7 +193,7 @@ const runtimeInit=(async()=>{
   try{await casualMatchmaking.init();casualMatchmakingReady=true;casualMatchmakingError=null}catch(e){casualMatchmakingError=String(e&&e.message||e);casualMatchmakingReady=false}
 })();
 
-const server=http.createServer(async(req,res)=>{
+const server=http.createServer(async(req,res)=>{if(mediaRoute(req,res))return;
   metrics.requests++;
   try{
     const u=new URL(req.url,`http://${req.headers.host||'localhost'}`),parts=u.pathname.split('/').filter(Boolean);
