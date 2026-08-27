@@ -9,7 +9,7 @@ function tile(uid,color,num,isFake=false){return{uid,color,num,isFake};}
 function baseState(rack0,melds=[],extra={}){
   const players=[];for(let i=0;i<4;i++)players.push({id:i,seat:i,rack:i===0?rack0.slice():[],opened:false,openingType:null,openingColor:null,handPenalty:0,totalPenalty:0,score:0,hasDrawn:false,badOpenPenaltyKey:null});
   Object.assign(players[0],extra.p0||{});Object.assign(players[1],extra.p1||{});Object.assign(players[2],extra.p2||{});Object.assign(players[3],extra.p3||{});
-  return Object.assign({players,scoreKeeper:2,bigHandDealer:0,handIndex:0,bigHandCount:0,handType:'NORMAL',dealer:0,turnIndex:0,turnCount:4,firstRoundActive:false,starter:0,deck:[],discardPile:[],currentDiscard:null,indicator:tile('ind','k',13),okey:{color:'k',num:1},fakeIsPlain:true,okeyMode:'INDICATOR',melds:melds.slice(),meldSeq:10,pending:null,lastOpenTotal:50,turnState:'ACTION',handOver:false,winner:null,gameFinished:false,matchFinal:null,teamMode:false,teams:null,teamForfeitHandWins:[0,0]},extra.st||{});
+  return Object.assign({players,scoreKeeper:2,handDealerBase:0,handIndex:0,handCount:0,handType:'NORMAL',dealer:0,turnIndex:0,turnCount:4,firstRoundActive:false,starter:0,deck:[],discardPile:[],currentDiscard:null,indicator:tile('ind','k',13),okey:{color:'k',num:1},fakeIsPlain:true,okeyMode:'INDICATOR',melds:melds.slice(),meldSeq:10,pending:null,lastOpenTotal:50,turnState:'ACTION',handOver:false,winner:null,gameFinished:false,matchFinal:null,teamMode:false,teams:null,teamForfeitHandWins:[0,0]},extra.st||{});
 }
 function restore(E,st,LED=[],LOG=[]){E._serverRestore({st,LED,LOG,SEEDB:1,SEEDSEQ:1});return E;}
 function u(g){return g.map(t=>t.uid)}
@@ -31,7 +31,7 @@ function u(g){return g.map(t=>t.uid)}
 
 (function deckEmptyAndBigCycle(){
   const E=createEngine();assert.equal(E.newGame(777).ok,true);
-  const expected=['BIG','NORMAL','NORMAL','NORMAL','BIG','NORMAL','NORMAL','NORMAL','BIG'];
+  const expected=new Array(9).fill('STANDARD');
   for(let h=0;h<expected.length;h++){
     const sh=E.startHand();assert.equal(sh.ok,true,'start hand '+h);assert.equal(E.st.handType,expected[h],'hand type '+h);assert.equal(E.check().ok,true,'pre deck-empty invariant '+h);
     const snap=E._serverSnapshot(),moved=snap.st.deck.splice(0);snap.st.players[1].rack.push(...moved);snap.st.turnIndex=0;snap.st.turnState='DRAW';snap.st.players[0].hasDrawn=false;snap.st.firstRoundActive=false;snap.st.handOver=false;E._serverRestore(snap);

@@ -6,7 +6,7 @@ var CFG={
   OPENED_COLOR_MULT:{k:40,r:50,y:60,b:100},
   WINNER_BONUS:{NORMAL:0,BIG:0},
   PROCESS_PENALTY_TARGET_POLICY:"meldOwner",FLOWER_RULE:null,
-  END_AFTER_BIG:3, TEAMS:null,
+  END_AFTER_HANDS:9, TEAMS:null,
   KATLAMALI:true,
   MAJOR_PENALTY:500,
   PAIR_PROCESS_MULTIPLIER:20,
@@ -104,7 +104,7 @@ function drawNumericIndicator(deck){
   for(var i=deck.length-1;i>=0;i--)if(!deck[i].isFake)return deck.splice(i,1)[0];
   return null;
 }
-function isBigRules(S){S=S||st;return !!(S&&S.handType==="BIG")}
+function isBigRules(){return false}
 function make106(){
   var d=[],cs=["r","y","b","k"],u=0;
   for(var k=0;k<2;k++)for(var c=0;c<4;c++)for(var n=1;n<=13;n++)d.push({uid:"u"+(u++),color:cs[c],num:n,isFake:false});
@@ -289,12 +289,12 @@ function check(){
       if(!mf.teamMode||!mf.teamRows||mf.teamRows.length!==2)matchErr.push("missing_team_match_final");
       for(var pr=0;pr<mf.rows.length;pr++){var ppr=mf.rows[pr];if(ppr.totalPenalty!==(st.players[ppr.seat].totalPenalty||0))matchErr.push("match_total:"+ppr.seat)}
       if(mf.teamRows&&mf.teamRows.length===2){var tch=0,lastTR=0;for(var tr=0;tr<mf.teamRows.length;tr++){var rrT=mf.teamRows[tr],tsa=rrT.seats&&rrT.seats[0],tsb=rrT.seats&&rrT.seats[1],wantT=(st.players[tsa].totalPenalty||0)+(st.players[tsb].totalPenalty||0);if(rrT.totalPenalty!==wantT)matchErr.push("team_total:"+rrT.team);if(rrT.rank<1||rrT.rank>2)matchErr.push("team_rank:"+rrT.rank);if(tr&&rrT.rank<lastTR)matchErr.push("team_rank_order");lastTR=rrT.rank;if(rrT.rank===1)tch++}if(!tch||!mf.championTeams||mf.championTeams.length!==tch)matchErr.push("team_champion_count")}
-      if(mf.bigHands<CFG.END_AFTER_BIG)matchErr.push("match_big_hands:"+mf.bigHands);
+      if(mf.handsCounted<CFG.END_AFTER_HANDS)matchErr.push("match_big_hands:"+mf.handsCounted);
     }else{
       var champ=0,lastRank=0;
       for(var mr=0;mr<mf.rows.length;mr++){var rr=mf.rows[mr];if(rr.totalPenalty!==(st.players[rr.seat].totalPenalty||0))matchErr.push("match_total:"+rr.seat);if(rr.rank<1||rr.rank>4)matchErr.push("match_rank:"+rr.rank);if(mr&&rr.rank<lastRank)matchErr.push("match_rank_order");lastRank=rr.rank;if(rr.rank===1)champ++}
       if(!champ||!mf.champions||mf.champions.length!==champ)matchErr.push("match_champion_count");
-      if(mf.bigHands<CFG.END_AFTER_BIG)matchErr.push("match_big_hands:"+mf.bigHands);
+      if(mf.handsCounted<CFG.END_AFTER_HANDS)matchErr.push("match_big_hands:"+mf.handsCounted);
     }
   }else if(st.matchFinal)matchErr.push("premature_match_final");
   var ok=cnt===106&&!dup.length&&!midDup.length&&!badMeld.length&&!badSig.length&&!okeyErr.length&&!specialErr.length&&!majorErr.length&&!matchErr.length&&!teamErr.length&&st.turnIndex>=0&&st.turnIndex<4;
@@ -308,14 +308,14 @@ function newGame(seed){
   var nextSeed=explicitSeed?(Number(seed)>>>0):freshSeed32();
   if(tc.teamMode)CFG.TEAMS=[[0,2],[1,3]];
   SEEDB=nextSeed;
-  st={players:[],scoreKeeper:2,bigHandDealer:0,handIndex:0,bigHandCount:0,handType:null,dealer:0,
+  st={players:[],scoreKeeper:2,handDealerBase:0,handIndex:0,handCount:0,handType:null,dealer:0,
       turnIndex:0,turnCount:0,firstRoundActive:true,starter:0,deck:[],discardPile:[],currentDiscard:null,
       indicator:null,okey:null,fakeIsPlain:false,okeyMode:null,melds:[],meldSeq:0,pending:null,lastOpenTotal:50,
       winner:null,handOver:true,gameFinished:false,turnState:"WAIT",endBreakdown:null,finishSpecial:null,endMajorPenalties:null,matchFinal:null,
       teamMode:!!tc.teamMode,teams:tc.teamMode?[[0,2],[1,3]]:null,teamForfeitHandWins:[0,0],forfeitHistory:{}};
   for(var i=0;i<4;i++)st.players.push({id:i,seat:i,rack:[],opened:false,openingType:null,openingColor:null,
       handPenalty:0,totalPenalty:0,score:0,hasDrawn:false,badOpenPenaltyKey:null});
-  st.bigHandDealer=nextSeat(st.scoreKeeper);
+  st.handDealerBase=nextSeat(st.scoreKeeper);
   LOG.length=0;LED.length=0;
   ev("GAME_START",-1,{seed:SEEDB,seedSource:explicitSeed?"EXPLICIT":"PRODUCTION_FRESH",katlamali:!!CFG.KATLAMALI,teamMode:!!st.teamMode,teams:st.teams});
   return{ok:true,teamMode:!!st.teamMode};
@@ -325,8 +325,8 @@ function startHand(){
   if(!st.handOver)return{ok:false,err:"el sürüyor"};
   var hs=handSeed32(SEEDB,st.handIndex),rnd=rngMk(hs);
   st.handSeed=hs;
-  st.handType=(st.handIndex%4===0)?"BIG":"NORMAL";
-  st.dealer=st.handType==="BIG"?st.bigHandDealer:(st.bigHandDealer+(st.handIndex%4))%4;
+  st.handType="STANDARD";
+  st.dealer=(st.handDealerBase+st.handIndex)%4;
   var deck=make106();
   for(var x=deck.length-1;x>0;x--){var y=rnd(x+1),tp=deck[x];deck[x]=deck[y];deck[y]=tp}
   st.deck=deck;st.discardPile=[];st.currentDiscard=null;st.melds=[];st.pending=null;
@@ -349,7 +349,7 @@ function startHand(){
   st.firstRoundActive=true;st.handOver=false;st.winner=null;
   st.turnState="ACTION";
   st.players[st.starter].hasDrawn=true;
-  ev("HAND_START",st.dealer,{handType:st.handType,handIndex:st.handIndex,handSeed:st.handSeed,starter:st.starter,okey:st.okey,okeyMode:st.okeyMode,indicator:st.indicator?st.indicator.uid:null,bigRules:isBigRules(st)});
+  ev("HAND_START",st.dealer,{handType:st.handType,handIndex:st.handIndex,handSeed:st.handSeed,starter:st.starter,okey:st.okey,okeyMode:st.okeyMode,indicator:st.indicator?st.indicator.uid:null,bigRules:false});
   ev("DEAL",st.dealer,{deck:st.deck.length});
   return{ok:true};
 }
@@ -755,19 +755,19 @@ function buildMatchFinal(){
     teams.sort(function(a,b){return (a.totalPenalty-b.totalPenalty)||(b.handWins-a.handWins)||(b.bigWins-a.bigWins)||(a.majorCount-b.majorCount)||(a.team-b.team)});
     var prevKeyT=null,prevRankT=0;for(i=0;i<teams.length;i++){var tk=matchTieKey(teams[i]);teams[i].rank=(i>0&&tk===prevKeyT)?prevRankT:(i+1);prevKeyT=tk;prevRankT=teams[i].rank}
     var championTeams=teams.filter(function(r){return r.rank===1}).map(function(r){return r.team});
-    var outT={teamMode:true,rows:rows,teamRows:teams,championTeams:championTeams,championTeam:championTeams.length===1?championTeams[0]:null,tie:championTeams.length>1,handsPlayed:st.handIndex+1,bigHands:st.bigHandCount,rule:"LOWEST_TEAM_TOTAL",tieRule:"TEAM_TOTAL > TEAM_WINS > TEAM_BIG_WINS > FEWER_TEAM_MAJOR; EXACT=TIE"};
+    var outT={teamMode:true,rows:rows,teamRows:teams,championTeams:championTeams,championTeam:championTeams.length===1?championTeams[0]:null,tie:championTeams.length>1,handsPlayed:st.handIndex+1,handsCounted:st.handCount,rule:"LOWEST_TEAM_TOTAL",tieRule:"TEAM_TOTAL > TEAM_WINS > TEAM_BIG_WINS > FEWER_TEAM_MAJOR; EXACT=TIE"};
     st.matchFinal=outT;return outT;
   }
   rows.sort(function(a,b){return (a.totalPenalty-b.totalPenalty)||(b.handWins-a.handWins)||(b.bigWins-a.bigWins)||(a.majorCount-b.majorCount)||(a.seat-b.seat)});
   var prevKey=null,prevRank=0;
   for(i=0;i<rows.length;i++){var key=matchTieKey(rows[i]);rows[i].rank=(i>0&&key===prevKey)?prevRank:(i+1);prevKey=key;prevRank=rows[i].rank}
   var champions=rows.filter(function(r){return r.rank===1}).map(function(r){return r.seat});
-  var out={rows:rows,champions:champions,champion:champions.length===1?champions[0]:null,tie:champions.length>1,handsPlayed:st.handIndex+1,bigHands:st.bigHandCount,rule:"LOWEST_TOTAL",tieRule:"TOTAL > WINS > BIG_WINS > FEWER_MAJOR; EXACT=TIE"};
+  var out={rows:rows,champions:champions,champion:champions.length===1?champions[0]:null,tie:champions.length>1,handsPlayed:st.handIndex+1,handsCounted:st.handCount,rule:"LOWEST_TOTAL",tieRule:"TOTAL > WINS > FEWER_MAJOR; EXACT=TIE"};
   st.matchFinal=out;return out;
 }
 function endHand(winner,reason,finishTile){
   st.winner=winner;st.handOver=true;st.turnState="WAIT";st.pending=null;
-  var wp=winner!=null?partnerOf(winner):-1,bigRules=isBigRules(st);st.endBreakdown=[];st.finishSpecial=finishSpecialMeta(winner,finishTile);
+  var wp=winner!=null?partnerOf(winner):-1,bigRules=false;st.endBreakdown=[];st.finishSpecial=finishSpecialMeta(winner,finishTile);
   st.endMajorPenalties=[];
   for(var i=0;i<4;i++){
     var P=st.players[i],prior=P.handPenalty||0,bd=endPenaltyBreakdown(P,i,winner,bigRules,prior,st.finishSpecial);
@@ -778,9 +778,9 @@ function endHand(winner,reason,finishTile){
   for(i=0;i<4;i++){st.players[i].totalPenalty+=st.players[i].handPenalty;st.players[i].score=st.players[i].totalPenalty}
   ev("FINISH",winner==null?-1:winner,{reason:reason,bigRules:bigRules,finishSpecial:st.finishSpecial,breakdown:st.endBreakdown});
   ev("HAND_END",-1,{hand:st.handIndex,type:st.handType});
-  if(st.handType==="BIG"){
-    st.bigHandCount++;ev("BIG_HAND_END",-1,{count:st.bigHandCount});
-    if(st.bigHandCount>=CFG.END_AFTER_BIG){st.gameFinished=true;var mf=buildMatchFinal();ev("GAME_END",-1,{matchFinal:mf})}
+  if(true){
+    st.handCount++;ev("HAND_COUNTED",-1,{count:st.handCount});
+    if(st.handCount>=CFG.END_AFTER_HANDS){st.gameFinished=true;var mf=buildMatchFinal();ev("GAME_END",-1,{matchFinal:mf})}
   }
   st.handIndex++;
   return{ok:true,winner:winner,reason:reason,handOver:true,finishSpecial:st.finishSpecial};
@@ -800,7 +800,7 @@ function forfeitHand(disconnectedSeat,context,eventHandIndex){
   if(hi!==st.handIndex)return{ok:false,err:"STALE_FORFEIT_HAND"};
   if(st.handOver)return{ok:false,err:"el aktif değil"};
   var losingTeam=teamIndexOfSeat(disconnectedSeat);if(losingTeam<0)return{ok:false,err:"INVALID_TEAMS"};
-  var winningTeam=losingTeam===0?1:0,losers=st.teams[losingTeam],winners=st.teams[winningTeam],bigRules=isBigRules(st);
+  var winningTeam=losingTeam===0?1:0,losers=st.teams[losingTeam],winners=st.teams[winningTeam],bigRules=false;
   if(!st.forfeitHistory)st.forfeitHistory={};st.forfeitHistory[hi]=true;
   st.winner=null;st.handOver=true;st.turnState="WAIT";st.pending=null;st.endBreakdown=[];st.finishSpecial=finishSpecialMeta(null,null);st.endMajorPenalties=[];
   /* Yalnız kaçan takımda yeni ELDE OKEY +500 oluşur. Rakibin mevcut defteri korunur fakat yeni kapanış cezası yaratılmaz. */
@@ -815,7 +815,7 @@ function forfeitHand(disconnectedSeat,context,eventHandIndex){
   for(i=0;i<4;i++){st.players[i].totalPenalty+=st.players[i].handPenalty;st.players[i].score=st.players[i].totalPenalty}
   ev("FORFEIT_HAND",disconnectedSeat,{hand:hi,losingTeam:losingTeam,winningTeam:winningTeam,bigRules:bigRules,breakdown:st.endBreakdown});
   ev("HAND_END",-1,{hand:st.handIndex,type:st.handType,reason:"FORFEIT"});
-  if(st.handType==="BIG"){st.bigHandCount++;ev("BIG_HAND_END",-1,{count:st.bigHandCount,reason:"FORFEIT"});if(st.bigHandCount>=CFG.END_AFTER_BIG){st.gameFinished=true;var mf=buildMatchFinal();ev("GAME_END",-1,{matchFinal:mf})}}
+  if(true){st.handCount++;ev("HAND_COUNTED",-1,{count:st.handCount,reason:"FORFEIT"});if(st.handCount>=CFG.END_AFTER_HANDS){st.gameFinished=true;var mf=buildMatchFinal();ev("GAME_END",-1,{matchFinal:mf})}}
   st.handIndex++;
   return{ok:true,winner:null,reason:"FORFEIT",handOver:true,losingTeam:losingTeam,winningTeam:winningTeam,hand:hi};
 }
