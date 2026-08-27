@@ -40,6 +40,8 @@ async function run(o){
   const rq=rafs.splice(0,rafs.length);for(const r of rq){try{r.fn()}catch(e){}}
   await null;await null;await null;
   if(!o.installed&&!lg.gated&&GT.classList.contains("on")){lg.gateShown=true;if(!o.gateReject){lg.gated=true;GT.fire("pointerup")}}
+  if(o.raceAt&&inj.rc&&!inj.rs&&now>=1e6+o.raceAt+300){inj.rs=1;lg.gofsRace=lg.gofs}
+  if(o.fsRetryAt&&!inj.rr&&now>=1e6+o.fsRetryAt){inj.rr=1;GT.fire('pointerup')}
   if(o.raceAt&&!inj.rc&&now>=1e6+o.raceAt){inj.rc=1;GT.fire("pointerup");W.fire("pointerdown");SN.fire("pointerup");GT.fire("pointerup");W.fire("pointerdown")}
   if(!lg.started&&V.classList.contains("on")){lg.started=true;
    if(o.skipAfter)setT(()=>SK.fire("pointerup"),o.skipAfter);
@@ -99,13 +101,20 @@ for(const [w,h,wide] of aspects){
 }
 for(const [w,h,wide] of aspects){for(const ms of [50,100,120]){
  let r=await run({w,h,fsPending:true,raceAt:ms,endAfter:900});n++;
- T("fs-race-pending-"+ms+"-"+w,r.gofs<=1&&r.out===1&&r.unboot===1&&r.fsflagNow===0);
+/* v188.4 kanonik: pending penceresi icinde duplicate istek 0; pencere kapaninca CTA retryable oldugundan YENI gercek gesture ile 1 retry mesrudur. */
+ T("fs-race-pending-"+ms+"-"+w,r.gofsRace===1&&r.gofs<=2&&r.out===1&&r.unboot===1&&r.fsflagNow===0);
 }}
 for(let k=0;k<6;k++){
  let r=await run({w:2400,h:1080,endAfter:250});n++;
  T("lifecycle-fit-"+k,r.out===1&&r.unboot===1&&r.fits>=1&&r.gofs<=1);
  r=await run({w:1080,h:2400,endAfter:250});n++;
  T("portre-cihaz-orani-"+k,r.started&&r.out===1&&WID.test(r.srcs[0])&&r.gofs<=1);
+}
+for(const [w,h,wide] of aspects){
+ let r=await run({w,h,fsPending:true,fsRetryAt:2000,endAfter:2600});n++;
+ T("fs-red-sonrasi-yeni-gesture-retry-"+w,r.gofs>=2&&r.out===1&&r.unboot===1);
+ r=await run({w,h,endAfter:400});n++;
+ T("fs-basari-sonrasi-tek-istek-"+w,r.gofs===1&&r.out===1);
 }
 console.log("v188-runtime: "+P+" PASS "+F+" FAIL / run="+n);
 if(F)console.log("FAILS "+fails.join(" | "));
