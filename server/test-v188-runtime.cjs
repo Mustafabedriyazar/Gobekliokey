@@ -74,6 +74,13 @@ for(const ar of [1.94,1.95,1.96]){for(let k=0;k<5;k++){
  const exp=(ar>=1.95)?WID:STD;
  T("esik-"+ar+"-"+k,exp.test(r.srcs[0])&&r.srcs.length===1&&r.wide===(ar>=1.95));
 }}
+// v188.2 race: erken kullanici gesture (autoplay reddi cozulmeden) crash/cift play/cift goFS/stuck mute/cift teardown uretmemeli
+for(const [w,h,wide] of aspects){for(const ms of [50,100,120]){
+ let r=await run({w,h,autoplayReject:true,unmuteAfter:ms,endAfter:900});n++;
+ T("race-unmute-"+ms+"-"+w,r.started&&r.out===1&&r.unboot===1&&r.gofs<=1&&r.fsflagNow===0&&r.muted===false&&r.play<=2);
+ r=await run({w,h,skipAfter:ms});n++;
+ T("race-skip-"+ms+"-"+w,r.out===1&&r.unboot===1&&r.gofs<=1&&r.fsflagNow===0&&r.srcs.length<=2);
+}}
 console.log("v188-runtime: "+P+" PASS "+F+" FAIL / run="+n);
 if(F)console.log("FAILS "+fails.join(" | "));
 process.exit(F?1:0);
