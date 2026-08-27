@@ -32,4 +32,6 @@ T("s17-tek-fit-motoru",(H.match(/function fitStage\(/g)||[]).length===1);
 T("s18-timeout-fs-denemez",/if\(!gateDone&&!done\)ok17Gate\(false\)/.test(gseg)&&(gseg.match(/ok17Gate\(true\)/g)||[]).length===2&&/if\(ug===true\)ok17GestureFS\(\)/.test(gseg));
 T("s19-fullscreenElement-guard",/if\(document\.fullscreenElement\|\|document\.webkitFullscreenElement\)return/.test(gseg));
 T("s20-senkron-latch",/var fsTried=false;/.test(gseg)&&/\|\|fsTried\)return;/.test(gseg)&&/fsTried=true;try\{window\.__OK17FSOK=1/.test(gseg));
+T('s21-tek-boot-ve-release-authority',(H.match(/classList\.add\(.ok17boot.\)/g)||[]).length===1&&(H.match(/classList\.remove\(.ok17boot.\)/g)||[]).length===1&&(H.match(/id="ok17gate"/g)||[]).length===1&&(H.match(/function teardown\(\)/g)||[]).length===1);
+T('s22-gate-shell-icinde-dogru-sira',H.indexOf('id="ok17gate"')>shell&&H.indexOf('id="ok17gate"')<H.indexOf('id="ok17skip"')&&H.indexOf('id="ok17skip"')<se);
 console.log("v188-startup: "+t+" PASS "+f+" FAIL");process.exit(f?1:0);

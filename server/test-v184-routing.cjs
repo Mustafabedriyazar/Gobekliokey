@@ -20,7 +20,11 @@ T('P1-dm',cnt(t,"FS.dm===1){fsOk=true;return false}")===1);
 T('P2-edge',cnt(t,"ev.clientY<=24){FS.edgeAt=Date.now();return}")===1);
 T('P3-sys',cnt(t,"(Date.now()-(FS.edgeAt||0)<2500)||")===1);
 T('P4-vps',cnt(t,'vpSync._q')>=2&&(cnt(bj,'vpSync._q')===0||cnt(bj,'vpSync._q')>=2));
-T('P5-boot',cnt(t,'setTimeout(fitSoon,300)')===1&&cnt(t,'setTimeout(fitSoon,900)')===1);
+/* v188.3: fit zamanlamalari SAHIPLIK BLOGU icinde dogrulanir; production timing degistirilmez. */
+const bootI=t.indexOf('window.addEventListener("resize",fitSoon)');const bootSeg=bootI>=0?t.slice(bootI,bootI+320):'';
+const shI=t.indexOf('<div id="ok17iw"');const shE=t.indexOf('<!--OK17INTRO-V188-SON-->');const introSeg=(shI>=0&&shE>shI)?t.slice(shI,shE):'';
+T('P5-boot',bootSeg.length>0&&cnt(bootSeg,'setTimeout(fitSoon,300)')===1&&cnt(bootSeg,'setTimeout(fitSoon,900)')===1&&cnt(t,'function fitStage(')===1);
+T('P5b-intro-teardown-lifecycle',introSeg.length>0&&cnt(introSeg,'fitSoon();setTimeout(fitSoon,260);setTimeout(fitSoon,900)')===1&&cnt(introSeg,'setTimeout(fitSoon,300)')===0);
 const goT=fx(t,'function goFS(');
 T('goFS-src',!!goT&&goT.indexOf('requestFullscreen')>=0&&goT.indexOf('orientation.lock')>=0);
 const fsT=fx(t,'function fsTry(){');T('fsT-src',!!fsT);
