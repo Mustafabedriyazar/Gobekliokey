@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs');
 const path=require('path');
-const FILES={'/media/intro-v188.mp4':{file:path.join(__dirname,'..','media','intro-v188.mp4'),type:'video/mp4'},'/media/intro-bg-v188.jpg':{file:path.join(__dirname,'..','media','intro-bg-v188.jpg'),type:'image/jpeg'}};
+const FILES={'/media/intro-v188.mp4':{file:path.join(__dirname,'..','media','intro-v188.mp4'),type:'video/mp4'},'/media/intro-bg-v188.jpg':{file:path.join(__dirname,'..','media','intro-bg-v188.jpg'),type:'image/jpeg'},'/media/intro-wide-v188.mp4':{file:path.join(__dirname,'..','media','intro-wide-v188.mp4'),type:'video/mp4'}};
 function mediaRoute(req,res){
   const u=String((req&&req.url)||'').split('?')[0];
   const ent=FILES[u];

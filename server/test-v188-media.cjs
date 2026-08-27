@@ -24,5 +24,7 @@ const g=await run('HEAD','/media/intro-v188.mp4','bytes=0-9');T('m6-head-206-gov
 const h=await run('POST','/media/intro-v188.mp4');T('m7-405',h.code===405);
 const i=mediaRoute({method:'GET',url:'/baska',headers:{}},null);T('m8-passthrough',i===false);
 const j=await run('GET','/media/intro-bg-v188.jpg');T('m9-backdrop-200',j.code===200&&j.len>0&&j.hdr['Content-Type']==='image/jpeg');
+const w1=await run('GET','/media/intro-wide-v188.mp4','bytes=0-99');T('m10-wide-206',w1.code===206&&w1.len===100);
+const w2=await run('HEAD','/media/intro-wide-v188.mp4');T('m11-wide-head',w2.code===200&&w2.hdr['Accept-Ranges']==='bytes'&&w2.hdr['Content-Type']==='video/mp4');
 console.log('v188-media: '+t+' PASS '+f+' FAIL');process.exit(f?1:0);
 })();
