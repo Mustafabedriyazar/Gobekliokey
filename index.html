@@ -1890,7 +1890,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
   <button id="rbProcess" class="rbtn cmd3d rproc" style="left:744px;top:652px;width:134px;height:72px"><span class="cmdMain">İŞLE</span><span class="cmdSub">YEDİR</span><b id="procBadge">0</b></button>
   <button id="rbFinish" class="rbtn cmd3d rfinish" style="left:890px;top:652px;width:134px;height:72px"><span class="cmdMain">BİTİR</span><span class="cmdSub" id="finishSub">KİLİTLİ</span></button>
   <div id="elTgl" style="left:1060px;top:652px;width:150px;height:72px">
-    <div class="eo on" id="elBig"><i class="crn"></i>Büyük El</div>
+    <div class="eo" id="elBigRemoved" style="display:none"></div>
     <div class="eo" id="elNrm"><i class="rdo"></i>Normal El</div>
   </div>
   <div id="skorp" style="left:1234px;top:654px;width:168px;height:67px">
@@ -1984,7 +1984,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
     <div class="lrMetal"></div>
     <div class="lrHead">
       <button id="lrBackBtn" type="button" class="lrBack" aria-label="Geri">← GERİ</button>
-      <div class="lrHeadText"><b>CANLI RAPOR</b><span id="lrSub">EL 1 · BÜYÜK EL · TUR 1</span></div>
+      <div class="lrHeadText"><b>CANLI RAPOR</b><span id="lrSub">EL 1</span></div>
       <button id="lrCloseBtn" type="button" class="lrClose" aria-label="Kapat">×</button>
     </div>
     <div id="lrRows" class="lrRows" aria-live="polite"></div>
@@ -4227,7 +4227,7 @@ function fmtChip(n){n=Math.round(+n||0);var neg=n<0;var s=Math.abs(n).toString()
 function fmtSigned(n){n=Math.round(+n||0);return(n>0?'+':'')+fmtChip(n)}
 function ownOutcomeTone(rep){return rep&&rep.resultClass==='win'?'winfare':(rep&&rep.resultClass==='safe'?'handbell':'losefare')}
 function statusPackFor(seat,winner){if(winner==null)return{text:'EL KAPANDI',cls:'loss'};if(seat===winner)return{text:'KAZANDI',cls:'win'};if(seat===uiPartnerOf(winner))return{text:'ORTAK GÜVENDE',cls:'safe'};return{text:'CEZA ALDI',cls:'loss'}}
-function calcSeatChipDelta(seat,winner){var st=E.st,P=st.players[seat],handType=st.handType,totalOpp=0;for(var i=0;i<4;i++)if(i!==seat)totalOpp+=st.players[i].handPenalty||0;var base=Math.max(350,(P.handPenalty||0)*18);if(winner==null)return -base; if(seat===winner)return Math.max(900,totalOpp*16+(handType==='BIG'?500:180)); if(seat===uiPartnerOf(winner))return Math.max(280,totalOpp*7); return -Math.max(500,(P.handPenalty||0)*22+(handType==='BIG'?220:0))}
+function calcSeatChipDelta(seat,winner){var st=E.st,P=st.players[seat],totalOpp=0;for(var i=0;i<4;i++)if(i!==seat)totalOpp+=st.players[i].handPenalty||0;var base=Math.max(350,(P.handPenalty||0)*18);if(winner==null)return -base; if(seat===winner)return Math.max(900,totalOpp*16+180); if(seat===uiPartnerOf(winner))return Math.max(280,totalOpp*7); return -Math.max(500,(P.handPenalty||0)*22)}
 function updateEconomyUI(delta){var b=document.getElementById('bankV'),g=document.getElementById('gemsV'),ec=document.getElementById('eoChips');if(b){b.textContent=fmtChip(META.chips);if(delta!=null){b.classList.remove('eoChipFlash');void b.offsetWidth;b.classList.add('eoChipFlash')}}if(g)g.textContent=fmtChip(META.gems);if(ec)ec.textContent=fmtChip(META.chips)}
 function buildEndReport(res){
   var st=E.st,me=st.players[HSEAT],winner=st.winner,endKey=(Math.max(0,(st.handIndex|0)-1))+'|'+(winner==null?'D':winner)+'|'+st.players.map(function(p){return p.totalPenalty||0}).join(',')+'|'+(st.gameFinished?'F':'H');
@@ -5271,6 +5271,7 @@ function updUI(){
     eb.innerHTML='<i class="crn"></i>Büyük El '+Math.min(stt.bigHandCount+(stt.handType==="BIG"&&!stt.handOver?1:0),E.CFG.END_AFTER_BIG)+"/"+E.CFG.END_AFTER_BIG}
   if(en){en.classList.toggle("on",stt.handType!=="BIG");
     en.innerHTML='<i class="rdo"></i>'+(stt.handOver?"El bitti":(my?"SIRA SENDE":"Sıra: "+SEATN[stt.turnIndex]))}
+try{var _eo=document.getElementById('endOverlay');if(stt.handOver&&_eo&&!_eo.classList.contains('on')&&!window.__g17EndAuto){window.__g17EndAuto=1;setTimeout(function(){window.__g17EndAuto=0;try{handEndUI(null)}catch(e){}},120)}}catch(e){}
   var sv=document.getElementById("skV");if(sv)sv.textContent=me.totalPenalty;
   var cz=document.getElementById("czV");if(cz)cz.textContent=me.handPenalty;
   updateEconomyUI();
@@ -5306,6 +5307,7 @@ function doDraw(){
   }
   var r=E.draw(HSEAT);
   if(!r.ok){toast(r.err);buzz(4);if(r.ended)handEndUI(r.ended);else updUI();return}
+  if(r.handOver||r.deckEmpty||r.ended){buzz(4);window.__g17EndAuto=1;handEndUI(r.ended||r);setTimeout(function(){window.__g17EndAuto=0},400);return}
   var t=spawnEng(r.tile);placeNew(t);
   layoutRacks();
   var dp=dealDeckPoint();
@@ -5542,7 +5544,7 @@ function handEndUI(res){
   var w=E.st.winner,msg,rep=null;
   try{rep=buildEndReport(res)}catch(ex){dlog("END_REPORT_FAIL",ex&&ex.stack||ex);rep={winner:w,rows:[],myDelta:0,myHand:E.st.players[HSEAT].handPenalty||0,myTotal:E.st.players[HSEAT].totalPenalty||0,handType:E.st.handType,handNo:E.st.handIndex,resultClass:w===HSEAT?"win":"loss",title:w===HSEAT?"KAZANDIN":"EL BİTTİ",sub:"El motoru başarıyla kapandı; rapor katmanı güvenli moda geçti.",gameFinished:!!E.st.gameFinished}}
   if(w==null)msg="Deste bitti — el kapandı";
-  else if(w===HSEAT)msg="KAZANDIN! ("+(E.st.handType==="BIG"?"Büyük":"Normal")+" el)";
+  else if(w===HSEAT)msg="KAZANDIN!";
   else if(w===uiPartnerOf(HSEAT))msg=SEATN[w]+" eli bitirdi — ortak kazandı";
   else msg=SEATN[w]+" eli bitirdi";
   /* v160: endMajorPenalties remain in the end report; no transient penalty overlay may cover the report. */
