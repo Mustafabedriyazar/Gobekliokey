@@ -2,6 +2,7 @@
 const fs=require('fs');
 const path=require('path');
 const FILES={'/media/intro-v188.mp4':{file:path.join(__dirname,'..','media','intro-v188.mp4'),type:'video/mp4'},'/media/intro-bg-v188.jpg':{file:path.join(__dirname,'..','media','intro-bg-v188.jpg'),type:'image/jpeg'},'/media/intro-wide-v1883.mp4':{file:path.join(__dirname,'..','media','intro-wide-v1883.mp4'),type:'video/mp4'}};
+function diagRoute(req,res){  const u=String((req&&req.url)||'').split('?')[0];  if(u!=='/v1/diag')return false;  if(req.method!=='POST'){res.writeHead(405,{'Allow':'POST'});res.end();return true;}  let b='';  req.on('data',function(c){if(b.length<8000)b+=c});  req.on('end',function(){    try{const j=JSON.parse(b||'{}');const safe={};      const ALLOW=['ev','t','fsEl','fsReq','fsErrName','fsErrMsg','fsChange','fsError','ua','iw','ih','vvw','vvh','dpr','ar','src','vw','vh','rs','ns','errc','wide','fit','ori','lock','dm','fsFail','fsUserExit'];      for(const k of ALLOW){if(j[k]!==undefined)safe[k]=(typeof j[k]==='string')?String(j[k]).slice(0,120):j[k]}      console.log('[DIAG] '+JSON.stringify(safe));    }catch(e){console.log('[DIAG] parse-error')}    res.writeHead(204);res.end();  });  return true;}
 function mediaRoute(req,res){
   const u=String((req&&req.url)||'').split('?')[0];
   const ent=FILES[u];
@@ -34,4 +35,4 @@ function mediaRoute(req,res){
   fs.createReadStream(ent.file).on('error',function(){try{res.destroy()}catch(_e){}}).pipe(res);
   return true;
 }
-module.exports={mediaRoute};
+module.exports={mediaRoute,diagRoute};
