@@ -15,7 +15,7 @@
 .ok17pill{position:absolute;z-index:2;padding:9px 16px;border-radius:999px;border:1px solid rgba(243,207,122,.55);background:rgba(20,8,38,.72);color:#f0e2c0;font:600 13px/1 Georgia,serif;letter-spacing:.18em;opacity:0;transition:opacity .3s ease;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .ok17pill.on{opacity:1}
 #ok17skip{top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right))}
-#ok17snd{bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
+#ok17snd{bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}#ok17gate{bottom:22%;left:50%;transform:translateX(-50%);padding:13px 26px;font-size:14px;letter-spacing:.2em;background:rgba(28,12,50,.9);border-color:rgba(243,207,122,.8)}
 html.ok17boot,html.ok17boot body{background:#0c0517!important;overflow:hidden!important}html.ok17boot body>*:not(#ok17iw){visibility:hidden!important}html.ok17boot #ok17iw{visibility:visible!important}</style><script>(function(){try{document.documentElement.classList.add('ok17boot')}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -1683,24 +1683,25 @@ body.meld-holding .tr.mld{touch-action:none}
 </head>
 <body><div id="ok17iw" class="ind"><div id="ok17bg"></div><div class="lp"><div class="ring" id="ok17ring"></div><div class="lt" id="ok17lt">YÜKLENİYOR</div><div class="ls" id="ok17ls">OKEY 17</div></div>
 <video id="ok17vid" playsinline webkit-playsinline preload="auto"></video>
-<div class="ok17pill" id="ok17skip">GEÇ ▸</div><div class="ok17pill" id="ok17snd">🔊 SESİ AÇ</div></div>
+<div class="ok17pill" id="ok17gate">TAM EKRANDA BAŞLAT</div><div class="ok17pill" id="ok17skip">GEÇ ▸</div><div class="ok17pill" id="ok17snd">🔊 SESİ AÇ</div></div>
 <script>
 (function(){
 'use strict';
 if(window.__OK17INTRO)return;window.__OK17INTRO=1;
-var W=document.getElementById('ok17iw'),V=document.getElementById('ok17vid'),RG=document.getElementById('ok17ring'),LT=document.getElementById('ok17lt'),LS=document.getElementById('ok17ls'),SK=document.getElementById('ok17skip'),SN=document.getElementById('ok17snd');
+var GT=document.getElementById('ok17gate'),W=document.getElementById('ok17iw'),V=document.getElementById('ok17vid'),RG=document.getElementById('ok17ring'),LT=document.getElementById('ok17lt'),LS=document.getElementById('ok17ls'),SK=document.getElementById('ok17skip'),SN=document.getElementById('ok17snd');
 if(!W||!V)return;
-var STD='/media/intro-v188.mp4?v=188',WIDE='/media/intro-wide-v188.mp4?v=1882';function ok17Aspect(){try{var a=window.innerWidth,b=window.innerHeight;if(!a||!b)return 16/9;return Math.max(a,b)/Math.min(a,b)}catch(e){return 16/9}}function ok17Pick(ar){return (ar>=1.95)?WIDE:STD}var isWide=(ok17Pick(ok17Aspect())===WIDE),fbUsed=false;var SRC=isWide?WIDE:STD;function ok17Installed(){try{return !!(window.matchMedia&&(matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches))}catch(e){return false}}function ok17GestureFS(){if(done||ok17Installed())return;try{window.__OK17FSOK=1;if(typeof goFS==='function')goFS()}catch(e){}finally{window.__OK17FSOK=0}}try{window.__OK17PICK=ok17Pick}catch(e){}var BG=document.getElementById('ok17bg');if(BG){var bi=new Image();bi.onload=function(){try{BG.classList.add('on')}catch(e){}};bi.src='/media/intro-bg-v188.jpg';}
+var STD='/media/intro-v188.mp4?v=188',WIDE='/media/intro-wide-v1883.mp4?v=1883';function ok17Aspect(){try{var a=window.innerWidth,b=window.innerHeight;if(!a||!b)return 16/9;return Math.max(a,b)/Math.min(a,b)}catch(e){return 16/9}}function ok17Pick(ar){return (ar>=1.95)?WIDE:STD}var isWide=(ok17Pick(ok17Aspect())===WIDE),fbUsed=false;var SRC=isWide?WIDE:STD;function ok17Installed(){try{return !!(window.matchMedia&&(matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches))}catch(e){return false}}var fsTried=false;function ok17GestureFS(){if(done||ok17Installed()||fsTried)return;try{if(document.fullscreenElement||document.webkitFullscreenElement)return}catch(e){}fsTried=true;try{window.__OK17FSOK=1;if(typeof goFS==='function')goFS()}catch(e){}finally{window.__OK17FSOK=0}}var gateNeed=!ok17Installed(),gateDone=!gateNeed;function ok17Gate(ug){if(gateDone||done)return;gateDone=true;try{GT&&GT.classList.remove('on')}catch(e){}if(ug===true)ok17GestureFS();tick()}try{window.__OK17PICK=ok17Pick}catch(e){}var BG=document.getElementById('ok17bg');if(BG){var bi=new Image();bi.onload=function(){try{BG.classList.add('on')}catch(e){}};bi.src='/media/intro-bg-v188.jpg';}
 var done=false,started=false,timers=[],ang=0,indRAF=0;
 var t0=Date.now(),deadline=t0+15000,HARD=t0+45000,lastBuf=0,lastGrow=t0;
 function tm(fn,ms){var id=setTimeout(fn,ms);timers.push(id);return id}
 function bufEnd(){try{var b=V.buffered;return b&&b.length?b.end(b.length-1):0}catch(e){return 0}}
 function teardown(){if(done)return;done=true;
- try{V.pause()}catch(e){}
- try{V.removeAttribute('src');V.load()}catch(e){}
+ setTimeout(function(){try{V.pause()}catch(e){}try{V.removeAttribute('src');V.load()}catch(e){}},470);
  for(var i=0;i<timers.length;i++)clearTimeout(timers[i]);
  if(indRAF)cancelAnimationFrame(indRAF);
+ try{if(BG){BG.style.opacity='0';BG.style.background='transparent'}}catch(e){}
  try{document.documentElement.classList.remove('ok17boot')}catch(e){}
+ try{if(typeof fitSoon==='function'){fitSoon();setTimeout(fitSoon,260);setTimeout(fitSoon,900)}}catch(e){}
  W.classList.add('out');
  setTimeout(function(){try{W.remove()}catch(e){}},460);
  window.__OK17INTRO_DONE=1;
@@ -1709,18 +1710,20 @@ function teardown(){if(done)return;done=true;
 function spinInd(){if(done||started||!W.classList.contains('ind'))return;ang=(ang+4.6)%360;W.style.setProperty('--a',ang+'deg');indRAF=requestAnimationFrame(spinInd)}
 spinInd();
 function setPct(p){p=Math.max(0,Math.min(1,p));W.classList.remove('ind');RG.style.setProperty('--p',(p*100).toFixed(1)+'%');LT.textContent='OYNATMA HAZIRLIĞI';LS.textContent='%'+Math.floor(p*100)}
-var poll=setInterval(function(){
+function tick(){if(done||started)return;pollFn()}
+var pollFn=function(){
  if(done||started){clearInterval(poll);return}
  var now=Date.now(),be=bufEnd();
  if(be>lastBuf+0.35){lastBuf=be;lastGrow=now;if(now>deadline-6000)deadline=Math.min(HARD,now+6000)}
  var d=V.duration,hasD=(isFinite(d)&&d>0);
  if(V.readyState>=1&&hasD)setPct(be/d);
+ if(!gateDone){if(GT&&!GT.classList.contains('on'))GT.classList.add('on');return}
  var gateA=(V.readyState>=4);
  var gateB=(V.readyState>=3&&hasD&&be>=Math.min(d-0.05,5.5));
  if(hasD&&(gateA||gateB)){clearInterval(poll);start()}
  else if(now>deadline&&now-lastGrow>8000){clearInterval(poll);teardown()}
  else if(now>HARD){clearInterval(poll);teardown()}
-},120);
+};var poll=setInterval(pollFn,120);
 function start(){if(started||done)return;started=true;
  var lp=W.querySelector('.lp');if(lp)lp.style.opacity='0';
  if(isWide)V.classList.add('wide');
@@ -1733,6 +1736,9 @@ function start(){if(started||done)return;started=true;
    tm(function(){if(!done&&V.readyState<3&&Date.now()-w0>=2400)teardown()},2600)});
 }
 ['pointerdown','pointerup','click','touchstart','touchend'].forEach(function(ev){W.addEventListener(ev,function(e){e.stopPropagation()},false)});
+if(GT){GT.addEventListener('pointerup',function(e){e.preventDefault();e.stopPropagation();ok17Gate(true)})}
+W.addEventListener('pointerdown',function(){if(!gateDone)ok17Gate(true)},true);
+setTimeout(function(){if(!gateDone&&!done)ok17Gate(false)},20000);
 V.addEventListener('ended',teardown);
 V.addEventListener('error',function(){if(!fbUsed&&SRC===WIDE&&!done){fbUsed=true;SRC=STD;isWide=false;try{V.classList.remove('wide');V.src=STD;V.load()}catch(e){teardown()}return}teardown()});
 SK.addEventListener('pointerup',function(e){e.preventDefault();ok17GestureFS();teardown()});
@@ -5797,7 +5803,7 @@ function fitSoon(){
   },180);
 }
 window.addEventListener("resize",fitSoon);setTimeout(fitSoon,300);setTimeout(fitSoon,900);
-window.addEventListener("orientationchange",fitSoon);
+window.addEventListener("orientationchange",fitSoon);window.addEventListener("orientationchange",function(){setTimeout(fitSoon,420);setTimeout(fitSoon,1200)});
 if(screen.orientation&&screen.orientation.addEventListener){screen.orientation.addEventListener("change",fitSoon)}
 if(window.visualViewport){window.visualViewport.addEventListener("resize",fitSoon)}
 /* ---- ANDROID NATIVE-GESTURE LOCK v111 ----

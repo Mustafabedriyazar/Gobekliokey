@@ -22,5 +22,14 @@ T("s12-fullscreen-kalici-yol-duruyor",/d\.requestFullscreen\|\|d\.webkitRequestF
 // v188.2 kanonik: intro dogrudan requestFullscreen/orientation.lock cagirmaz; mevcut goFS() yolunu YALNIZ gercek gesture icinde tek-seferlik bypass ile kullanir.
 const tdi=H.indexOf("function teardown(){",shell);const tdSeg=H.slice(tdi,tdi+700);
 const gcalls=(bodySeg.match(/ok17GestureFS\(\)/g)||[]).length;
-T("s8-fullscreen-yalniz-gesture",bodySeg.indexOf("requestFullscreen")<0&&bodySeg.indexOf("orientation.lock")<0&&(bodySeg.match(/goFS\(\)/g)||[]).length===1&&/function ok17GestureFS\(\)\{/.test(bodySeg)&&gcalls===4&&tdSeg.indexOf("GestureFS")<0&&bodySeg.indexOf("finally{window.__OK17FSOK=0}")>0&&bodySeg.indexOf("ok17Installed()")>0);
+T("s8-fullscreen-yalniz-gesture",bodySeg.indexOf("requestFullscreen")<0&&bodySeg.indexOf("orientation.lock")<0&&(bodySeg.match(/goFS\(\)/g)||[]).length===1&&/function ok17GestureFS\(\)\{/.test(bodySeg)&&gcalls===5&&tdSeg.indexOf("GestureFS")<0&&bodySeg.indexOf("finally{window.__OK17FSOK=0}")>0&&bodySeg.indexOf("ok17Installed()")>0);
+const gseg=bodySeg;
+T("s13-gate-installed-skip",gseg.indexOf("TAM EKRANDA")>0&&gseg.indexOf("var gateNeed=!ok17Installed()")>0);
+T("s14-teardown-bg-once-video-sonra",/setTimeout\(function\(\)\{try\{V\.pause\(\)\}catch\(e\)\{\}try\{V\.removeAttribute/.test(gseg)&&gseg.indexOf("BG.style.opacity='0'")>0);
+T("s15-teardown-fitSoon",/typeof fitSoon===.function.\)\{fitSoon\(\);setTimeout\(fitSoon,260\);setTimeout\(fitSoon,900\)/.test(gseg));
+T("s16-orientation-refit",/orientationchange.,function\(\)\{setTimeout\(fitSoon,420\);setTimeout\(fitSoon,1200\)/.test(H));
+T("s17-tek-fit-motoru",(H.match(/function fitStage\(/g)||[]).length===1);
+T("s18-timeout-fs-denemez",/if\(!gateDone&&!done\)ok17Gate\(false\)/.test(gseg)&&(gseg.match(/ok17Gate\(true\)/g)||[]).length===2&&/if\(ug===true\)ok17GestureFS\(\)/.test(gseg));
+T("s19-fullscreenElement-guard",/if\(document\.fullscreenElement\|\|document\.webkitFullscreenElement\)return/.test(gseg));
+T("s20-senkron-latch",/var fsTried=false;/.test(gseg)&&/\|\|fsTried\)return;/.test(gseg)&&/fsTried=true;try\{window\.__OK17FSOK=1/.test(gseg));
 console.log("v188-startup: "+t+" PASS "+f+" FAIL");process.exit(f?1:0);
