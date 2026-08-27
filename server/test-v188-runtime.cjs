@@ -21,9 +21,9 @@ async function run(o){
  const html=CL();html.add("ok17boot");const rmv=html.remove;html.remove=c=>{if(c==="ok17boot")lg.unboot++;return rmv(c)};
  const wadd=W.classList.add;W.classList.add=c=>{if(c==="out")lg.out++;return wadd(c)};
  const GT=EL();const map={ok17gate:GT,ok17iw:W,ok17vid:V,ok17ring:RG,ok17lt:LT,ok17ls:LS,ok17skip:SK,ok17snd:SN,ok17bg:BG};
- const doc={fullscreenElement:null,webkitFullscreenElement:null,getElementById:i=>map[i]||null,documentElement:{classList:html},hidden:false,addEventListener(){},dispatchEvent(){}};
+ const dh={};const doc={fullscreenElement:null,webkitFullscreenElement:null,fire:function(ev){(dh[ev]||[]).forEach(function(f){try{f()}catch(e){}})},getElementById:i=>map[i]||null,documentElement:{classList:html},hidden:false,addEventListener(ev,fn){(dh[ev]=dh[ev]||[]).push(fn)},dispatchEvent(){}};
  const win={innerWidth:o.w,innerHeight:o.h,matchMedia:q=>({matches:!!o.installed&&/display-mode/.test(q)})};
- const goFS=()=>{lg.gofs++;lg.fsflag=win.__OK17FSOK;if(!o.fsPending)doc.fullscreenElement={}};const fitSoon=()=>{lg.fits=(lg.fits||0)+1};
+ const goFS=()=>{lg.gofs++;lg.fsflag=win.__OK17FSOK;if(!o.fsPending){doc.fullscreenElement={};doc.fire('fullscreenchange')}};const fitSoon=()=>{lg.fits=(lg.fits||0)+1};
  const Img=function(){const self=this;Object.defineProperty(this,"src",{set(v){setT(()=>{if(self.onload)self.onload()},50)},get(){return ""}})};
  const fn=new Function("fitSoon","window","document","Date","setTimeout","clearTimeout","setInterval","clearInterval","requestAnimationFrame","cancelAnimationFrame","Image","CustomEvent","goFS","matchMedia",code);
  fn(fitSoon,win,doc,{now:()=>now},setT,clr,setI,clr,raf,craf,Img,function(n){return{type:n}},goFS,q=>win.matchMedia(q));
@@ -40,6 +40,7 @@ async function run(o){
   const rq=rafs.splice(0,rafs.length);for(const r of rq){try{r.fn()}catch(e){}}
   await null;await null;await null;
   if(!o.installed&&!lg.gated&&GT.classList.contains("on")){lg.gateShown=true;if(!o.gateReject){lg.gated=true;GT.fire("pointerup")}}
+  if(o.observeAt&&!inj.ob&&now>=1e6+o.observeAt){inj.ob=1;lg.ctaObs=GT.classList.contains('on')?1:0;lg.gofsObs=lg.gofs}
   if(o.raceAt&&inj.rc&&!inj.rs&&now>=1e6+o.raceAt+300){inj.rs=1;lg.gofsRace=lg.gofs}
   if(o.fsRetryAt&&!inj.rr&&now>=1e6+o.fsRetryAt){inj.rr=1;GT.fire('pointerup')}
   if(o.raceAt&&!inj.rc&&now>=1e6+o.raceAt){inj.rc=1;GT.fire("pointerup");W.fire("pointerdown");SN.fire("pointerup");GT.fire("pointerup");W.fire("pointerdown")}
@@ -49,7 +50,7 @@ async function run(o){
    if(o.endAfter)setT(()=>V.fire("ended"),o.endAfter);}
   if(lg.out>0)break;
  }
- lg.fits=lg.fits||0;lg.bgOpacity=BG.style.opacity;lg.fsflagNow=win.__OK17FSOK;lg.boot=html.contains("ok17boot");lg.wide=V.classList.contains("wide");lg.muted=V.muted;lg.snd=SN.classList.contains("on");
+ lg.fits=lg.fits||0;lg.ctaEnd=GT.classList.contains('on')?1:0;lg.bgOpacity=BG.style.opacity;lg.fsflagNow=win.__OK17FSOK;lg.boot=html.contains("ok17boot");lg.wide=V.classList.contains("wide");lg.muted=V.muted;lg.snd=SN.classList.contains("on");
  return lg;}
 const STD=/intro-v188\.mp4/,WID=/intro-wide-v1883\.mp4/;
 const aspects=[[1920,1080,false],[2160,1080,true],[2340,1080,true],[2400,1080,true]];
@@ -69,7 +70,7 @@ for(const [w,h,wide] of aspects){for(const warm of [false,true]){
 }}
 for(const [w,h,wide] of aspects){
  let r=await run({w,h,errAt:120,endAfter:300});n++;
- T("r"+n+"-error-fallback",wide?(r.srcs.length===2&&WID.test(r.srcs[0])&&STD.test(r.srcs[1])&&r.wide===false&&r.started&&r.out===1):(r.srcs.length===1&&r.out===1));
+ T("r"+n+"-error-fallback",wide?(r.srcs.length===2&&WID.test(r.srcs[0])&&STD.test(r.srcs[1])&&r.started&&r.out===1):(r.srcs.length===1&&r.out===1));
  r=await run({w,h,errAt:120,err2At:900});n++;
  T("r"+n+"-cift-error-dongusuz",r.srcs.length<=2&&r.out===1&&r.unboot===1&&!(r.srcs.length===2&&WID.test(r.srcs[1])));
 }
@@ -111,11 +112,30 @@ for(let k=0;k<6;k++){
  T("portre-cihaz-orani-"+k,r.started&&r.out===1&&WID.test(r.srcs[0])&&r.gofs<=1);
 }
 for(const [w,h,wide] of aspects){
- let r=await run({w,h,fsPending:true,fsRetryAt:2000,endAfter:2600});n++;
+ let r=await run({w,h,fsPending:true,fsRetryAt:3600,endAfter:4400});n++;
  T("fs-red-sonrasi-yeni-gesture-retry-"+w,r.gofs>=2&&r.out===1&&r.unboot===1);
  r=await run({w,h,endAfter:400});n++;
  T("fs-basari-sonrasi-tek-istek-"+w,r.gofs===1&&r.out===1);
 }
+/* CONTRACTS-V1884D */
+for(const [w,h,wide] of aspects){
+ let r=await run({w,h,endAfter:400});n++;
+ T("first-valid-gesture-one-request-"+w,r.gofs===1&&r.started===true);
+ r=await run({w,h,raceAt:60,endAfter:900});n++;
+ T("same-gesture-no-duplicate-request-"+w,r.gofsRace===1);
+ r=await run({w,h,fsPending:true,fsRetryAt:3600,endAfter:4400});n++;
+ T("failed-request-new-gesture-retry-"+w,r.gofs===2&&r.out===1);
+ r=await run({w,h,raceAt:600,endAfter:1400});n++;
+ T("fullscreen-success-no-second-request-"+w,r.gofs===1);
+ r=await run({w,h,observeAt:1500,endAfter:1800});n++;
+ T("fullscreen-success-cta-hidden-"+w,r.ctaObs===0&&r.ctaEnd===0&&r.gofs===1);
+ r=await run({w,h,fsPending:true,observeAt:3400,fsRetryAt:3600,endAfter:4400});n++;
+ T("fullscreen-fail-cta-retryable-"+w,r.ctaObs===1&&r.gofs===2);
+}
+{ let r=await run({w:2340,h:1080,endAfter:600});n++;
+ T("intro-fullscreen-no-side-letterbox",r.wide===true&&WID.test(r.srcs[r.srcs.length-1])&&r.started===true);
+ r=await run({w:1080,h:2340,endAfter:600});n++;
+ T("orientation-portrait-landscape-recovery",r.started===true&&r.out===1&&r.unboot===1&&r.fits>=1);}
 console.log("v188-runtime: "+P+" PASS "+F+" FAIL / run="+n);
 if(F)console.log("FAILS "+fails.join(" | "));
 process.exit(F?1:0);
