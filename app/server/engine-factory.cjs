@@ -2,9 +2,9 @@
 module.exports=function createEngine(){
 return (function(){
 var CFG={
-  COLOR_PENALTY_RULES:{r:null,b:null,y:null,k:null},
-  OPENED_COLOR_MULT:{r:null,b:null,y:null,k:null},
-  WINNER_BONUS:{NORMAL:-100,BIG:-200},
+  COLOR_PENALTY_RULES:{k:400,r:500,y:600,b:1000},
+  OPENED_COLOR_MULT:{k:40,r:50,y:60,b:100},
+  WINNER_BONUS:{NORMAL:0,BIG:0},
   PROCESS_PENALTY_TARGET_POLICY:"meldOwner",FLOWER_RULE:null,
   END_AFTER_BIG:3, TEAMS:null,
   KATLAMALI:true,
@@ -13,7 +13,7 @@ var CFG={
   OWN_MELD_REPARTITION:false,
   MAX_REAL_PER_PROCESS:1
 };
-var WORKABLE_DISCARD_PENALTY=250;
+var WORKABLE_DISCARD_PENALTY=250;var OKEY_DISCARD_PENALTY=250;
 var st=null,LOG=[],LED=[],SEEDB=0,SEEDSEQ=0;
 /* v147 — production seed authority. QA/tests keep explicit deterministic seeds; normal games get a fresh seed. */
 function mixSeed32(x){x=(x>>>0)+0x9e3779b9;x=Math.imul(x^(x>>>16),0x21f0aaad);x=Math.imul(x^(x>>>15),0x735a2d97);return (x^(x>>>15))>>>0}
@@ -94,6 +94,9 @@ function isTeamMode(){return !!activeTeams()}
 function teamIndexOfSeat(p){var ts=activeTeams();if(!ts)return-1;for(var i=0;i<ts.length;i++)if(ts[i][0]===p||ts[i][1]===p)return i;return-1}
 function sameTeam(a,b){var ta=teamIndexOfSeat(a),tb=teamIndexOfSeat(b);return ta>=0&&ta===tb}
 function computeOkey(ind){return ind&&!ind.isFake?{color:ind.color,num:ind.num%13+1}:null}
+function actualOkeyColor(){var o=(st&&st.indicator)?computeOkey(st.indicator):null;return (o&&o.color)||null}
+function okeyColorPenalty(){var v=CFG.COLOR_PENALTY_RULES[actualOkeyColor()];return typeof v==="number"?v:600}
+function okeyColorMult(){var v=CFG.OPENED_COLOR_MULT[actualOkeyColor()];return typeof v==="number"?v:60}
 /* v152: gösterge daima numaralı taştır. Karıştırılmış destede üstten ilk numaralı taş çekilir;
    karşılaşılan Sahte Okey(ler) destede kalır ve normal dağıtıma katılır. */
 function drawNumericIndicator(deck){
@@ -207,7 +210,7 @@ function discardMajorPenaltyKind(tile,willFinish){
 }
 function applyDiscardMajorPenalty(p,tile,willFinish){
   var k=discardMajorPenaltyKind(tile,willFinish);if(!k)return null;
-  var amt=k.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:CFG.MAJOR_PENALTY;
+  var amt=k.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:OKEY_DISCARD_PENALTY;
   var e=pen(p,p,[tile],k.type,amt);e.label=k.label;e.targets=k.targets;return e;
 }
 function badOpenPenalty(p,reason){
@@ -360,7 +363,7 @@ function findT(p,uid){var r=st.players[p].rack;for(var i=0;i<r.length;i++)if(r[i
 function a_draw(p){
   var g=guard(p,["DRAW"]);if(g)return{ok:false,err:g};
   if(st.players[p].hasDrawn)return{ok:false,err:"bu turda zaten çektin"};
-  if(!st.deck.length){var r=endHand(null,"deckEmpty");return{ok:false,err:"deste bitti — el kapandı",ended:r}}
+  if(!st.deck.length){var r=endHand(null,"deckEmpty");return{ok:true,deckEmpty:true,handOver:true,winner:null,reason:"deckEmpty",ended:r,finishSpecial:(r&&r.finishSpecial)||null,note:"deste bitti — el kapandı"}}
   var t=st.deck.pop();st.players[p].rack.push(t);
   st.players[p].hasDrawn=true;st.turnState="ACTION";
   ev("DRAW_DECK",p,{uid:t.uid});
@@ -684,11 +687,11 @@ function rackPenaltyValue(P){
 }
 function unopenedPenalty(P,bigRules){
   /* v126 Kanlı kapanış: açmayan oyuncu eldeki taş değerinden bağımsız sabit ceza yer. */
-  return bigRules?1000:500;
+  return okeyColorPenalty();
 }
 function openedPenalty(P,bigRules){
   /* v126 Kanlı kapanış: açmış oyuncunun elde kalan taş toplamı NORMAL ×5, Büyük-El kuralları ×10. */
-  return rackPenaltyValue(P)*(bigRules?10:5);
+  return P.rack.length*okeyColorMult();
 }
 function finishSpecialMeta(winner,finishTile){
   var meta={kafa:false,pairFinish:false,okeyFinish:false,count:0,multiplier:1,labels:[],finishUid:finishTile?finishTile.uid:null};
@@ -698,7 +701,7 @@ function finishSpecialMeta(winner,finishTile){
   meta.kafa=st.players.every(function(q,i){return i===winner||(wp>=0&&i===wp)||!q.opened});
   meta.pairFinish=!!(P&&P.opened&&P.openingType==="PAIR");
   meta.okeyFinish=!!(finishTile&&isJok(finishTile,st));
-  if(meta.kafa){meta.count++;meta.labels.push("KAFA")}
+  
   if(meta.pairFinish){meta.count++;meta.labels.push("ÇİFTTEN")}
   if(meta.okeyFinish){meta.count++;meta.labels.push("OKEYLE")}
   meta.multiplier=Math.pow(2,meta.count);
@@ -706,9 +709,9 @@ function finishSpecialMeta(winner,finishTile){
 }
 function endPenaltyBreakdown(P,seat,winner,bigRules,prior,finishMeta){
   var sm=finishMeta&&finishMeta.multiplier>1?finishMeta.multiplier:1;
-  if(seat===winner){var wb=CFG.WINNER_BONUS[bigRules?"BIG":"NORMAL"];return{seat:seat,opened:!!P.opened,rackValue:rackPenaltyValue(P),multiplier:0,baseClosePenalty:wb,specialMultiplier:1,closePenalty:wb,winnerBonus:wb,priorPenalty:prior,totalHandPenalty:prior+wb,bigRules:!!bigRules,formula:"KAZANAN "+wb}}
-  var rv=rackPenaltyValue(P),base=P.opened?(rv*(bigRules?10:5)):(bigRules?1000:500),mul=P.opened?(bigRules?10:5):0,cp=base*sm;
-  var formula=P.opened?("Σ"+rv+" ×"+mul):("AÇMADI +"+base);
+  if(seat===winner){return{seat:seat,opened:!!P.opened,rackValue:rackPenaltyValue(P),multiplier:0,baseClosePenalty:0,specialMultiplier:1,closePenalty:0,winnerBonus:0,priorPenalty:prior,totalHandPenalty:prior,bigRules:false,formula:"KAZANAN 0"}}
+  var rv=rackPenaltyValue(P),cnt=P.rack.length,mul=P.opened?okeyColorMult():0,base=P.opened?(cnt*mul):okeyColorPenalty(),cp=base*sm;
+  var formula=P.opened?(cnt+" taş ×"+mul):("AÇMADI +"+base);
   if(sm>1)formula+=" ×"+sm+" = "+cp; else if(P.opened)formula+=" = "+cp;
   return{seat:seat,opened:!!P.opened,rackValue:rv,multiplier:mul,baseClosePenalty:base,specialMultiplier:sm,closePenalty:cp,winnerBonus:0,priorPenalty:prior,totalHandPenalty:prior+cp,bigRules:!!bigRules,formula:formula};
 }
@@ -765,7 +768,7 @@ function buildMatchFinal(){
 function endHand(winner,reason,finishTile){
   st.winner=winner;st.handOver=true;st.turnState="WAIT";st.pending=null;
   var wp=winner!=null?partnerOf(winner):-1,bigRules=isBigRules(st);st.endBreakdown=[];st.finishSpecial=finishSpecialMeta(winner,finishTile);
-  st.endMajorPenalties=applyHeldOkeyEndPenalties(winner);
+  st.endMajorPenalties=[];
   for(var i=0;i<4;i++){
     var P=st.players[i],prior=P.handPenalty||0,bd=endPenaltyBreakdown(P,i,winner,bigRules,prior,st.finishSpecial);
     if(i===winner){P.handPenalty+=bd.winnerBonus;st.endBreakdown[i]=bd;continue}
@@ -801,7 +804,7 @@ function forfeitHand(disconnectedSeat,context,eventHandIndex){
   if(!st.forfeitHistory)st.forfeitHistory={};st.forfeitHistory[hi]=true;
   st.winner=null;st.handOver=true;st.turnState="WAIT";st.pending=null;st.endBreakdown=[];st.finishSpecial=finishSpecialMeta(null,null);st.endMajorPenalties=[];
   /* Yalnız kaçan takımda yeni ELDE OKEY +500 oluşur. Rakibin mevcut defteri korunur fakat yeni kapanış cezası yaratılmaz. */
-  for(var hm=0;hm<losers.length;hm++){var he=applyHeldOkeyPenaltySeat(losers[hm]);if(he)st.endMajorPenalties.push(he)}
+  
   for(var i=0;i<4;i++){
     var P=st.players[i],prior=P.handPenalty||0,bd=endPenaltyBreakdown(P,i,null,bigRules,prior,{multiplier:1});
     if(teamIndexOfSeat(i)===losingTeam){P.handPenalty+=bd.closePenalty;bd.totalHandPenalty=P.handPenalty;bd.formula="FORFEIT · "+bd.formula}

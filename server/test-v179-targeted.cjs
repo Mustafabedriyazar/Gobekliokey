@@ -36,7 +36,7 @@ function u(g){return g.map(t=>t.uid)}
     const sh=E.startHand();assert.equal(sh.ok,true,'start hand '+h);assert.equal(E.st.handType,expected[h],'hand type '+h);assert.equal(E.check().ok,true,'pre deck-empty invariant '+h);
     const snap=E._serverSnapshot(),moved=snap.st.deck.splice(0);snap.st.players[1].rack.push(...moved);snap.st.turnIndex=0;snap.st.turnState='DRAW';snap.st.players[0].hasDrawn=false;snap.st.firstRoundActive=false;snap.st.handOver=false;E._serverRestore(snap);
     assert.equal(E.check().ok,true,'forced zero-deck state must conserve 106 on hand '+h);
-    const r=E.draw(0);assert.equal(r.ok,false);assert.equal(r.ended&&r.ended.reason,'deckEmpty');assert.equal(E.check().ok,true,'post deck-empty invariant '+h);
+    const r=E.draw(0);assert.equal(r.ok,true);assert.equal(r.deckEmpty,true);assert.equal(r.handOver,true);assert.equal(r.ended&&r.ended.reason,'deckEmpty');assert.equal(E.check().ok,true,'post deck-empty invariant '+h);
   }
   assert.equal(E.st.gameFinished,true,'third BIG hand must finish match');assert(E.st.matchFinal&&E.st.matchFinal.rows&&E.st.matchFinal.rows.length===4,'matchFinal required');
   const denied=E.startHand();assert.equal(denied.ok,false,'no new hand after match final');
