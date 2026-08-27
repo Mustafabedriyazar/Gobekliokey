@@ -1,0 +1,23 @@
+const fs=require("fs");const path=require("path");
+const H=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf8");
+let t=0,f=0;function T(n,c){if(c){t++;console.log("PASS "+n)}else{f++;console.log("FAIL "+n)}}
+const head=H.search(/<head[^>]*>/i),body=H.search(/<body[^>]*>/i);
+const hb=H.indexOf("<!--OK17INTRO-V188-BAS-->");const he=H.indexOf("</script>",hb)+9;const headSeg=H.slice(hb,he);
+const shell=H.indexOf('<div id="ok17iw"');const se=H.indexOf("<!--OK17INTRO-V188-SON-->");const bodySeg=H.slice(shell,se);
+const menu=H.indexOf('<div id="menuShell"');
+const css=H.indexOf("html.ok17boot body>*:not(#ok17iw)");
+const boot=H.indexOf("classList.add("+String.fromCharCode(39)+"ok17boot"+String.fromCharCode(39)+")");
+T("s1-css-head-icinde",css>head&&css<body);
+T("s2-boot-flag-head-icinde",boot>head&&boot<body);
+T("s3-shell-menuden-once",shell>body&&shell<menu);
+T("s4-tek-intro-blok",(H.match(/OK17INTRO-V188-BAS/g)||[]).length===1&&(H.match(/id="ok17iw"/g)||[]).length===1);
+T("s5-gofs-guard",H.indexOf('function goFS(){if(document.documentElement.classList.contains("ok17boot"))return;')>0);
+T("s6-atomik-release",(H.match(/classList\.remove\(.ok17boot.\)/g)||[]).length===1);
+T("s7-visibility-layout-korunur",headSeg.indexOf("visibility:hidden!important")>0&&headSeg.indexOf("display:none")<0);
+T("s8-intro-yeni-fullscreen-cagirmaz",bodySeg.indexOf("requestFullscreen")<0&&bodySeg.indexOf("orientation.lock")<0&&bodySeg.indexOf("goFS(")<0);
+T("s9-backdrop-lazy",H.indexOf("bi.src=")>0&&H.indexOf("intro-bg-v188.jpg")>0);
+T("s10-video-contain",H.indexOf("object-fit:contain")>0);
+const hideRules=(headSeg.match(/body>\*:not\(#ok17iw\)/g)||[]).length;
+T("s11-gizleme-yalniz-boot-kapsaminda",hideRules===1&&/html\.ok17boot body>\*:not\(#ok17iw\)\{visibility:hidden!important\}/.test(headSeg)&&/html\.ok17boot #ok17iw\{visibility:visible!important\}/.test(headSeg));
+T("s12-fullscreen-kalici-yol-duruyor",/d\.requestFullscreen\|\|d\.webkitRequestFullscreen/.test(H)&&H.indexOf('orientation.lock("landscape")')>0&&(H.match(/classList\.contains\("ok17boot"\)\)return;/g)||[]).length===1);
+console.log("v188-startup: "+t+" PASS "+f+" FAIL");process.exit(f?1:0);

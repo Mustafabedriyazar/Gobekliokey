@@ -23,5 +23,6 @@ const e=await run('GET','/media/intro-v188.mp4','bytes=zz');T('m5-bozuk-range-20
 const g=await run('HEAD','/media/intro-v188.mp4','bytes=0-9');T('m6-head-206-govdesiz',g.code===206&&g.len===0&&g.hdr['Content-Length']===10);
 const h=await run('POST','/media/intro-v188.mp4');T('m7-405',h.code===405);
 const i=mediaRoute({method:'GET',url:'/baska',headers:{}},null);T('m8-passthrough',i===false);
+const j=await run('GET','/media/intro-bg-v188.jpg');T('m9-backdrop-200',j.code===200&&j.len>0&&j.hdr['Content-Type']==='image/jpeg');
 console.log('v188-media: '+t+' PASS '+f+' FAIL');process.exit(f?1:0);
 })();
