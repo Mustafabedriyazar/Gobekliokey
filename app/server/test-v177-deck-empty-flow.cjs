@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('assert');
-const {AuthoritativeRoom}=require('./authority.cjs');
-const createEngine=require('./engine-factory.cjs');
+const {AuthoritativeRoom}=require('../../server/authority.cjs'); /* v192: kanonik otorite tek kaynak */
+const createEngine=require('../../server/engine-factory.cjs');
 
 let pass=0,fail=0;
 function test(name,fn){
@@ -50,7 +50,7 @@ test('deste gercekten tukendiginde DRAW sunucu tarafinda canonical commit olarak
   const r=driveUntilDeckSize(room,0);
   assert.ok(r,'deste tukenince eli kapatan DRAW yaniti yakalanmali');
   assert.strictEqual(r.committed,true);
-  assert.strictEqual(r.engineOk,false,'motorun kendi sonucu basarisiz hamle olarak kalir');
+  assert.strictEqual(r.engineOk,true,'v192 kanon: deste bitisi motor tarafinda da basarili bitis');
   assert.strictEqual(room.engine.st.deck.length,0);
   assert.strictEqual(room.engine.st.handOver,true,'rev ilerlemeli — hamle yok sayilip donme olusmamali');
   assert.strictEqual(room.engine.st.winner,null);
@@ -107,7 +107,7 @@ function clearState(E){
   return st;
 }
 
-test('v174 islek tas cezasi 250 ve yandan alma reddi v177 sonrasi da bozulmamis',()=>{
+test('v174 islek tas cezasi 250 + v192 kanon: islek yan tas alinabilir (v177 sonrasi)',()=>{
   const E=mkBareEngine(9177001);
   const st=clearState(E);
   st.melds=[{id:'m0',owner:0,kind:'series',form:'female',color:'r',tiles:[tile('r',4,'v177-r4'),tile('r',5,'v177-r5'),tile('r',6,'v177-r6')],ha:st.handIndex,openLen:3,processAdds:0}];
@@ -122,8 +122,8 @@ test('v174 islek tas cezasi 250 ve yandan alma reddi v177 sonrasi da bozulmamis'
   assert.strictEqual(dr.majorPenalty.amount,250);
   st.players[0].hasDrawn=false;
   const tr=E.take(0);
-  assert.strictEqual(tr.ok,false);
-  assert.ok(/işlek/i.test(tr.err));
+  assert.strictEqual(tr.ok,true,'v192 kanon: islek yan tas alinabilir');
+  assert.ok(st.pending&&st.pending.workable===true,'pending.workable');
 });
 
 console.log('\nTOPLAM: '+pass+' PASS, '+fail+' FAIL');

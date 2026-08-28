@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('assert');
-const createEngine=require('./engine-factory.cjs');
+const createEngine=require('../../server/engine-factory.cjs'); /* v192: kanonik motor tek kaynak */
 
 let pass=0,fail=0;
 function test(name,fn){
@@ -41,8 +41,8 @@ test('sonraki oyuncunun cekmesi gerektiginde deste bos ise el kapanir ve sonuc e
   st.players[2].hasDrawn=false;
   st.deck=[];
   const r=E.draw(2);
-  assert.strictEqual(r.ok,false,'motor sonucu basarisiz hamle olarak isaretlemeye devam eder');
-  assert.strictEqual(typeof r.err,'string');
+  assert.strictEqual(r.ok,true,'v192 kanon: deste bitisi tek basarili bitis (ok:true/deckEmpty)');
+  assert.strictEqual(r.deckEmpty,true,'v192 kanon: deckEmpty bayragi');
   assert.ok(r.ended,'el sonu yuku cagirana tasinmali');
   assert.strictEqual(r.ended.ok,true,'el sonu bilgisi basarili olarak isaretlenmeli, sessizce yok sayilmamali');
   assert.strictEqual(r.ended.handOver,true);
@@ -68,7 +68,7 @@ test('deste bosken kapanan elde canonical ceza hesabi calisir',()=>{
   st.players[0].hasDrawn=false;
   st.deck=[];
   const r=E.draw(0);
-  assert.strictEqual(r.ok,false);
+  assert.strictEqual(r.ok,true,'v192 kanon');
   assert.ok(r.ended.ok);
   assert.ok(Array.isArray(st.endBreakdown));
   assert.strictEqual(st.endBreakdown.length,4);
@@ -91,7 +91,7 @@ test('destede tas varken normal akis degismez - r.ended alani yok',()=>{
   assert.strictEqual(st.deck.length,2);
 });
 
-test('v174 isleyen tas cezasi 250 ve yandan alma reddi bozulmamis',()=>{
+test('v174 islek tas cezasi 250 + v192 kanon: islek yan tas alinabilir',()=>{
   const E=mkEngine(9002006);
   const st=clearState(E);
   st.melds=[{id:'m0',owner:0,kind:'series',form:'female',color:'r',tiles:[tile('r',4,'v176-r4'),tile('r',5,'v176-r5'),tile('r',6,'v176-r6')],ha:st.handIndex,openLen:3,processAdds:0}];
@@ -106,8 +106,8 @@ test('v174 isleyen tas cezasi 250 ve yandan alma reddi bozulmamis',()=>{
   assert.strictEqual(dr.majorPenalty.amount,250);
   st.players[0].hasDrawn=false;
   const tr=E.take(0);
-  assert.strictEqual(tr.ok,false);
-  assert.ok(/işlek/i.test(tr.err));
+  assert.strictEqual(tr.ok,true,'v192 kanon: islek yan tas alinabilir');
+  assert.ok(st.pending&&st.pending.workable===true,'pending.workable');
 });
 
 console.log('\nTOPLAM: '+pass+' PASS, '+fail+' FAIL');

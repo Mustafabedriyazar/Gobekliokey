@@ -56,7 +56,7 @@ function playSimpleTurn(room,n){const p=room.engine.st.turnIndex;if(room.engine.
 
 (function seedCommitReveal(){
   const room=new AuthoritativeRoom({mode:'TEAM',context:'CASUAL'});join4(room);const commit=room.seedAudit.commit;assert(!room.snapshotForSeat(0).audit.reveal);for(const s of room.seats){s.connected=false;s.botActive=true;s.disconnectAt=Date.now()}
-  let guard=0;while(!room.engine.st.gameFinished&&guard<1000){if(room.engine.st.handOver){const r=room.engine.startHand();assert(r.ok);room.rev++;for(const s of room.seats)s.botActive=true}else room._pumpBots();guard++}
+  let guard=0;while(!room.engine.st.gameFinished&&guard<20000){if(room.engine.st.handOver){const r=room.engine.startHand();assert(r.ok);room.rev++;for(const s of room.seats)s.botActive=true}else room._pumpBots();guard++}
   assert(room.engine.st.gameFinished);const a=room.snapshotForSeat(0).audit;assert(a.reveal&&a.reveal.nonce);const {sha256}=require('./authority.cjs');assert.strictEqual(sha256(`${a.reveal.seed}:${a.reveal.nonce}`),commit);console.log('seedCommitReveal PASS');
 })();
 

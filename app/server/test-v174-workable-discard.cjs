@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('assert');
-const createEngine=require('./engine-factory.cjs');
+const createEngine=require('../../server/engine-factory.cjs'); /* v192: kanonik motor tek kaynak */
 
 let pass=0,fail=0;
 function test(name,fn){
@@ -39,7 +39,7 @@ test('acik seri isleyen tas atilinca WORKABLE_DISCARD 250 uygulanir',()=>{
   assert.strictEqual(st.players[1].handPenalty,250);
 });
 
-test('sonraki oyuncu isleyen tasi yandan alamaz - state degismez',()=>{
+test('sonraki oyuncu isleyen tasi yandan alabilir - v192 kanon (pending.workable)',()=>{
   const E=mkEngine(9001002);
   const st=clearState(E);
   st.melds=[{id:'m0',owner:0,kind:'series',form:'female',color:'r',tiles:[tile('r',4,'t2-r4'),tile('r',5,'t2-r5'),tile('r',6,'t2-r6')],ha:st.handIndex,openLen:3,processAdds:0}];
@@ -60,16 +60,12 @@ test('sonraki oyuncu isleyen tasi yandan alamaz - state degismez',()=>{
   const preTurnState=st.turnState;
   const preTurnIndex=st.turnIndex;
   const tr=E.take(0);
-  assert.strictEqual(tr.ok,false);
-  assert.strictEqual(typeof tr.err,'string');
-  assert.ok(/işlek/i.test(tr.err),'hata mesajı işlek taşa işaret etmeli');
-  assert.strictEqual(st.discardPile.length,preDiscardLen);
-  assert.strictEqual(st.currentDiscard.tile.uid,preCurrentUid);
-  assert.strictEqual(st.pending,prePending);
-  assert.deepStrictEqual(st.players[0].rack,preRack0);
-  assert.deepStrictEqual(st.players.map(p=>p.hasDrawn),preHasDrawn);
-  assert.strictEqual(st.turnState,preTurnState);
+  assert.strictEqual(tr.ok,true,'v192 kanon: islek yan tas alinabilir');
+  assert.strictEqual(tr.tile.uid,'t2-r7');
+  assert.ok(st.pending&&st.pending.tile.uid==='t2-r7','pending yan tasi tasimali');
+  assert.strictEqual(st.pending.workable,true,'v192 kanon: pending.workable');
   assert.strictEqual(st.turnIndex,preTurnIndex);
+  assert.strictEqual(st.turnState,'ACTION');
 });
 
 test('hicbir acik pere islenemeyen normal tas yandan alinabilir',()=>{
@@ -92,7 +88,7 @@ test('hicbir acik pere islenemeyen normal tas yandan alinabilir',()=>{
   assert.strictEqual(st.pending.tile.uid,'t3-k9');
 });
 
-test('okey tasi atilinca OKEY_DISCARD 500 kalir',()=>{
+test('okey tasi atilinca OKEY_DISCARD 250 uygulanir - v192 kanon',()=>{
   const E=mkEngine(9001004);
   const st=clearState(E);
   const okeyTile=tile(st.okey.color,st.okey.num,'t4-okey');
@@ -103,7 +99,7 @@ test('okey tasi atilinca OKEY_DISCARD 500 kalir',()=>{
   assert.strictEqual(r.ok,true);
   assert.ok(r.majorPenalty,'ceza uygulanmalı');
   assert.strictEqual(r.majorPenalty.type,'OKEY_DISCARD');
-  assert.strictEqual(r.majorPenalty.amount,500);
+  assert.strictEqual(r.majorPenalty.amount,250);
 });
 
 console.log('\nTOPLAM: '+pass+' PASS, '+fail+' FAIL');
