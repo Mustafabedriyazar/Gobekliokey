@@ -225,7 +225,7 @@ return (function(){
         else if(of.color===tf.color&&Math.abs(of.num-tf.num)===1)keep+=(pr.disc==="keepSeries"?7:5);
         else if(of.color===tf.color&&Math.abs(of.num-tf.num)===2)keep+=2;
       }
-      var val=E.tv(t),valuePressure=P.opened?(E.isBigRules(E.st)?1.35:.80):.12;valuePressure+=th*.08;
+      var val=E.tv(t),valuePressure=P.opened?0.80:0.12;valuePressure+=th*.08;
       var sc=keep*10+(pr.disc==="high"?(13-val):val)-val*valuePressure;opts.push({t:t,sc:sc});
     }
     var best=chooseDiscardBySkill(p,opts);
@@ -247,7 +247,7 @@ return (function(){
       if(!pc&&P.openingType)np=searchNewPer(p,uid,P.openingType,cd.tile);
       if(!pc&&!np)return false;
     }
-    var r=E.take(p);if(!r.ok)return false;
+    var _cdx=E.st.currentDiscard;if(_cdx&&E.workableDiscardTargets(_cdx.tile).length)return false;var r=E.take(p);if(!r.ok)return false;
     if(!P.opened&&choice){
       var ro=E.open(p,choice.pick.map(function(g){return g.tiles.map(function(t){return t.uid})}),choice.mode);if(ro.ok)return true;
     }else if(P.opened){

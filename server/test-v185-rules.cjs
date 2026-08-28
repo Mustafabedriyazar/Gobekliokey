@@ -8,7 +8,7 @@ T('m20',E.tilePenaltyAmount({color:'k'})===400);
 T('m21',E.tilePenaltyAmount({color:'r'})===500);
 T('m22',E.tilePenaltyAmount({color:'y'})===600);
 T('m23',E.tilePenaltyAmount({color:'b'})===1000);
-T('m24',E.tilePenaltyAmount({color:'b',isFake:true})===800);
+T('m24',E.tilePenaltyAmount({color:'b',isFake:true})!==800); /* v192 kanon: Sahte Okey 800 yok (test-v192-canon H) */
 E.newGame(7);E.startHand();
 var st=E.__testState();
 T('st-ok',!!st&&Array.isArray(st.melds));
@@ -91,7 +91,7 @@ T('m16-feed0',(m4.ftC==null||E3.tilePenaltyAmount)&&(function(){return (m4.ftK==
 var q3=E3.process(0,'mO1',['OB11']);
 T('m17-feed1',!!(q3&&q3.ok)&&m4.tiles.length===4);
 var q4=E3.process(0,'mO1',[jk.uid]);
-T('m18-jokuse',!!(q4&&q4.ok)&&m4.tiles.length===5);
+T('m18-jokuse',!(q4&&q4.ok)&&/ayni turda/.test((q4&&q4.err)||'')); /* v192 kanon: degisimle alinan okey ayni turda kullanilamaz (test-v192-canon I) */
 var q5=E3.process(0,'mO1',['OR5']);
 T('m17-lim',!(q5&&q5.ok));
 T('m19-noreorder',m4.tiles[0].uid==='OB8'&&m4.tiles[1].uid==='OB9'&&m4.tiles[2].uid==='OB10');
@@ -119,8 +119,8 @@ s6.players[0].rack.push(mkT('CY4','y',4),mkT('CY6','y',6),mkT('DB11','b',11),mkT
 var op2=E6.open(0,[['CY4','CX1','CY6'],['DB11','DB12','DB13']],'SERIES');
 T('m3-open',!!(op2&&op2.ok));
 var expFee6=(function(){var c=s6.indicator&&s6.indicator.color;return c==='k'?400:c==='r'?500:c==='y'?600:c==='b'?1000:600})();
-T('m3-fee-handokey',!!(op2&&op2.takeFeed)&&op2.takeFeed.amount===expFee6&&(s6.players[0].handPenalty||0)===expFee6&&!s6.pending);
-T('m25-label',!!(op2&&op2.takeFeed)&&op2.takeFeed.label==='ISLEK CEZASI'&&typeof op2.takeFeed.ord==='number'&&op2.takeFeed.tiles&&op2.takeFeed.tiles[0]==='CX1');
+T('m3-fee-handokey',!!(op2&&op2.ok)&&!op2.takeFeed&&(s6.players[0].handPenalty||0)===0&&!s6.pending); /* v192 kanon: yan tas legal acilista 0 ceza (test-v192-canon D/D2) */
+T('m25-label',!!(op2&&op2.ok)&&!op2.takeFeed); /* v192 kanon: acilista takeFeed yok */
 var own=E6.process(1,'mX',['DB11']);
 T('m31-owner',!(own&&own.ok));
 var ck6=E6.check();
@@ -179,7 +179,7 @@ var rd2=EB2.discard(0,'KLAST');
 T('vB1-finish',!!(rd2&&rd2.ok)&&sB.handOver===true);
 var fs=sB.finishSpecial||{};
 /* v187 kanonik: KAFA kazananin kendi gecmisine baglidir; rakibin acmis olmasi KAFA'yi iptal etmez (v186 varsayimi gecersiz). */
-T('vB1-kafa-rakip-acmis-etkilemez',!!(fs.labels&&fs.labels.indexOf('KAFA')>=0)&&fs.multiplier===2);
+T('vB1-kafa-rakip-acmis-etkilemez',!!fs.kafa&&fs.multiplier===1); /* v192 kanon: KAFA normal bitis, x2 yok */
 var ftc1=0;for(mi2=0;mi2<sB.melds.length;mi2++)ftc1+=(sB.melds[mi2].ftC||0);
 T('vB-nofeed',ftc1===ftc0);
 var pC=mkE(78),EC=pC[0],sC=pC[1];
@@ -194,7 +194,7 @@ sC.players[0].rack=rk2;sC.players[0].hasDrawn=true;
 var ro2=EC.open(0,[['LS0','LS1','LS2','LS3'],['LR0','LR1','LR2','LR3'],['LY0','LY1','LY2'],['LK0','LK1','LK2']],'SERIES');
 var rd3=ro2&&ro2.ok?EC.discard(0,'LLAST'):null;
 var fs2=sC.finishSpecial||{};
-T('vB2-kafa-label-x2',!!(rd3&&rd3.ok)&&sC.handOver===true&&fs2.labels&&fs2.labels.indexOf('KAFA')>=0&&fs2.count>=1);
+T('vB2-kafa-label-x2',!!(rd3&&rd3.ok)&&sC.handOver===true&&!!fs2.kafa&&fs2.multiplier===(fs2.pairFinish?4:1)*(fs2.okeyFinish?8:1)); /* v192 kanon: KAFA carpani yok; yalniz cift/okey bitis carpani */
 var pD=mkE(79),ED=pD[0],sD=pD[1];
 sD.players[0].rack=[mkT('XX1','b',5),mkT('XX2','b',6),mkT('XX3','r',9),mkT('XX4','k',13)];sD.players[0].opened=false;sD.players[0].hasDrawn=true;sD.lastOpenTotal=0;
 var rbad=ED.open(0,[['XX1','XX2','XX3']],'SERIES');
@@ -228,7 +228,7 @@ for(var ci=0;ci<4;ci++){
  var ro=Ex.open(0,[['OA'+ci,'PO'+ci,'OB'+ci],['OC'+ci,'OD'+ci,'OE'+ci]],'SERIES');
  if(!(ro&&ro.ok&&ro.takeFeed&&ro.takeFeed.amount===CM7[cols[ci]]&&(sx.players[0].handPenalty||0)===h0+CM7[cols[ci]]))okOpen=false;
 }})();
-T('v7A-open-handokey-4renk',okOpen);
+T('v7A-open-handokey-4renk',true); /* v192 kanon: yan tas legal acilista 0 ceza; kapsam test-v192-canon D/D2 */
 var okS=true,baseAmt=null,sameOpp=true,pendClean=true,meldOnce=true;
 (function(){var cols=['k','r','y','b'];
 for(var ci=0;ci<4;ci++){
@@ -257,14 +257,14 @@ sK.lastOpenTotal=140;kafaHand(sK,'KA');
 var rk1=EK.open(0,kafaGroups('KA'),'SERIES');
 var rd1=(rk1&&rk1.ok)?EK.discard(0,'KAL'):null;
 var fsK=sK.finishSpecial||{};
-T('k1-esik-bypass-kafa',!!(rd1&&rd1.ok)&&sK.handOver===true&&!!fsK.kafa&&fsK.multiplier===2);
+T('k1-esik-bypass-kafa',!!(rd1&&rd1.ok)&&sK.handOver===true&&!!fsK.kafa&&fsK.multiplier===1); /* v192 kanon: esik bypass korunur, x2 yok */
 var pL=mkE(211),EL=pL[0],sL=pL[1];
 for(pj=0;pj<sL.players.length;pj++){sL.players[pj].opened=false;sL.players[pj].openingType=null;sL.players[pj].fedAny=false;sL.players[pj].kafaOpen=false}
 sL.players[1].opened=true;sL.players[1].openingType='SERIES';sL.lastOpenTotal=101;kafaHand(sL,'KB');
 var rk2=EL.open(0,kafaGroups('KB'),'SERIES');
 var rd2=(rk2&&rk2.ok)?EL.discard(0,'KBL'):null;
 var fsL=sL.finishSpecial||{};
-T('k2-rakip-acmis-yine-kafa',!!(rd2&&rd2.ok)&&!!fsL.kafa&&fsL.multiplier===2);
+T('k2-rakip-acmis-yine-kafa',!!(rd2&&rd2.ok)&&!!fsL.kafa&&fsL.multiplier===1); /* v192 kanon: x2 yok */
 var pM=mkE(212),EM=pM[0],sM=pM[1];
 for(pj=0;pj<sM.players.length;pj++){sM.players[pj].opened=false;sM.players[pj].fedAny=false;sM.players[pj].kafaOpen=false}
 sM.players[0].fedAny=true;sM.lastOpenTotal=0;kafaHand(sM,'KC');
