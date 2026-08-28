@@ -280,7 +280,7 @@ function check(){
     if(st.winner!=null&&fs.finishUid&&(!st.currentDiscard||st.currentDiscard.tile.uid!==fs.finishUid))specialErr.push("finish_uid_not_current_discard");
   }
   var majorErr=[],majorTypes={WORKABLE_DISCARD:1,OKEY_DISCARD:1,OKEY_HELD_END:1,BAD_OPEN_ATTEMPT:1};
-  for(var li=0;li<LED.length;li++){var le=LED[li];if(!majorTypes[le.type])continue;var wantAmt=le.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:CFG.MAJOR_PENALTY;if(le.amount!==wantAmt)majorErr.push(le.type+":amount="+le.amount);if(le.type==="WORKABLE_DISCARD"&&(!le.targets||!le.targets.length))majorErr.push("WORKABLE_DISCARD:no_target");if(le.type==="BAD_OPEN_ATTEMPT"&&le.tiles&&le.tiles.length)majorErr.push("BAD_OPEN_ATTEMPT:has_tile")}
+  for(var li=0;li<LED.length;li++){var le=LED[li];if(!majorTypes[le.type])continue;var wantAmt=le.type==="WORKABLE_DISCARD"?WORKABLE_DISCARD_PENALTY:(le.type==="OKEY_DISCARD"?OKEY_DISCARD_PENALTY:CFG.MAJOR_PENALTY);if(le.amount!==wantAmt)majorErr.push(le.type+":amount="+le.amount);if(le.type==="WORKABLE_DISCARD"&&(!le.targets||!le.targets.length))majorErr.push("WORKABLE_DISCARD:no_target");if(le.type==="BAD_OPEN_ATTEMPT"&&le.tiles&&le.tiles.length)majorErr.push("BAD_OPEN_ATTEMPT:has_tile")}
   var matchErr=[],teamErr=[];
   if(st.teamMode){var tcNow=normalizeTeamsConfig(st.teams);if(!tcNow.ok||!tcNow.teamMode)teamErr.push("invalid_active_teams");if(!st.teamForfeitHandWins||st.teamForfeitHandWins.length!==2)teamErr.push("bad_forfeit_win_state")}
   if(st.gameFinished){
