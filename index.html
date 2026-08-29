@@ -4051,7 +4051,7 @@ function bindDrag(t){
        floating 3/8 style tiles seen under opponent pers: legal drops are engine-committed
        and snap into the target meld instead of remaining as movable FREE tiles. */
     if(commit&&t.uid){
-      var magTarget=liveMag||processDropTarget(t.uid,vcx,vcy);
+      var magTarget=liveMag||processDropTarget(t.uid,vcx,vcy)||okeyRepDropTarget(t.uid,vcx,vcy);
       if(window.G17NET&&G17NET.active()&&magTarget){restoreDraggedSource(t,e,src);G17NET.process(magTarget.id,[t.uid]);if(PENDFIT){PENDFIT=false;fitSoon()}return}
       var mag=commitDragProcess(t,vcx,vcy,magTarget);
       if(mag){if(PENDFIT){PENDFIT=false;fitSoon()}return}
@@ -4881,11 +4881,26 @@ function restoreDraggedSource(t,e,src){
   else{t.area="rack";t.row=src.row;t.slot=src.slot;t.fx=src.fx;t.fy=src.fy;RACKS[src.row][src.slot]=t;e.classList.remove("tg")}
   requestAnimationFrame(function(){layoutRacks();layoutFree();layoutMelds()});
 }
+function okeyRepDropTarget(uid,x,y){
+  var t=engTile(uid);if(!t||E.isJok(t))return null;
+  var best=null,bs=1e18,padX=Math.max(30,Math.round(GW*.55)),padY=Math.max(28,Math.round(GH*.65));
+  for(var i=0;i<E.st.melds.length;i++){
+    var m=E.st.melds[i];var hb=MELD_HIT[m.id];if(!hb)continue;
+    if(x<hb.x1-padX||x>hb.x2+padX||y<hb.y1-padY||y>hb.y2+padY)continue;
+    var jok=null;for(var j2=0;j2<m.tiles.length;j2++){var mt=m.tiles[j2];if(E.isJok(mt)){jok=mt;break}}
+    if(!jok)continue;
+    if(jok.rep&&!(jok.rep.color===t.color&&jok.rep.num===t.num))continue;
+    var cx=(hb.x1+hb.x2)*.5,cy=(hb.y1+hb.y2)*.5,sc=(x-cx)*(x-cx)+(y-cy)*(y-cy);
+    if(sc<bs){bs=sc;best={id:m.id,owner:m.owner,meld:m,hb:hb,okeyRep:true}}
+  }
+  return best;
+}
 function commitDragProcess(t,x,y,forcedTarget){
   if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
   var target=forcedTarget||processDropTarget(t&&t.uid,x,y);if(!target)return null;
   var src={};src[t.uid]={x:x,y:y};
   var r=E.process(HSEAT,target.id,[t.uid]);if(!r.ok&&E.okeyTake){var ro=E.okeyTake(HSEAT,target.id,t.uid);if(ro&&ro.ok){r=ro}}if(!r.ok)return null;
+  if(r.replaced||r.tookUid){removeVis(t);clearProcessAssist();clearSel();syncMelds();animateProcessTransfer([t.uid],src,HSEAT,target.id,{stagger:0});toast("OKEY DEĞİŞİMİ — taş perdeki Okey ile değişti, Okey ıstakanda");buzz([9,15,9]);updUI();updHint();assertRack();return{ok:true,amount:0,target:target.id,owner:target.owner}}
   removeVis(t);clearProcessAssist();clearSel();syncMelds();
   var animMs=animateProcessTransfer([t.uid],src,HSEAT,target.id,{stagger:0});
   if(!animMs)sfx("snap");

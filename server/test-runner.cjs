@@ -5,7 +5,7 @@ const canonical=[
   'packaging-guard.cjs',
   'test-authority.cjs','test-v162-hardening.cjs','test-v163-runtime.cjs','test-v164-auth-moderation.cjs','test-v164-client-auth.cjs','test-v164-redis-identity.cjs','test-v164-account-restart.cjs','test-v165-recovery-chat-profile.cjs','test-v169-ranked-matchmaking.cjs','test-v170-ranked-flow.cjs','test-v170-redis-settlement.cjs','test-v170-redis-real.cjs','test-v174-workable-discard.cjs',
   'test-v176-deck-empty-end-report.cjs','test-v177-deck-empty-flow.cjs','test-v178-deck-exhaust-sim.cjs',
-  'test-v179-targeted.cjs','test-v180-pb-rules.cjs','test-v181-fps60.cjs','test-v182-product-menus.cjs','test-v192-canon.cjs','test-v192b-okey-replacement.cjs','core-regression.cjs','stress-authority.cjs'
+  'test-v179-targeted.cjs','test-v180-pb-rules.cjs','test-v181-fps60.cjs','test-v182-product-menus.cjs','test-v192-canon.cjs','test-v192b-okey-replacement.cjs','test-v192c-ui-drop-routing.cjs','core-regression.cjs','stress-authority.cjs'
 ];
 const required=new Set(['packaging-guard.cjs','test-v179-targeted.cjs','test-v180-pb-rules.cjs','test-v181-fps60.cjs','test-v182-product-menus.cjs','test-v192-canon.cjs','core-regression.cjs','stress-authority.cjs']);
 let ran=0,skipped=[];
