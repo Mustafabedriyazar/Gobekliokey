@@ -2007,7 +2007,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-194-islek-ui-kanon";
+var BUILD="gobek17-195-islek-legality-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -5395,7 +5395,7 @@ function islekMyTurn(){var me=E.st&&E.st.players[HSEAT];return !!(me&&me.opened&
 function islekClearHi(){if(typeof document!=="undefined"&&document.querySelectorAll){var q1=document.querySelectorAll(".islek-target");for(var q2=0;q2<q1.length;q2++)q1[q2].classList.remove("islek-target")}for(var k in VISM){var a=VISM[k]||[];for(var j=0;j<a.length;j++)if(a[j]&&a[j].el)a[j].el.classList.remove("islek-target")}}
 function islekPaint(){islekClearHi();var t=ISLEK.target;if(!ISLEK.on||!t||!E.st)return;
   for(var i=0;i<E.st.melds.length;i++){var m=E.st.melds[i];
-    var hit=(t.type==="meld")?(m.id===t.id):(m.kind==="pair"&&m.owner===t.owner);
+    var hit=(t.type==="meld")?(m.id===t.id):(m.kind==="pair"&&m.owner===t.owner&&!!islekExactRepUid(m));
     if(!hit)continue;var a=VISM[m.id]||[];for(var j=0;j<a.length;j++)if(a[j]&&a[j].el)a[j].el.classList.add("islek-target")}}
 function islekUI(){var pb=document.getElementById("rbProcess"),sub=document.getElementById("islekSub");
   if(pb)pb.classList.toggle("islekOn",ISLEK.on);
@@ -5421,6 +5421,12 @@ function islekExactRepUid(m){if(!m)return null;var jok=null,i;
     if(t.color===jok.rep.color&&t.num===jok.rep.num)return t.uid}
   if(E.st.pending&&!E.isJok(E.st.pending.tile)&&E.st.pending.tile.color===jok.rep.color&&E.st.pending.tile.num===jok.rep.num)return E.st.pending.tile.uid;
   return null}
+function islekSeriLegal(m){if(!m||m.kind!=="series"||!E.st)return false;
+  if(islekExactRepUid(m))return true;
+  var me=E.st.players[HSEAT],i;
+  if(E.st.pending&&E.canFeedTileToMeld(E.st.pending.tile,m))return true;
+  for(i=0;i<me.rack.length;i++)if(E.canFeedTileToMeld(me.rack[i],m))return true;
+  return false}
 function islekSpawnReturnedOkey(tookUid){if(!tookUid)return;var _has=false,_rw,_ci;
   for(_rw=0;_rw<RACKS.length&&!_has;_rw++)for(_ci=0;_ci<RACKS[_rw].length;_ci++){if(RACKS[_rw][_ci]&&RACKS[_rw][_ci].uid===tookUid){_has=true;break}}
   if(!_has){for(_ci=0;_ci<FREE.length;_ci++)if(FREE[_ci]&&FREE[_ci].uid===tookUid){_has=true;break}}
@@ -5441,8 +5447,8 @@ function islekCommit(meldId,uids,silent){var m=islekFindMeld(meldId);if(!m)retur
   updUI();updHint();assertRack();islekPaint();return true}
 function islekSelectMeld(m){if(!ISLEK.on||!islekMyTurn())return false;
   var ru=islekExactRepUid(m);
-  if(ru){if(islekCommit(m.id,[ru],true))return true}
-  if(m.kind==="series"){ISLEK.target={type:"meld",id:m.id,kind:"series",owner:m.owner}}
+  if(ru){if(islekCommit(m.id,[ru],true)){ISLEK.target=null;islekClearHi();islekUI();return true}}
+  if(m.kind==="series"){if(!islekSeriLegal(m)){toast("Bu SERI perinde legal islek yok");buzz(4);return true}ISLEK.target={type:"meld",id:m.id,kind:"series",owner:m.owner}}
   else if(m.kind==="pair"){if(m.owner===HSEAT){toast("Kendi CIFT alanina isleme yapilmaz — PER AC (CIFT) kullan");buzz(4);return true}
     ISLEK.target={type:"pairArea",owner:m.owner,anchor:m.id}}
   else return false;
@@ -5461,7 +5467,7 @@ function islekRunSeri(){
   for(i=0;i<me.rack.length;i++)order.push(me.rack[i].uid);
   if(window.G17NET&&G17NET.active()){
     var cands=[];for(i=0;i<order.length&&cands.length<4;i++){var t2=engTile(order[i]);if(t2&&E.canFeedTileToMeld(t2,m))cands.push(order[i])}
-    if(!cands.length){toast("Bu hedefte legal islek yok");buzz(4);return}
+    if(!cands.length){toast("Bu hedefte legal islek yok");buzz(4);ISLEK.target=null;islekClearHi();islekUI();return}
     var tid=ISLEK.target.id;
     (async function(){for(var q=0;q<cands.length;q++){try{await G17NET.process(tid,[cands[q]])}catch(e){}}})();ISLEK.target=null;islekClearHi();islekUI();
     return}
@@ -5470,7 +5476,7 @@ function islekRunSeri(){
     m=islekFindMeld(ISLEK.target.id);if(!m)break;
     if(!E.canFeedTileToMeld(t,m))continue;
     if(islekCommit(ISLEK.target.id,[order[i]],true))made++}
-  if(!made){toast("Bu hedefte legal islek yok");buzz(4)}
+  if(!made){toast("Bu hedefte legal islek yok");buzz(4);ISLEK.target=null;islekClearHi();islekUI()}
   else{toast(made+" tas secili seriye islendi");ISLEK.target=null;islekClearHi();islekUI()}}
 function islekPairSets(){var me=E.st.players[HSEAT],ts=me.rack.slice();if(E.st.pending)ts.push(E.st.pending.tile);
   var used={},out=[],i,j;
@@ -6640,7 +6646,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-194-islek-ui-kanon'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-195-islek-legality-kanon'};
 })(window);
 </script>
 <script>
@@ -6925,7 +6931,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-194-islek-ui-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-195-islek-legality-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>

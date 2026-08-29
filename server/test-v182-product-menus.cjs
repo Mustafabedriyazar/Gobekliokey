@@ -15,7 +15,7 @@ const {AuthoritativeRoom}=require('./authority.cjs');
   assert(html.includes('async function quickMatchUI(mode)'), 'casual quick matchmaking UI missing');
   assert(html.includes('G17NET.quickMatchUI("TEAM")'), 'main quick-match CTA not wired to online queue');
   assert(!html.includes('g17mStartCurrentGame("EŞLİ HIZLI EŞLEŞME")'), 'quick CTA still launches local game');
-  assert(html.includes('gobek17-194-islek-ui-kanon'), 'v182 build stamp missing');
+  assert(html.includes('gobek17-195-islek-legality-kanon'), 'v182 build stamp missing');
 
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'g17-v182-'));
   try{
