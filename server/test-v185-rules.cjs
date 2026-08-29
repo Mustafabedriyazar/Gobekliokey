@@ -208,7 +208,7 @@ var mS={id:'mS1',kind:'series',owner:1,tiles:[mkT('SB8','b',8),jok2,mkT('SB10','
 sE.melds.push(mS);
 sE.players[0].rack.push(mkT('RB9','b',9));
 var pr1=EE.process(0,'mS1',['RB9']);
-var ot1=(!pr1||!pr1.ok)?EE.okeyTake(0,'mS1','RB9'):null;
+var ot1=(pr1&&pr1.ok&&pr1.replaced)?pr1:((!pr1||!pr1.ok)?EE.okeyTake(0,'mS1','RB9'):null); /* v192b: process replacement onceligi */
 var gotJok=false;for(var qi=0;qi<sE.players[0].rack.length;qi++)if(jok2&&sE.players[0].rack[qi].uid===jok2.uid)gotJok=true;
 T('vC-fallback-swap',!!(ot1&&ot1.ok)&&gotJok&&mS.tiles.length===3&&(mS.ftC||0)===0&&(mS.processAdds||0)===0&&mS.tiles[1].uid==='RB9');
 var ot2=EE.okeyTake(0,'mS1','RB9');
