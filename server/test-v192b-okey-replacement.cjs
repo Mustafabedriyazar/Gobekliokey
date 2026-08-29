@@ -28,7 +28,7 @@ let st0={handIndex:0};
  T("kota/ceza yok",(m.processAdds||0)===0&&led(st)===L0&&(P.handPenalty||0)===0);
  T("acilis tipi degismedi",P.openingType==="SERIES"&&P.opened===true);
  const r2=E.process(0,"m1",["J1"]);
- T("ayni turda okey kullanilamaz",!(r2&&r2.ok));
+ T("ayni tur okey kullanilabilir (v193)",!!(r2&&r2.ok)&&st.melds[0].tiles.length===4);
 })();
 (function serialNonExactFeed(){const {E,st,P}=mk();st0=st;
  st.melds=[serMeld("m1")];

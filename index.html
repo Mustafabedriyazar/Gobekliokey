@@ -1887,7 +1887,18 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
     <div class="rbar"><i id="opFill"></i></div>
     <div class="rl2" id="opNeed">51 Gerekli</div>
   </div>
-  <button id="rbProcess" class="rbtn cmd3d rproc" style="left:744px;top:652px;width:134px;height:72px"><span class="cmdMain">İŞLE</span><span class="cmdSub">YEDİR</span><b id="procBadge">0</b></button>
+  <button id="rbProcess" class="rbtn cmd3d rproc" style="left:744px;top:652px;width:134px;height:72px"><span class="cmdMain">İŞLEK</span><span class="cmdSub">YEDİR</span><b id="procBadge">0</b></button>
+  <style id="islekCss">
+  #islekSub{position:absolute;left:492px;top:588px;width:552px;height:60px;display:none;z-index:60;pointer-events:none;justify-content:center;align-items:center;gap:16px}
+  #islekSub.on{display:flex}
+  .islekSubBtn{pointer-events:auto;flex:0 0 auto;min-width:246px;height:56px;border-radius:16px;border:2px solid rgba(255,214,120,.55);background:linear-gradient(180deg,#3b2660,#241243);color:#ffe9b8;font-weight:800;font-size:21px;letter-spacing:.4px;box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14);cursor:pointer}
+  .islekSubBtn:active{transform:translateY(1px)}
+  .islekSubBtn.go{border-color:#5dffa8;color:#eafff2;box-shadow:0 0 0 2px rgba(93,255,168,.35),0 0 22px rgba(93,255,168,.35),0 6px 18px rgba(0,0,0,.45)}
+  #rbProcess.islekOn{border-color:#5dffa8!important;box-shadow:0 0 0 2px rgba(93,255,168,.5),0 0 26px rgba(93,255,168,.45)!important}
+  .islek-target{outline:3px solid rgba(93,255,168,.92);outline-offset:2px;box-shadow:0 0 14px rgba(93,255,168,.55)!important;border-radius:8px}
+  </style>
+  <div id="islekSub" aria-hidden="true"><button id="islekSeri" class="islekSubBtn" type="button">SERİ İŞLEK YEDİR</button><button id="islekCift" class="islekSubBtn" type="button">ÇİFT İŞLEK YEDİR</button></div>
+
   <button id="rbFinish" class="rbtn cmd3d rfinish" style="left:890px;top:652px;width:134px;height:72px"><span class="cmdMain">BİTİR</span><span class="cmdSub" id="finishSub">KİLİTLİ</span></button>
   <div id="elTgl" style="left:1060px;top:652px;width:150px;height:72px">
     <div class="eo" id="elBigRemoved" style="display:none"></div>
@@ -1996,7 +2007,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-192c-okrep-ui";
+var BUILD="gobek17-193-islek-yedir-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -2330,7 +2341,7 @@ function tableMeldValid(m){
   if(m.form==="male"){var mv=grpValid(m.tiles);return mv&&mv.kind==="series"&&mv.form==="male"?mv:null}
   return femaleSeriesValidExtended(m.tiles,13);
 }
-function meldProcessAdds(m){var n=Number(m&&m.processAdds);return isFinite(n)&&n>=0?Math.floor(n):0} function meldTurnFeeds(m){if(!m||!st||m.ftK!==st.turnCount)return 0;var n=Number(m.ftC);return isFinite(n)&&n>=0?Math.floor(n):0}
+function meldProcessAdds(m){var n=Number(m&&m.processAdds);return isFinite(n)&&n>=0?Math.floor(n):0} function meldTurnFeeds(m){if(!m||!st||m.ftK!==st.turnCount)return 0;var n=Number(m.ftC);return isFinite(n)&&n>=0?Math.floor(n):0} function meldTurnFeedsA(m){if(!m||!st||m.ftK!==st.turnCount)return 0;var n=Number(m.ftA);return isFinite(n)&&n>=0?Math.floor(n):0} function meldTurnFeedsB(m){if(!m||!st||m.ftK!==st.turnCount)return 0;var n=Number(m.ftB);return isFinite(n)&&n>=0?Math.floor(n):0}
 function normalizeOpenedMeldTiles(tiles,v){
   var a=(tiles||[]).slice();if(!v||v.kind!=="series")return a;var reps=jokerReps(a,v),co={r:0,y:1,b:2,k:3};
   function face(t){return reps[t.uid]||meldFace(t)||t}
@@ -2340,13 +2351,13 @@ function normalizeOpenedMeldTiles(tiles,v){
 }
 function seriesEndpointPlan(m,tiles){
   if(!m||m.kind!=="series"||!tiles||!tiles.length)return null;
-  var used=meldTurnFeeds(m);if(used+tiles.length>2)return null;
+  var usedA=meldTurnFeedsA(m),usedB=meldTurnFeedsB(m);if(usedA+usedB+tiles.length>4)return null;
   var base=tableMeldValid(m);if(!base||base.kind!=="series")return null;
   if(m.form==="male"){var mm=m.tiles.concat(tiles),mv=grpValid(mm);if(!mv||mv.kind!=="series"||mv.form!=="male")return null;return{v:mv,left:[],right:tiles.slice(),reps:jokerReps(mm,mv)}}
   var seq=base.nums||[],L=seq.length,n=tiles.length;if(!seq.length||L+n>13)return null;var start=seq[0],end=seq[seq.length-1],best=null;
   function perm(a){if(a.length<2)return[a.slice()];return[a.slice(),[a[1],a[0]]]}
   var perms=perm(tiles);
-  for(var li=0;li<=n;li++){var ri=n-li,ns=start-li,ne=end+ri;if(ns<1||ne>13)continue;
+  for(var li=0;li<=n;li++){var ri=n-li,ns=start-li,ne=end+ri;if(ns<1||ne>13)continue;if(usedA+li>2||usedB+ri>2)continue;
     var need=[];for(var q=0;q<li;q++)need.push(ns+q);for(q=1;q<=ri;q++)need.push(end+q);
     for(var pi=0;pi<perms.length;pi++){var pa=perms[pi],ok=true,reps={},left=[],right=[];
       for(var k=0;k<pa.length;k++){var t=pa[k],want=need[k],f=meldFace(t);
@@ -2425,7 +2436,7 @@ function check(){
   st.players.forEach(function(p,i){p.rack.forEach(function(t){reg(t,"p"+i)})});
   st.melds.forEach(function(m,i){
     if(midSeen[m.id])midDup.push(m.id);midSeen[m.id]=1;
-    var vv=tableMeldValid(m);if(!vv||vv.kind!==m.kind)badMeld.push(m.id);var pa=meldProcessAdds(m),ol=(m.openLen==null?m.tiles.length-pa:Number(m.openLen));if(pa<0||meldTurnFeeds(m)>2||!isFinite(ol)||ol<2||m.tiles.length!==ol+pa)badMeld.push(m.id+":processMeta");
+    var vv=tableMeldValid(m);if(!vv||vv.kind!==m.kind)badMeld.push(m.id);var pa=meldProcessAdds(m),ol=(m.openLen==null?m.tiles.length-pa:Number(m.openLen));if(pa<0||meldTurnFeedsA(m)>2||meldTurnFeedsB(m)>2||meldTurnFeeds(m)>4||!isFinite(ol)||ol<2||m.tiles.length!==ol+pa)badMeld.push(m.id+":processMeta");
     m.tiles.forEach(function(t){reg(t,"m"+i)})
   });
   if(st.indicator)reg(st.indicator,"ind");
@@ -2693,7 +2704,7 @@ function a_open(p,groupsUids,mode,orderedManual){
     var tiles=resolve(p,groupsUids[i],true);
     if(!tiles)return{ok:false,err:"grup taşları geçersiz"};
     for(q=0;q<tiles.length;q++){
-      if(flat[tiles[q].uid])return{ok:false,err:"aynı taş iki grupta"};if(P.okeyLockUid&&tiles[q].uid===P.okeyLockUid&&P.okeyLockKey===st.handIndex+":"+st.turnCount)return{ok:false,err:"bu turda alinan okey ayni turda kullanilamaz"};
+      if(flat[tiles[q].uid])return{ok:false,err:"aynı taş iki grupta"};
       flat[tiles[q].uid]=1;
       if(st.pending&&tiles[q].uid===st.pending.tile.uid)usedPend=true;
     }
@@ -2772,7 +2783,7 @@ function a_process(p,meldId,uids){
   var P=st.players[p];if(!P.opened)return{ok:false,err:"önce açmalısın"};if(!P.hasDrawn)return{ok:false,err:"önce taş çekmelisin"};
   var m=null,i;for(i=0;i<st.melds.length;i++)if(st.melds[i].id===meldId){m=st.melds[i];break}
   if(!m)return{ok:false,err:"per bulunamadı"};
-  var tiles=resolve(p,uids,true);if(!tiles||!tiles.length)return{ok:false,err:"taş geçersiz"};for(i=0;i<tiles.length;i++)if(P.okeyLockUid&&tiles[i].uid===P.okeyLockUid&&P.okeyLockKey===st.handIndex+":"+st.turnCount)return{ok:false,err:"bu turda alinan okey ayni turda kullanilamaz"};
+  var tiles=resolve(p,uids,true);if(!tiles||!tiles.length)return{ok:false,err:"taş geçersiz"};
   /* ÇİFT işleme mevcut çifte üçüncü taş eklemez; başka oyuncunun ÇİFT alanında yeni legal çift yaratır. */
   if(m.kind==="pair"){
     if(m.owner===p)return{ok:false,err:"kendi ÇİFT alanına işleme yapılmaz — PER AÇ (ÇİFT) kullan"};
@@ -2786,10 +2797,10 @@ function a_process(p,meldId,uids){
     return{ok:true,amount:pairApplied,rawAmount:pp.amount,pair:true,created:pm.id,target:m.owner,penalty:pe,teamFree:pairTeamFree,takePenalty:takePenaltyPair};
   }
   var realN=0;for(i=0;i<tiles.length;i++)if(!isJok(tiles[i]))realN++;if(realN>CFG.MAX_REAL_PER_PROCESS)return{ok:false,err:"aynı seriye bir hamlede en fazla "+CFG.MAX_REAL_PER_PROCESS+" gerçek taş işlenir"};
-  var plan=seriesEndpointPlan(m,tiles);if(!plan){if(meldTurnFeeds(m)+tiles.length>2)return{ok:false,err:"bu pere toplam en fazla 2 taş işlenebilir"};return{ok:false,err:"taş yalnız perin en soluna veya en sağına işlenebilir; açık per bölünmez/değişmez"}}
+  var plan=seriesEndpointPlan(m,tiles);if(!plan){if(meldTurnFeedsA(m)>=2&&meldTurnFeedsB(m)>=2)return{ok:false,err:"işlek kotası dolu — bu seride uç başına en fazla 2 (toplam 4) normal işlek"};return{ok:false,err:"taş yalnız perin en soluna veya en sağına işlenebilir; açık per bölünmez/değişmez"}}
   var usedPend=false;for(i=0;i<tiles.length;i++){var t=tiles[i],ix=findT(p,t.uid);if(ix>=0)st.players[p].rack.splice(ix,1);else if(st.pending&&st.pending.tile.uid===t.uid)usedPend=true}
   /* Açılmış perin eski taş dizisi aynen korunur; yalnız endpoint taşları eklenir. */
-  var oldUids=m.tiles.map(function(t){return t.uid}),left=plan.left||[],right=plan.right||[];m.tiles=left.concat(m.tiles,right);st.players[p].fedAny=true;m.ftC=meldTurnFeeds(m)+tiles.length;m.ftK=st.turnCount;m.processAdds=meldProcessAdds(m)+tiles.length;if(m.openLen==null)m.openLen=oldUids.length;
+  var oldUids=m.tiles.map(function(t){return t.uid}),left=plan.left||[],right=plan.right||[];m.tiles=left.concat(m.tiles,right);st.players[p].fedAny=true;var _fA=meldTurnFeedsA(m)+((plan.left||[]).length),_fB=meldTurnFeedsB(m)+((plan.right||[]).length);m.ftC=meldTurnFeeds(m)+tiles.length;m.ftA=_fA;m.ftB=_fB;m.ftK=st.turnCount;m.processAdds=meldProcessAdds(m)+tiles.length;if(m.openLen==null)m.openLen=oldUids.length;
   var allReps=jokerReps(m.tiles,tableMeldValid(m)||plan.v);for(i=0;i<m.tiles.length;i++){if(isJok(m.tiles[i]))m.tiles[i].rep=allReps[m.tiles[i].uid]||m.tiles[i].rep||null}
   m.color=(plan.v&&plan.v.color)||m.color;m.form=(plan.v&&plan.v.form)||m.form||null;
   var amt=0;for(i=0;i<tiles.length;i++)amt+=tv(tiles[i])*10;var tgt=m.owner,seriesTeamFree=(tgt!==p&&sameTeam(p,tgt)),appliedAmt=seriesTeamFree?0:amt;if(tgt!==p&&!seriesTeamFree)pen(p,tgt,tiles,"PROCESS",amt);
@@ -2959,7 +2970,7 @@ function openNeed(mode){
   return n;
 }
 return{CFG:CFG,newGame:newGame,startHand:startHand,draw:a_draw,take:a_take,takeCancel:a_takeCancel,okeyTake:a_okeyTake,takePenalty:a_takePenalty,tilePenaltyAmount:tilePenaltyAmount,__testState:function(v){if(arguments.length)st=v;return st},openNeed:openNeed,openingPolicy:openingPolicy,nextSeat:nextSeat,rightSeat:rightSeat,takeSourceSeat:takeSourceSeat,partnerOf:partnerOf,isTeamMode:isTeamMode,teamIndexOfSeat:teamIndexOfSeat,sameTeam:sameTeam,normalizeTeamsConfig:normalizeTeamsConfig,computeOkey:computeOkey,isBigRules:isBigRules,
-       open:a_open,openAttempt:openAttempt,badOpenPenalty:badOpenPenalty,badProcessPenalty:badProcessPenalty,process:a_process,discard:a_discard,discardMajorPenaltyKind:discardMajorPenaltyKind,workableDiscardTargets:workableDiscardTargets,canFeedTileToMeld:canFeedTileToMeld,canFeedPairToMeld:canFeedPairToMeld,pairFeedPlan:pairFeedPlan,tableMeldValid:tableMeldValid,seriesEndpointPlan:seriesEndpointPlan,meldProcessAdds:meldProcessAdds,check:check,rackPenaltyValue:rackPenaltyValue,unopenedPenalty:unopenedPenalty,openedPenalty:openedPenalty,finishSpecialMeta:finishSpecialMeta,buildMatchFinal:buildMatchFinal,matchSeatStats:matchSeatStats,teamMatchStats:teamMatchStats,forfeitHand:forfeitHand,isJok:isJok,isIndicatorTile:isIndicatorTile,isPairWild:isPairWild,plainFakeRep:plainFakeRep,meldFace:meldFace,tv:tv,grpValid:grpValid,grpValidOrdered:grpValidOrdered,jokerReps:jokerReps,
+       open:a_open,openAttempt:openAttempt,badOpenPenalty:badOpenPenalty,badProcessPenalty:badProcessPenalty,process:a_process,discard:a_discard,discardMajorPenaltyKind:discardMajorPenaltyKind,workableDiscardTargets:workableDiscardTargets,canFeedTileToMeld:canFeedTileToMeld,meldTurnFeedsA:meldTurnFeedsA,meldTurnFeedsB:meldTurnFeedsB,canFeedPairToMeld:canFeedPairToMeld,pairFeedPlan:pairFeedPlan,tableMeldValid:tableMeldValid,seriesEndpointPlan:seriesEndpointPlan,meldProcessAdds:meldProcessAdds,check:check,rackPenaltyValue:rackPenaltyValue,unopenedPenalty:unopenedPenalty,openedPenalty:openedPenalty,finishSpecialMeta:finishSpecialMeta,buildMatchFinal:buildMatchFinal,matchSeatStats:matchSeatStats,teamMatchStats:teamMatchStats,forfeitHand:forfeitHand,isJok:isJok,isIndicatorTile:isIndicatorTile,isPairWild:isPairWild,plainFakeRep:plainFakeRep,meldFace:meldFace,tv:tv,grpValid:grpValid,grpValidOrdered:grpValidOrdered,jokerReps:jokerReps,
        get st(){return st},get seed(){return SEEDB},LOG:LOG,LED:LED};
 })();
 /*OKEY17-SON*/
@@ -3989,8 +4000,8 @@ function bindDrag(t){
       if(directHit||gestureThrow||_srcHit){
         if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
         var pUid0=E.st.pending?E.st.pending.tile.uid:null;
-        if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);G17NET.discardUid(t.uid);if(PENDFIT){PENDFIT=false;fitSoon()}return}
-        var rD=E.discard(HSEAT,t.uid);
+        if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);if(typeof ISLEK!=="undefined"&&ISLEK.on){toast("İşlek modu açık — taş atmak için İŞLEK YEDİR'i kapat");buzz(4);if(PENDFIT){PENDFIT=false;fitSoon()}return}G17NET.discardUid(t.uid);if(PENDFIT){PENDFIT=false;fitSoon()}return}
+        if(typeof ISLEK!=="undefined"&&ISLEK.on){restoreDraggedSource(t,e,src);toast("İşlek modu açık — taş atmak için İŞLEK YEDİR'i kapat");buzz(4);if(PENDFIT){PENDFIT=false;fitSoon()}return}var rD=E.discard(HSEAT,t.uid);
         if(rD.ok){
           e.classList.remove("drag","press");document.body.classList.remove("dragging");setThrowAssist(false,false);
           if(DR&&DR.raf)cancelAnimationFrame(DR.raf);DR=null;
@@ -4024,14 +4035,14 @@ function bindDrag(t){
        and second matching drop commits both atomically. A lone/invalid pair drop is restored
        without creating a false BAD_PROCESS ×10 event. */
     if(commit&&t.uid){
-      var pairPoint={x:vcx,y:vcy},pairTogether=d.pairSelUids&&d.pairSelUids.length===2?d.pairSelUids:null;
+      var pairPoint={x:vcx,y:vcy},pairTogether=(typeof ISLEK!=="undefined"&&ISLEK.on)&&d.pairSelUids&&d.pairSelUids.length===2?d.pairSelUids:null;
       var pairTogetherTarget=pairTogether?pairDropTargetForUids(pairTogether,pairPoint.x,pairPoint.y):null;
       if(pairTogetherTarget){
         if(PAIR_FEED_STAGE.uid&&pairTogether.indexOf(PAIR_FEED_STAGE.uid)<0)clearPairFeedStage(true);
         var togetherPts=captureMotionCenters(pairTogether);togetherPts[t.uid]={x:vcx,y:vcy};
         if(commitPairFeedDrop(t,pairTogetherTarget,src,pairTogether,togetherPts)){if(PENDFIT){PENDFIT=false;fitSoon()}return}
       }
-      var pairHit=opponentPairHit(pairPoint.x,pairPoint.y);
+      var pairHit=(typeof ISLEK!=="undefined"&&ISLEK.on)?opponentPairHit(pairPoint.x,pairPoint.y):null;
       if(pairHit){
         /* v192d kanon: cift perde exact-rep -> OKEY_REPLACEMENT onceligi (feed/stage oncesi) */
         if(typeof okeyRepDropTarget==="function"){var _orp=okeyRepDropTarget(t.uid,pairPoint.x,pairPoint.y);
@@ -4059,18 +4070,18 @@ function bindDrag(t){
        floating 3/8 style tiles seen under opponent pers: legal drops are engine-committed
        and snap into the target meld instead of remaining as movable FREE tiles. */
     if(commit&&t.uid){
-      var magTarget=okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy); /* v192f: kanon onceligi - replacement hedefi feedden once */
+      var magTarget=(typeof ISLEK!=="undefined"&&ISLEK.on)?(okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy)):null; /* v192f: kanon onceligi - replacement hedefi feedden once */
       if(window.G17NET&&G17NET.active()&&magTarget){restoreDraggedSource(t,e,src);G17NET.process(magTarget.id,[t.uid]);if(PENDFIT){PENDFIT=false;fitSoon()}return}
       var mag=commitDragProcess(t,vcx,vcy,magTarget);
       if(mag){if(PENDFIT){PENDFIT=false;fitSoon()}return}
       /* Kullanıcı açık bir SERİ perine belirgin şekilde bırakmışsa bu PROCESS intent'tir.
          Legal değilse taş FREE board'a düşüp perin altında takılı kalamaz: kaynağa geri döner. */
-      var nearProc=processIntentNear(t.uid,vcx,vcy);
+      var nearProc=processIntentNear(t.uid,vcx,vcy);if(nearProc&&!(typeof ISLEK!=="undefined"&&ISLEK.on)){restoreDraggedSource(t,e,src);toast("İşlek kapalı — açık pere taş işlemek için İŞLEK YEDİR'i aç");buzz(4);if(PENDFIT){PENDFIT=false;fitSoon()}return}
       if(nearProc){
         /* v157: açılmış per gövdesine/illegal ucuna bırakma artık FREE board'a düşmez.
            Taş aynen kaynağına döner ve denenen taş ×10 öz-ceza üretir. */
         var npm=nearProc.meld,why="Açılmış perin arasına taş konulamaz — per değişmez";
-        if(npm&&E.meldProcessAdds(npm)>=2)why="Bu pere toplam en fazla 2 taş işlenebilir";
+        if(npm&&npm.form!=="male"&&E.meldTurnFeedsA&&E.meldTurnFeedsA(npm)>=2&&E.meldTurnFeedsB(npm)>=2)why="işlek kotası dolu — uç başına 2, toplam 4";
         else if(npm&&npm.kind==="pair")why="Açılmış ÇİFT perine tek taş eklenemez";
         else if(!nearProc.body&&npm&&npm.form==="male"&&npm.tiles.length>=4)why="RENKSİZ SERİ PER en fazla 4 taş olabilir";
         else if(!nearProc.body&&npm&&npm.form==="female")why="Taş yalnız serinin gerçek sol/sağ ucunu ardışık tamamlıyorsa işlenebilir";
@@ -4854,7 +4865,7 @@ function processDropTarget(uid,x,y){
   return best;
 }
 
-function paintDragProcessMagnet(d,target){
+function paintDragProcessMagnet(d,target){if(!(typeof ISLEK!=="undefined"&&ISLEK.on))target=null;
   if(!d)return;var prev=d.procMag&&d.procMag.id,next=target&&target.id;
   if(prev===next){d.procMag=target||null;return}
   if(prev){var pa=VISM[prev]||[];for(var z=0;z<pa.length;z++)if(pa[z].el)pa[z].el.classList.remove("proc-magnet-hot")}
@@ -5160,7 +5171,7 @@ function doPerOpen(mode){
     }
   }
 
-  var pr=autoProcessExistingMelds(uids,mode);
+  var pr={ok:false,count:0,amount:0,moves:[]}; /* v193 kanon: yedirme yalniz ISLEK YEDIR akisi - PER AC otomatik feed yapmaz, rastgele hedef yok */
 
   if(!openedNew&&!pr.count){
     if(must)toast("Yerden aldığın taşı yeni perde veya uygun açık pere kullanmalısın");
@@ -5266,12 +5277,12 @@ function updUI(){
   var pb=document.getElementById("rbProcess"),fb=document.getElementById("rbFinish"),pc=document.getElementById("procBadge"),fs=document.getElementById("finishSub");
   var procU=me.opened&&my&&stt.turnState==="ACTION"&&me.hasDrawn&&!stt.firstRoundActive?processOpportunityUids():[];
   var canProc=procU.length>0;
-  if(pb){pb.classList.toggle("rdis",!canProc);pb.classList.toggle("hot",canProc&&selUids().length===1)}
+  if(pb){var canIslek=me.opened&&my&&stt.turnState==="ACTION"&&me.hasDrawn&&!stt.firstRoundActive;pb.classList.toggle("rdis",!canIslek);pb.classList.toggle("hot",canIslek&&(canProc||(typeof ISLEK!=="undefined"&&ISLEK.on)))}
   if(pc){pc.textContent=procU.length;pc.style.display=procU.length?"flex":"none"}
   var fr=finishReady();
   if(fb){fb.classList.toggle("rdis",!fr);fb.classList.toggle("ready",fr);fb.classList.toggle("hot",fr)}
   if(fs)fs.textContent=fr?"HAZIR":"SON TAŞ";
-  if(!canProc&&PROC_ASSIST.active)clearProcessAssist();
+  if(!canProc&&PROC_ASSIST.active)clearProcessAssist();if(typeof islekWatch==="function"){islekWatch();islekUI()}
   var eb=document.getElementById("elBig"),en=document.getElementById("elNrm");
   if(eb){eb.classList.toggle("on",stt.handType==="BIG");
     eb.innerHTML='<i class="crn"></i>Büyük El '+Math.min(stt.handCount+(stt.handType==="BIG"&&!stt.handOver?1:0),E.CFG.END_AFTER_HANDS)+"/"+E.CFG.END_AFTER_HANDS}
@@ -5377,7 +5388,133 @@ function removeVis(t){
   if(t.el&&t.el.parentNode&&t.el.parentNode.removeChild)t.el.parentNode.removeChild(t.el);
   else if(t.el)t.el.style.display="none";
 }
+/* ==== v193 KANONIK ISLEK YEDIR — master switch + canonical hedef + otomasyon. Motor tek legality otoritesi. ==== */
+var ISLEK={on:false,target:null,key:null};
+function islekKey(){return E.st?(E.st.handIndex+":"+E.st.turnCount+":"+E.st.turnIndex):"x"}
+function islekMyTurn(){var me=E.st&&E.st.players[HSEAT];return !!(me&&me.opened&&E.st.turnIndex===HSEAT&&!E.st.handOver&&E.st.turnState==="ACTION"&&me.hasDrawn&&!E.st.firstRoundActive)}
+function islekClearHi(){for(var k in VISM){var a=VISM[k]||[];for(var j=0;j<a.length;j++)if(a[j]&&a[j].el)a[j].el.classList.remove("islek-target")}}
+function islekPaint(){islekClearHi();var t=ISLEK.target;if(!ISLEK.on||!t||!E.st)return;
+  for(var i=0;i<E.st.melds.length;i++){var m=E.st.melds[i];
+    var hit=(t.type==="meld")?(m.id===t.id):(m.kind==="pair"&&m.owner===t.owner);
+    if(!hit)continue;var a=VISM[m.id]||[];for(var j=0;j<a.length;j++)if(a[j]&&a[j].el)a[j].el.classList.add("islek-target")}}
+function islekUI(){var pb=document.getElementById("rbProcess"),sub=document.getElementById("islekSub");
+  if(pb)pb.classList.toggle("islekOn",ISLEK.on);
+  if(sub){sub.classList.toggle("on",ISLEK.on);sub.setAttribute("aria-hidden",ISLEK.on?"false":"true");
+    var bs=document.getElementById("islekSeri"),bc=document.getElementById("islekCift");
+    if(bs)bs.classList.toggle("go",!!(ISLEK.on&&ISLEK.target&&ISLEK.target.type==="meld"&&ISLEK.target.kind==="series"));
+    if(bc)bc.classList.toggle("go",!!(ISLEK.on&&ISLEK.target&&ISLEK.target.type==="pairArea"))}}
+function islekSet(on){ISLEK.on=!!on;ISLEK.target=null;ISLEK.key=islekKey();islekPaint();islekUI();
+  if(on)toast("ISLEK YEDIR ACIK — hedef sec: SERI peri veya rakibin CIFT alani");else toast("ISLEK YEDIR KAPALI — normal discard aktif")}
+function islekReset(){if(!ISLEK.on&&!ISLEK.target)return;ISLEK.on=false;ISLEK.target=null;ISLEK.key=null;islekClearHi();islekUI()}
+function islekWatch(){if(!ISLEK.on&&!ISLEK.target)return;
+  if(!E.st||E.st.handOver||E.st.turnIndex!==HSEAT||ISLEK.key!==islekKey())islekReset()}
+function islekToggle(){if(!ISLEK.on&&!islekMyTurn()){toast("Islek icin: siran olmali, acmis ve tas cekmis olmalisin");buzz(4);return}
+  islekSet(!ISLEK.on)}
+function islekFindMeld(id){if(!E.st)return null;for(var i=0;i<E.st.melds.length;i++)if(E.st.melds[i].id===id)return E.st.melds[i];return null}
+function islekExactRepUid(m){if(!m)return null;var jok=null,i;
+  for(i=0;i<m.tiles.length;i++)if(E.isJok(m.tiles[i])){jok=m.tiles[i];break}
+  if(!jok||!jok.rep)return null;
+  var me=E.st.players[HSEAT];
+  for(i=0;i<me.rack.length;i++){var t=me.rack[i];if(E.isJok(t))continue;
+    if(t.color===jok.rep.color&&t.num===jok.rep.num)return t.uid}
+  if(E.st.pending&&!E.isJok(E.st.pending.tile)&&E.st.pending.tile.color===jok.rep.color&&E.st.pending.tile.num===jok.rep.num)return E.st.pending.tile.uid;
+  return null}
+function islekSpawnReturnedOkey(tookUid){if(!tookUid)return;var _has=false,_rw,_ci;
+  for(_rw=0;_rw<RACKS.length&&!_has;_rw++)for(_ci=0;_ci<RACKS[_rw].length;_ci++){if(RACKS[_rw][_ci]&&RACKS[_rw][_ci].uid===tookUid){_has=true;break}}
+  if(!_has){for(_ci=0;_ci<FREE.length;_ci++)if(FREE[_ci]&&FREE[_ci].uid===tookUid){_has=true;break}}
+  if(!_has){var _et=engTile(tookUid);if(_et){var _nt=spawnEng(_et);
+    if(typeof placeNew==="function"){placeNew(_nt)}else{var _sp=firstFree();if(_sp){RACKS[_sp.r][_sp.i]=_nt;_nt.row=_sp.r;_nt.slot=_sp.i}}
+    layoutRacks()}}}
+function islekCommit(meldId,uids,silent){var m=islekFindMeld(meldId);if(!m)return false;
+  if(window.G17NET&&G17NET.active()){G17NET.process(meldId,uids);return true}
+  var r=E.process(HSEAT,meldId,uids);
+  if(!r.ok){if(!silent){toast(r.err||"legal islek yok");buzz(4)}return false}
+  if(r.replaced||r.tookUid){var vt0=uiTileByUid(uids[0]);if(vt0)removeVis(vt0);clearSel();syncMelds();
+    islekSpawnReturnedOkey(r.tookUid);
+    toast("OKEY DEGISIMI — exact tas perde, Okey istakanda (ayni tur kullanilabilir)");buzz([9,15,9]);
+    updUI();updHint();assertRack();islekPaint();return true}
+  var i,vts=[];for(i=0;i<uids.length;i++){var vt=uiTileByUid(uids[i]);if(vt)vts.push(vt)}
+  for(i=0;i<vts.length;i++)removeVis(vts[i]);
+  clearSel();syncMelds();animateProcessTransfer(uids,{},HSEAT,r.created||meldId,{stagger:46});
+  updUI();updHint();assertRack();islekPaint();return true}
+function islekSelectMeld(m){if(!ISLEK.on||!islekMyTurn())return false;
+  var ru=islekExactRepUid(m);
+  if(ru){if(islekCommit(m.id,[ru],true))return true}
+  if(m.kind==="series"){ISLEK.target={type:"meld",id:m.id,kind:"series",owner:m.owner}}
+  else if(m.kind==="pair"){if(m.owner===HSEAT){toast("Kendi CIFT alanina isleme yapilmaz — PER AC (CIFT) kullan");buzz(4);return true}
+    ISLEK.target={type:"pairArea",owner:m.owner,anchor:m.id}}
+  else return false;
+  ISLEK.key=islekKey();islekPaint();islekUI();
+  toast(ISLEK.target.type==="pairArea"?"HEDEF SECILDI: rakibin CIFT alani — CIFT ISLEK YEDIR":"HEDEF SECILDI: seri peri — SERI ISLEK YEDIR");buzz(6);
+  return true}
+function islekMeldTap(meldId){if(!ISLEK.on)return false;var m=islekFindMeld(meldId);if(!m)return false;return islekSelectMeld(m)}
+function islekRunSeri(){
+  if(!ISLEK.on){toast("Once ISLEK YEDIR'i ac");buzz(4);return}
+  if(!ISLEK.target){toast("Once hedef SERI perini sec");buzz(4);return}
+  if(!(ISLEK.target.type==="meld"&&ISLEK.target.kind==="series")){toast("Secili hedef SERI degil — baska hedef ARANMAZ");buzz(4);return}
+  var m=islekFindMeld(ISLEK.target.id);
+  if(!m){toast("Hedef per artik masada yok — yeniden sec");buzz(4);ISLEK.target=null;islekPaint();islekUI();return}
+  var me=E.st.players[HSEAT],order=[],i;
+  if(E.st.pending)order.push(E.st.pending.tile.uid);
+  for(i=0;i<me.rack.length;i++)order.push(me.rack[i].uid);
+  if(window.G17NET&&G17NET.active()){
+    var cands=[];for(i=0;i<order.length&&cands.length<4;i++){var t2=engTile(order[i]);if(t2&&E.canFeedTileToMeld(t2,m))cands.push(order[i])}
+    if(!cands.length){toast("Bu hedefte legal islek yok");buzz(4);return}
+    var tid=ISLEK.target.id;
+    (async function(){for(var q=0;q<cands.length;q++){try{await G17NET.process(tid,[cands[q]])}catch(e){}}})();
+    return}
+  var made=0;
+  for(i=0;i<order.length;i++){var t=engTile(order[i]);if(!t)continue;
+    m=islekFindMeld(ISLEK.target.id);if(!m)break;
+    if(!E.canFeedTileToMeld(t,m))continue;
+    if(islekCommit(ISLEK.target.id,[order[i]],true))made++}
+  if(!made){toast("Bu hedefte legal islek yok");buzz(4)}
+  else toast(made+" tas secili seriye islendi")}
+function islekPairSets(){var me=E.st.players[HSEAT],ts=me.rack.slice();if(E.st.pending)ts.push(E.st.pending.tile);
+  var used={},out=[],i,j;
+  for(i=0;i<ts.length-1;i++){if(used[ts[i].uid])continue;
+    for(j=i+1;j<ts.length;j++){if(used[ts[j].uid])continue;
+      var v=E.grpValid([ts[i],ts[j]]);
+      if(v&&v.kind==="pair"){used[ts[i].uid]=1;used[ts[j].uid]=1;out.push([ts[i].uid,ts[j].uid]);break}}}
+  return out}
+function islekRunCift(){
+  if(!ISLEK.on){toast("Once ISLEK YEDIR'i ac");buzz(4);return}
+  if(!ISLEK.target){toast("Once hedefi sec: rakibin CIFT alani");buzz(4);return}
+  if(ISLEK.target.type!=="pairArea"){toast("Secili hedef CIFT alani degil — baska hedef ARANMAZ");buzz(4);return}
+  var owner=ISLEK.target.owner,i,anchor=null;
+  function findAnchor(){for(var k=0;k<E.st.melds.length;k++){var mm=E.st.melds[k];if(mm.kind==="pair"&&mm.owner===owner)return mm}return null}
+  anchor=findAnchor();
+  if(!anchor){toast("Hedef CIFT alani artik yok — yeniden sec");buzz(4);ISLEK.target=null;islekPaint();islekUI();return}
+  var sets=islekPairSets();
+  if(window.G17NET&&G17NET.active()){
+    var legal=[];for(i=0;i<sets.length&&legal.length<7;i++){var tt=[engTile(sets[i][0]),engTile(sets[i][1])];
+      if(tt[0]&&tt[1]&&E.pairFeedPlan(tt,anchor))legal.push(sets[i])}
+    if(!legal.length){toast("Legal cift islek yok");buzz(4);return}
+    var aid=anchor.id;
+    (async function(){for(var q=0;q<legal.length;q++){try{await G17NET.process(aid,legal[q])}catch(e){}}})();
+    return}
+  var made=0;
+  for(i=0;i<sets.length;i++){anchor=findAnchor();if(!anchor)break;
+    var ts2=[engTile(sets[i][0]),engTile(sets[i][1])];if(!ts2[0]||!ts2[1])continue;
+    if(!E.pairFeedPlan(ts2,anchor))continue;
+    if(islekCommit(anchor.id,sets[i],true))made++}
+  if(!made){toast("Legal cift islek yok");buzz(4)}
+  else toast(made+" yeni cift rakibin CIFT alanina islendi — her cift ayri ceza")}
+function islekStageXY(ev){var st=document.getElementById("stage");if(!st)return null;var r=st.getBoundingClientRect();
+  if(!r.width||!r.height)return null;return{x:(ev.clientX-r.left)*1536/r.width,y:(ev.clientY-r.top)*1024/r.height}}
+(function(){
+  var pb=document.getElementById("rbProcess");
+  if(pb)pb.addEventListener("click",function(ev){ev.stopImmediatePropagation();ev.preventDefault();islekToggle()},true);
+  var bs=document.getElementById("islekSeri");if(bs)bs.addEventListener("click",function(ev){ev.stopPropagation();islekRunSeri()});
+  var bc=document.getElementById("islekCift");if(bc)bc.addEventListener("click",function(ev){ev.stopPropagation();islekRunCift()});
+  document.addEventListener("click",function(ev){
+    if(!ISLEK.on||DR)return;var p=islekStageXY(ev);if(!p)return;
+    for(var k in MELD_HIT){var hb=MELD_HIT[k];if(!hb)continue;
+      if(p.x>=hb.x1-8&&p.x<=hb.x2+8&&p.y>=hb.y1-8&&p.y<=hb.y2+8){ev.stopPropagation();ev.preventDefault();islekMeldTap(k);return}}},true);
+})();
+
 function doDiscard(){
+  if(typeof ISLEK!=="undefined"&&ISLEK.on){toast("İşlek modu açık — taş atmak için İŞLEK YEDİR'i kapat");buzz(4);return}
   if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
   if(window.G17NET&&G17NET.active())return G17NET.discard();
   if(!uiReady(doDiscard))return;
@@ -6501,7 +6638,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-192c-okrep-ui'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-193-islek-yedir-kanon'};
 })(window);
 </script>
 <script>
@@ -6786,7 +6923,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-192c-okrep-ui',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-193-islek-yedir-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>

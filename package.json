@@ -1,7 +1,7 @@
 {
   "name": "gobek17-online",
   "private": true,
-  "version": "1.92.0",
+  "version": "1.93.0",
   "description": "GÖBEK17 v182 real account screens + email login + casual online matchmaking + v181 60 FPS + PB hardening",
   "main": "server.cjs",
   "scripts": {

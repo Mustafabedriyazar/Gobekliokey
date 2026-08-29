@@ -33,7 +33,7 @@ for(let ji=0;ji<3;ji++){
 })();
 (function uiOrderCanon(){const fs=require("fs"),path=require("path");
  const h=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf8");
- const i=h.indexOf("var magTarget=okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy);");
+ const i=h.indexOf("(okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy))");
  T("UI hedefleme sirasi kanonik (replacement once)",i>=0);
  T("eski feed-once sira kaldirildi",h.indexOf("var magTarget=liveMag||processDropTarget(t.uid,vcx,vcy)||okeyRepDropTarget")<0);
 })();

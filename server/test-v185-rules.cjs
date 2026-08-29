@@ -17,7 +17,7 @@ st.players[0].hasDrawn=true;st.players[0].opened=true;
 var bs=[];for(var i=4;i<=8;i++){bs.push(mkT('TB'+i,'b',i))}
 var m1={id:'mT1',kind:'series',owner:1,tiles:bs,processAdds:0,openLen:5,ha:st.handIndex};
 st.melds.push(m1);
-st.players[0].rack.push(mkT('TB9','b',9),mkT('TB10','b',10),mkT('TB3','b',3));
+st.players[0].rack.push(mkT('TB9','b',9),mkT('TB10','b',10),mkT('TB3','b',3),mkT('TB11','b',11));
 var p1=E.process(0,'mT1',['TB9']);
 T('m8a',!!(p1&&p1.ok));
 T('m6',m1.tiles.length===6&&m1.tiles[5].uid==='TB9'&&m1.tiles[0].uid==='TB4');
@@ -26,19 +26,19 @@ T('m8b',!!(p2&&p2.ok)&&m1.tiles.length===7);
 var before=m1.tiles.map(function(x){return x.uid}).join(',');
 var rackN=st.players[0].rack.length;
 var p3=E.process(0,'mT1',['TB3']);
-T('m8c-reject',!(p3&&p3.ok));
-T('m29-nochange',m1.tiles.map(function(x){return x.uid}).join(',')===before&&st.players[0].rack.length===rackN);
+T('m8c-reject',!!(p3&&p3.ok)&&(function(){var px=E.process(0,'mT1',['TB11']);return !(px&&px.ok)})()); /* v193: dusuk uc legal, 3. yuksek uc RED */
+T('m29-nochange',m1.tiles[0].uid==='TB3'&&m1.tiles.length===8&&st.players[0].rack.length===rackN-1&&m1.tiles.map(function(x){return x.uid}).join(',').indexOf('TB11')<0);
 T('m7-order',before.indexOf('TB4,TB5,TB6,TB7,TB8')>=0);
 var y3=[];for(i=4;i<=6;i++){y3.push(mkT('TY'+i,'y',i))}
 var m3={id:'mT3',kind:'series',owner:1,tiles:y3,processAdds:0,openLen:3,ha:st.handIndex};
 st.melds.push(m3);
-st.players[0].rack.push(mkT('TY7','y',7),mkT('TY8','y',8),mkT('TY3','y',3));
+st.players[0].rack.push(mkT('TY7','y',7),mkT('TY8','y',8),mkT('TY3','y',3),mkT('TY9','y',9));
 var f1=E.process(0,'mT3',['TY7']),f2=E.process(0,'mT3',['TY8']);
 var f3=E.process(0,'mT3',['TY3']);
-T('m9-lim',!!(f1&&f1.ok)&&!!(f2&&f2.ok)&&!(f3&&f3.ok));
+T('m9-lim',!!(f1&&f1.ok)&&!!(f2&&f2.ok)&&!!(f3&&f3.ok)&&(function(){var fx=E.process(0,'mT3',['TY9']);return !(fx&&fx.ok)})()); /* v193: 2+2 */
 st.turnCount++;
-var f4=E.process(0,'mT3',['TY3']);
-T('m11-newturn',!!(f4&&f4.ok)&&m3.tiles[0].uid==='TY3');
+var f4=E.process(0,'mT3',['TY9']);
+T('m11-newturn',!!(f4&&f4.ok)&&m3.tiles[m3.tiles.length-1].uid==='TY9');
 var cs2=[];for(i=2;i<=6;i++){cs2.push(mkT('TR'+i,'r',i))}
 var m2={id:'mT2',kind:'series',owner:1,tiles:cs2,processAdds:0,openLen:5,ha:st.handIndex};
 st.melds.push(m2);
@@ -91,7 +91,7 @@ T('m16-feed0',(m4.ftC==null||E3.tilePenaltyAmount)&&(function(){return (m4.ftK==
 var q3=E3.process(0,'mO1',['OB11']);
 T('m17-feed1',!!(q3&&q3.ok)&&m4.tiles.length===4);
 var q4=E3.process(0,'mO1',[jk.uid]);
-T('m18-jokuse',!(q4&&q4.ok)&&/ayni turda/.test((q4&&q4.err)||'')); /* v192 kanon: degisimle alinan okey ayni turda kullanilamaz (test-v192-canon I) */
+T('m18-jokuse',!!(q4&&q4.ok)&&m4.tiles.length===5); /* v193 kanon: geri alinan okey ayni tur kullanilabilir */
 var q5=E3.process(0,'mO1',['OR5']);
 T('m17-lim',!(q5&&q5.ok));
 T('m19-noreorder',m4.tiles[0].uid==='OB8'&&m4.tiles[1].uid==='OB9'&&m4.tiles[2].uid==='OB10');
@@ -140,23 +140,23 @@ var EA=mk();EA.newGame(81);EA.startHand();var sA=EA.__testState();
 sA.firstRoundActive=false;sA.turnIndex=0;sA.turnState='ACTION';sA.players[0].hasDrawn=true;sA.players[0].opened=true;
 var mL={id:'mL1',kind:'series',owner:1,tiles:[mkT('LB8','b',8),mkT('LB9','b',9),mkT('LB10','b',10)],processAdds:0,openLen:3,ha:sA.handIndex};
 sA.melds.push(mL);
-sA.players[0].rack.push(mkT('LB7','b',7),mkT('LB11','b',11),mkT('LB12','b',12));
+sA.players[0].rack.push(mkT('LB7','b',7),mkT('LB11','b',11),mkT('LB12','b',12),mkT('LB13','b',13));
 var q1=EA.process(0,'mL1',['LB7']);
 var q2=EA.process(0,'mL1',['LB11']);
 T('mD-two',!!(q1&&q1.ok)&&!!(q2&&q2.ok)&&mL.tiles.length===5);
 var sig=mL.tiles.map(function(x){return x.uid}).join(',');
 var q3=EA.process(0,'mL1',['LB12']);
-var inr=false;for(var ri=0;ri<sA.players[0].rack.length;ri++)if(sA.players[0].rack[ri].uid==='LB12')inr=true;
-T('mD-reject',!(q3&&q3.ok)&&mL.tiles.map(function(x){return x.uid}).join(',')===sig&&inr);
+var sig2=mL.tiles.map(function(x){return x.uid}).join(',');var q3b=EA.process(0,'mL1',['LB13']);var inr=false;for(var ri=0;ri<sA.players[0].rack.length;ri++)if(sA.players[0].rack[ri].uid==='LB13')inr=true;
+T('mD-reject',!!(q3&&q3.ok)&&!(q3b&&q3b.ok)&&mL.tiles.map(function(x){return x.uid}).join(',')===sig2&&inr); /* v193: LB12 B2 legal, LB13 B3 RED */
 sA.turnCount=(sA.turnCount||0)+1;
-var q4=EA.process(0,'mL1',['LB12']);
-T('mD-newturn',!!(q4&&q4.ok)&&mL.tiles.length===6&&mL.processAdds===3);
+var q4=EA.process(0,'mL1',['LB13']);
+T('mD-newturn',!!(q4&&q4.ok)&&mL.tiles.length===7&&mL.processAdds===4);
 var ckF=EA.check();
 T('mF-lifetimeok',!!ckF&&(!ckF.badMeld||ckF.badMeld.indexOf('mL1:processMeta')<0));
-mL.ftK=sA.turnCount;mL.ftC=3;
+mL.ftK=sA.turnCount;mL.ftC=5;mL.ftA=3;
 var ckG=EA.check();
 T('mG-turnlimit',!!ckG&&ckG.badMeld&&ckG.badMeld.indexOf('mL1:processMeta')>=0);
-mL.ftC=1;
+mL.ftC=1;mL.ftA=0;
 
 function mkE(seed){var E2=mk();E2.newGame(seed);E2.startHand();var s2=E2.__testState();s2.firstRoundActive=false;s2.turnIndex=0;s2.turnState='ACTION';s2.players[0].hasDrawn=true;s2.players[0].opened=true;return[E2,s2]}
 var CMAP={k:400,r:500,y:600,b:1000};var colors=['k','r','y','b'];var okA=true;
