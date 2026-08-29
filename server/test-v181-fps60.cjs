@@ -18,7 +18,7 @@ assert(html.includes('g17mPointerRect||(g17mPointerRect=view.getBoundingClientRe
 assert(html.includes('window.G17FPS60={state:function()'), 'runtime performance telemetry API missing');
 
 // FPS hardening must not modify the authoritative game/rating/bot core.
-assert.equal(sha('server/engine-factory.cjs'),'7a3a8a09ef958b119cd45aa186f3ff14777a0cbec76907eb26d0598efd0bc6af','engine changed during FPS-only build');
+assert.equal(sha('server/engine-factory.cjs'),'023dea3ed9bbf9532d27ad9ea8330f7a86ac7b0d79f481fbcc3cb2ca2fab80d4','engine changed during FPS-only build');
 assert.equal(sha('server/bot-factory.cjs'),'99e393ff24c5278fcde18da62df572a778ec2e891774a91133f04c470d9f38b8','bot changed during FPS-only build');
 // v182 intentionally extends authority seat reservation for CASUAL_MATCH; FPS regression keeps engine/bot hashes locked.
 
