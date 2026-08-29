@@ -4033,6 +4033,14 @@ function bindDrag(t){
       }
       var pairHit=opponentPairHit(pairPoint.x,pairPoint.y);
       if(pairHit){
+        /* v192d kanon: cift perde exact-rep -> OKEY_REPLACEMENT onceligi (feed/stage oncesi) */
+        if(typeof okeyRepDropTarget==="function"){var _orp=okeyRepDropTarget(t.uid,pairPoint.x,pairPoint.y);
+          if(_orp&&_orp.id===pairHit.id){
+            if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);G17NET.process(_orp.id,[t.uid]);if(PENDFIT){PENDFIT=false;fitSoon()}return}
+            var _mg=commitDragProcess(t,vcx,vcy,_orp);
+            if(_mg){if(PENDFIT){PENDFIT=false;fitSoon()}return}
+          }}
+
         if(PAIR_FEED_STAGE.uid&&PAIR_FEED_STAGE.meldId===pairHit.id&&PAIR_FEED_STAGE.uid!==t.uid){
           var seqU=[PAIR_FEED_STAGE.uid,t.uid],seqTarget=pairDropTargetForUids(seqU,pairPoint.x,pairPoint.y);
           if(seqTarget){
