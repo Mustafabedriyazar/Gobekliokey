@@ -4908,7 +4908,15 @@ function commitDragProcess(t,x,y,forcedTarget){
   var target=forcedTarget||processDropTarget(t&&t.uid,x,y);if(!target)return null;
   var src={};src[t.uid]={x:x,y:y};
   var r=E.process(HSEAT,target.id,[t.uid]);if(!r.ok&&E.okeyTake){var ro=E.okeyTake(HSEAT,target.id,t.uid);if(ro&&ro.ok){r=ro}}if(!r.ok)return null;
-  if(r.replaced||r.tookUid){removeVis(t);clearProcessAssist();clearSel();syncMelds();animateProcessTransfer([t.uid],src,HSEAT,target.id,{stagger:0});toast("OKEY DEĞİŞİMİ — taş perdeki Okey ile değişti, Okey ıstakanda");buzz([9,15,9]);updUI();updHint();assertRack();return{ok:true,amount:0,target:target.id,owner:target.owner}}
+  if(r.replaced||r.tookUid){removeVis(t);clearProcessAssist();clearSel();syncMelds();
+      /* v192e uid-return: motorun iade ettigi Okey gorsel racke spawn edilir (idempotent) */
+      if(r.tookUid){var _has=false,_rw,_ci;
+        for(_rw=0;_rw<RACKS.length&&!_has;_rw++)for(_ci=0;_ci<RACKS[_rw].length;_ci++){if(RACKS[_rw][_ci]&&RACKS[_rw][_ci].uid===r.tookUid){_has=true;break}}
+        if(!_has){for(_ci=0;_ci<FREE.length;_ci++)if(FREE[_ci]&&FREE[_ci].uid===r.tookUid){_has=true;break}}
+        if(!_has){var _et=engTile(r.tookUid);if(_et){var _nt=spawnEng(_et);
+          if(typeof placeNew==="function"){placeNew(_nt)}else{var _sp=firstFree();if(_sp){RACKS[_sp.r][_sp.i]=_nt;_nt.row=_sp.r;_nt.slot=_sp.i}}
+          layoutRacks()}}}
+      animateProcessTransfer([t.uid],src,HSEAT,target.id,{stagger:0});toast("OKEY DEĞİŞİMİ — taş perdeki Okey ile değişti, Okey ıstakanda");buzz([9,15,9]);updUI();updHint();assertRack();return{ok:true,amount:0,target:target.id,owner:target.owner}}
   removeVis(t);clearProcessAssist();clearSel();syncMelds();
   var animMs=animateProcessTransfer([t.uid],src,HSEAT,target.id,{stagger:0});
   if(!animMs)sfx("snap");
