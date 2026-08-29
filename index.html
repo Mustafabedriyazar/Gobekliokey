@@ -1889,15 +1889,15 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
   </div>
   <button id="rbProcess" class="rbtn cmd3d rproc" style="left:744px;top:652px;width:134px;height:72px"><span class="cmdMain">İŞLEK</span><span class="cmdSub">YEDİR</span><b id="procBadge">0</b></button>
   <style id="islekCss">
-  #islekSub{position:absolute;left:492px;top:588px;width:552px;height:60px;display:none;z-index:60;pointer-events:none;justify-content:center;align-items:center;gap:16px}
+  #islekSub{position:absolute;left:492px;top:652px;width:244px;height:72px;display:none;z-index:60;pointer-events:none;justify-content:center;align-items:center;gap:8px}
   #islekSub.on{display:flex}
-  .islekSubBtn{pointer-events:auto;flex:0 0 auto;min-width:246px;height:56px;border-radius:16px;border:2px solid rgba(255,214,120,.55);background:linear-gradient(180deg,#3b2660,#241243);color:#ffe9b8;font-weight:800;font-size:21px;letter-spacing:.4px;box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14);cursor:pointer}
+  .islekSubBtn{pointer-events:auto;flex:0 0 auto;min-width:114px;max-width:118px;height:64px;padding:0 4px;border-radius:14px;border:2px solid rgba(255,214,120,.55);background:linear-gradient(180deg,#3b2660,#241243);color:#ffe9b8;font-weight:800;font-size:14px;letter-spacing:.2px;line-height:1.05;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14);cursor:pointer}
   .islekSubBtn:active{transform:translateY(1px)}
   .islekSubBtn.go{border-color:#5dffa8;color:#eafff2;box-shadow:0 0 0 2px rgba(93,255,168,.35),0 0 22px rgba(93,255,168,.35),0 6px 18px rgba(0,0,0,.45)}
   #rbProcess.islekOn{border-color:#5dffa8!important;box-shadow:0 0 0 2px rgba(93,255,168,.5),0 0 26px rgba(93,255,168,.45)!important}
   .islek-target{outline:3px solid rgba(93,255,168,.92);outline-offset:2px;box-shadow:0 0 14px rgba(93,255,168,.55)!important;border-radius:8px}
   </style>
-  <div id="islekSub" aria-hidden="true"><button id="islekSeri" class="islekSubBtn" type="button">SERİ İŞLEK YEDİR</button><button id="islekCift" class="islekSubBtn" type="button">ÇİFT İŞLEK YEDİR</button></div>
+  <div id="islekSub" aria-hidden="true"><button id="islekSeri" class="islekSubBtn" type="button">SERİ YEDİR</button><button id="islekCift" class="islekSubBtn" type="button">ÇİFT YEDİR</button></div>
 
   <button id="rbFinish" class="rbtn cmd3d rfinish" style="left:890px;top:652px;width:134px;height:72px"><span class="cmdMain">BİTİR</span><span class="cmdSub" id="finishSub">KİLİTLİ</span></button>
   <div id="elTgl" style="left:1060px;top:652px;width:150px;height:72px">
@@ -2007,7 +2007,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-193-islek-yedir-kanon";
+var BUILD="gobek17-194-islek-ui-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -5392,7 +5392,7 @@ function removeVis(t){
 var ISLEK={on:false,target:null,key:null};
 function islekKey(){return E.st?(E.st.handIndex+":"+E.st.turnCount+":"+E.st.turnIndex):"x"}
 function islekMyTurn(){var me=E.st&&E.st.players[HSEAT];return !!(me&&me.opened&&E.st.turnIndex===HSEAT&&!E.st.handOver&&E.st.turnState==="ACTION"&&me.hasDrawn&&!E.st.firstRoundActive)}
-function islekClearHi(){for(var k in VISM){var a=VISM[k]||[];for(var j=0;j<a.length;j++)if(a[j]&&a[j].el)a[j].el.classList.remove("islek-target")}}
+function islekClearHi(){if(typeof document!=="undefined"&&document.querySelectorAll){var q1=document.querySelectorAll(".islek-target");for(var q2=0;q2<q1.length;q2++)q1[q2].classList.remove("islek-target")}for(var k in VISM){var a=VISM[k]||[];for(var j=0;j<a.length;j++)if(a[j]&&a[j].el)a[j].el.classList.remove("islek-target")}}
 function islekPaint(){islekClearHi();var t=ISLEK.target;if(!ISLEK.on||!t||!E.st)return;
   for(var i=0;i<E.st.melds.length;i++){var m=E.st.melds[i];
     var hit=(t.type==="meld")?(m.id===t.id):(m.kind==="pair"&&m.owner===t.owner);
@@ -5406,8 +5406,10 @@ function islekUI(){var pb=document.getElementById("rbProcess"),sub=document.getE
 function islekSet(on){ISLEK.on=!!on;ISLEK.target=null;ISLEK.key=islekKey();islekPaint();islekUI();
   if(on)toast("ISLEK YEDIR ACIK — hedef sec: SERI peri veya rakibin CIFT alani");else toast("ISLEK YEDIR KAPALI — normal discard aktif")}
 function islekReset(){if(!ISLEK.on&&!ISLEK.target)return;ISLEK.on=false;ISLEK.target=null;ISLEK.key=null;islekClearHi();islekUI()}
-function islekWatch(){if(!ISLEK.on&&!ISLEK.target)return;
-  if(!E.st||E.st.handOver||E.st.turnIndex!==HSEAT||ISLEK.key!==islekKey())islekReset()}
+function islekWatch(){if(!ISLEK.on&&!ISLEK.target){islekClearHi();return}
+  if(!E.st||E.st.handOver||E.st.turnIndex!==HSEAT||ISLEK.key!==islekKey()){islekReset();return}
+  if(ISLEK.target){var tOk=false;if(ISLEK.target.type==="meld"){tOk=!!islekFindMeld(ISLEK.target.id)}else{for(var i0=0;i0<E.st.melds.length;i0++){var m0=E.st.melds[i0];if(m0.kind==="pair"&&m0.owner===ISLEK.target.owner){tOk=true;break}}}
+  if(!tOk){ISLEK.target=null;islekClearHi();islekUI()}else islekPaint()}}
 function islekToggle(){if(!ISLEK.on&&!islekMyTurn()){toast("Islek icin: siran olmali, acmis ve tas cekmis olmalisin");buzz(4);return}
   islekSet(!ISLEK.on)}
 function islekFindMeld(id){if(!E.st)return null;for(var i=0;i<E.st.melds.length;i++)if(E.st.melds[i].id===id)return E.st.melds[i];return null}
@@ -5461,7 +5463,7 @@ function islekRunSeri(){
     var cands=[];for(i=0;i<order.length&&cands.length<4;i++){var t2=engTile(order[i]);if(t2&&E.canFeedTileToMeld(t2,m))cands.push(order[i])}
     if(!cands.length){toast("Bu hedefte legal islek yok");buzz(4);return}
     var tid=ISLEK.target.id;
-    (async function(){for(var q=0;q<cands.length;q++){try{await G17NET.process(tid,[cands[q]])}catch(e){}}})();
+    (async function(){for(var q=0;q<cands.length;q++){try{await G17NET.process(tid,[cands[q]])}catch(e){}}})();ISLEK.target=null;islekClearHi();islekUI();
     return}
   var made=0;
   for(i=0;i<order.length;i++){var t=engTile(order[i]);if(!t)continue;
@@ -5469,7 +5471,7 @@ function islekRunSeri(){
     if(!E.canFeedTileToMeld(t,m))continue;
     if(islekCommit(ISLEK.target.id,[order[i]],true))made++}
   if(!made){toast("Bu hedefte legal islek yok");buzz(4)}
-  else toast(made+" tas secili seriye islendi")}
+  else{toast(made+" tas secili seriye islendi");ISLEK.target=null;islekClearHi();islekUI()}}
 function islekPairSets(){var me=E.st.players[HSEAT],ts=me.rack.slice();if(E.st.pending)ts.push(E.st.pending.tile);
   var used={},out=[],i,j;
   for(i=0;i<ts.length-1;i++){if(used[ts[i].uid])continue;
@@ -5491,7 +5493,7 @@ function islekRunCift(){
       if(tt[0]&&tt[1]&&E.pairFeedPlan(tt,anchor))legal.push(sets[i])}
     if(!legal.length){toast("Legal cift islek yok");buzz(4);return}
     var aid=anchor.id;
-    (async function(){for(var q=0;q<legal.length;q++){try{await G17NET.process(aid,legal[q])}catch(e){}}})();
+    (async function(){for(var q=0;q<legal.length;q++){try{await G17NET.process(aid,legal[q])}catch(e){}}})();ISLEK.target=null;islekClearHi();islekUI();
     return}
   var made=0;
   for(i=0;i<sets.length;i++){anchor=findAnchor();if(!anchor)break;
@@ -5499,7 +5501,7 @@ function islekRunCift(){
     if(!E.pairFeedPlan(ts2,anchor))continue;
     if(islekCommit(anchor.id,sets[i],true))made++}
   if(!made){toast("Legal cift islek yok");buzz(4)}
-  else toast(made+" yeni cift rakibin CIFT alanina islendi — her cift ayri ceza")}
+  else{toast(made+" yeni cift rakibin CIFT alanina islendi — her cift ayri ceza");ISLEK.target=null;islekClearHi();islekUI()}}
 function islekStageXY(ev){var st=document.getElementById("stage");if(!st)return null;var r=st.getBoundingClientRect();
   if(!r.width||!r.height)return null;return{x:(ev.clientX-r.left)*1536/r.width,y:(ev.clientY-r.top)*1024/r.height}}
 (function(){
@@ -6638,7 +6640,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-193-islek-yedir-kanon'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-194-islek-ui-kanon'};
 })(window);
 </script>
 <script>
@@ -6923,7 +6925,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-193-islek-yedir-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-194-islek-ui-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>
