@@ -55,8 +55,16 @@ function playSimpleTurn(room,n){const p=room.engine.st.turnIndex;if(room.engine.
 
 
 (function seedCommitReveal(){
-  const room=new AuthoritativeRoom({mode:'TEAM',context:'CASUAL'});join4(room);const commit=room.seedAudit.commit;assert(!room.snapshotForSeat(0).audit.reveal);for(const s of room.seats){s.connected=false;s.botActive=true;s.disconnectAt=Date.now()}
-  let guard=0;const T0=Date.now();while(!room.engine.st.gameFinished&&Date.now()-T0<240000&&guard<400000){if(room.engine.st.handOver){const r=room.engine.startHand();assert(r.ok);room.rev++;for(const s of room.seats)s.botActive=true}else room._pumpBots();guard++}
+  const room=new AuthoritativeRoom({mode:'TEAM',context:'CASUAL'});join4(room);const commit=room.seedAudit.commit;assert(!room.snapshotForSeat(0).audit.reveal);
+  let n=0;
+  while(!room.engine.st.gameFinished){
+    if(room.engine.st.handOver){const r=room.engine.startHand();assert(r.ok);room.rev++;continue}
+    const p=room.engine.st.turnIndex;
+    if(room.engine.st.turnState==='DRAW'){const r=room.applyAction(p,{type:'DRAW'},room.rev,'scr-d'+(n++));assert(r.ok,'scr draw '+JSON.stringify(r).slice(0,120));continue}
+    const snap=room.snapshotForSeat(p),uid=snap.self.rack[0].uid;
+    const rd=room.applyAction(p,{type:'DISCARD',uid},room.rev,'scr-x'+(n++));assert(rd.ok,'scr discard '+JSON.stringify(rd).slice(0,120));
+    if(n>40000)throw new Error('scr drive guard');
+  }
   assert(room.engine.st.gameFinished);const a=room.snapshotForSeat(0).audit;assert(a.reveal&&a.reveal.nonce);const {sha256}=require('./authority.cjs');assert.strictEqual(sha256(`${a.reveal.seed}:${a.reveal.nonce}`),commit);console.log('seedCommitReveal PASS');
 })();
 
