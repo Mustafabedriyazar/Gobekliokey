@@ -4059,7 +4059,7 @@ function bindDrag(t){
        floating 3/8 style tiles seen under opponent pers: legal drops are engine-committed
        and snap into the target meld instead of remaining as movable FREE tiles. */
     if(commit&&t.uid){
-      var magTarget=liveMag||processDropTarget(t.uid,vcx,vcy)||okeyRepDropTarget(t.uid,vcx,vcy);
+      var magTarget=okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy); /* v192f: kanon onceligi - replacement hedefi feedden once */
       if(window.G17NET&&G17NET.active()&&magTarget){restoreDraggedSource(t,e,src);G17NET.process(magTarget.id,[t.uid]);if(PENDFIT){PENDFIT=false;fitSoon()}return}
       var mag=commitDragProcess(t,vcx,vcy,magTarget);
       if(mag){if(PENDFIT){PENDFIT=false;fitSoon()}return}
