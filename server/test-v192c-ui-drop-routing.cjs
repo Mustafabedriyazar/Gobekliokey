@@ -4,7 +4,7 @@ const H=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf-8");
 let pass=0,fail=0;function T(n,c){if(c){pass++;console.log("PASS - "+n)}else{fail++;console.log("FAIL - "+n)}}
 const i0=H.indexOf("function okeyRepDropTarget");T("helper mevcut",i0>0);
 const i1=H.indexOf("function commitDragProcess");T("helper commitDragProcess oncesinde",i0>0&&i0<i1);
-const mg="var magTarget=liveMag||processDropTarget(t.uid,vcx,vcy)||okeyRepDropTarget(t.uid,vcx,vcy);";
+const mg="var magTarget=okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy);";
 const im=H.indexOf(mg);T("magTarget zinciri rep hedefini iceriyor",im>0&&H.split(mg).length===2);
 const inet=H.indexOf("G17NET.process(magTarget.id,[t.uid])");T("online dispatch magTarget sonrasi",inet>im&&im>0);
 T("replaced dali commitDragProcess icinde",H.indexOf("r.replaced||r.tookUid")>i1);
