@@ -2007,7 +2007,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-195-islek-legality-kanon";
+var BUILD="gobek17-196-grid-dragdrop-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -2036,14 +2036,7 @@ var RACK_INIT=[
 ];
 /*L-SON*/
 /*LOGIC-BAS*/
-function rackDrop(R,F,row,i,t,src){
-  var occ=R[row][i];
-  R[row][i]=t;
-  if(!occ)return{type:"empty"};
-  if(src.area==="board"){occ.fx=src.fx;occ.fy=src.fy;occ.lx=src.lx;occ.ly=src.ly;F.push(occ)}
-  else{R[src.row][src.slot]=occ}
-  return{type:"swap",occ:occ};
-}
+/* v196: olu rackDrop (eski SWAP yolu) kaldirildi - canli insert-shift finish() icinde */
 function pairsInto(rest,out){
   var i=0;
   while(i<rest.length){
@@ -4023,8 +4016,7 @@ function bindDrag(t){
           /* A failed throw can never fall through into free-board placement. Restore
              the dragged rack tile atomically to its source slot and stop here. */
           toast(rD.err);buzz(4);
-          t.area="rack";t.row=src.row;t.slot=src.slot;t.fx=src.fx;t.fy=src.fy;
-          RACKS[src.row][src.slot]=t;e.classList.remove("tg");
+          t.fx=src.fx;t.fy=src.fy;safeRackReturn(t,src);e.classList.remove("tg");
           requestAnimationFrame(function(){layoutRacks();layoutFree();layoutMelds()});
           if(PENDFIT){PENDFIT=false;fitSoon()}return;
         }
@@ -4097,6 +4089,13 @@ function bindDrag(t){
        vcx>GX-30&&vcx<GX+gW+30&&vcy>GY-30&&vcy<GY+gH+30){
       gate=false;toast("Önce açılış modunu seç: 51 SERİ AÇ ya da 52 ÇİFT AÇ");buzz(4);
     }
+    /* v196 grid kanon: rack->grid serbest birakma yalniz acilis staging'inde legaldir;
+       acilmis el gride tas commit edemez - kaynaga guvenli donus, state degismez. */
+    if(gate&&commit&&t.uid&&src.area==="rack"&&E.st.players[HSEAT].opened&&
+       vcx>GX-30&&vcx<GX+gW+30&&vcy>GY-30&&vcy<GY+gH+30){
+      restoreDraggedSource(t,e,src);toast("Açılmış eldeki taş gride bırakılamaz — pere işlemek için İŞLEK YEDİR");buzz(4);
+      if(PENDFIT){PENDFIT=false;fitSoon()}return;
+    }
     if(gate&&commit&&vcx>GX-30&&vcx<GX+gW+30&&vcy>GY-30&&vcy<GY+gH+30){
       fp=freePlace(freeRects(t),t,vcx-GW/2,vcy-GH/2,GW,GH,GX,GY,gW,gH);
     }
@@ -4109,7 +4108,6 @@ function bindDrag(t){
       var row=p.y>ROWSPLIT?1:0;
       var i=Math.round((p.x-SLOT0-CX)/PITCH);
       if(i<0)i=0;if(i>SLOTS-1)i=SLOTS-1;
-      if(src.area==="rack")RACKS[src.row][src.slot]=null;
       var line=RACKS[row],target=-1,rtype="empty";
       if(line[i]){
         rtype="insert";
@@ -4125,7 +4123,7 @@ function bindDrag(t){
       if(target<0){
         res={type:"reject"};
         if(src.area==="board"){t.area="board";t.fx=src.fx;t.fy=src.fy;t.lx=src.lx;t.ly=src.ly;FREE.push(t);e.classList.add("tg")}
-        else{t.area="rack";t.row=src.row;t.slot=src.slot;RACKS[src.row][src.slot]=t;e.classList.remove("tg")}
+        else{safeRackReturn(t,src);e.classList.remove("tg")}
       }else{
         if(target<i){for(var sk=target;sk<i;sk++)line[sk]=line[sk+1]}
         else if(target>i){for(var sk=target;sk>i;sk--)line[sk]=line[sk-1]}
@@ -4136,7 +4134,7 @@ function bindDrag(t){
       }
     }else{
       if(src.area==="board"){t.area="board";t.fx=src.fx;t.fy=src.fy;t.lx=src.lx;t.ly=src.ly;FREE.push(t)}
-      else{t.area="rack";RACKS[src.row][src.slot]=t;t.row=src.row;t.slot=src.slot}
+      else{safeRackReturn(t,src)}
     }
     if(commit&&boardMotion){
       try{
@@ -4895,9 +4893,25 @@ function processIntentNear(uid,x,y){
   }
   return best;
 }
+/*V196-SRR-BAS*/
+function safeRackReturn(t,src){
+  var r=(src&&typeof src.row==="number")?src.row:0,s=(src&&typeof src.slot==="number")?src.slot:0;
+  if(r!==0&&r!==1)r=0;if(!(s>=0))s=0;if(s>SLOTS-1)s=SLOTS-1;
+  function put(rr,ss){RACKS[rr][ss]=t;t.row=rr;t.slot=ss;t.area="rack";return true}
+  if(!RACKS[r][s])return put(r,s);
+  for(var d2=1;d2<SLOTS;d2++){
+    var a2=s-d2,b2=s+d2;
+    if(a2>=0&&!RACKS[r][a2])return put(r,a2);
+    if(b2<SLOTS&&!RACKS[r][b2])return put(r,b2);
+  }
+  var o2=1-r;
+  for(var i2=0;i2<SLOTS;i2++)if(!RACKS[o2][i2])return put(o2,i2);
+  return put(r,s);/* teorik doluluk: veri kaybetmeden yaz */
+}
+/*V196-SRR-SON*/
 function restoreDraggedSource(t,e,src){
   if(src.area==="board"){t.area="board";t.fx=src.fx;t.fy=src.fy;t.lx=src.lx;t.ly=src.ly;FREE.push(t);e.classList.add("tg")}
-  else{t.area="rack";t.row=src.row;t.slot=src.slot;t.fx=src.fx;t.fy=src.fy;RACKS[src.row][src.slot]=t;e.classList.remove("tg")}
+  else{t.fx=src.fx;t.fy=src.fy;safeRackReturn(t,src);e.classList.remove("tg")}
   requestAnimationFrame(function(){layoutRacks();layoutFree();layoutMelds()});
 }
 function okeyRepDropTarget(uid,x,y){
@@ -6646,7 +6660,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-195-islek-legality-kanon'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-196-grid-dragdrop-kanon'};
 })(window);
 </script>
 <script>
@@ -6931,7 +6945,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-195-islek-legality-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-196-grid-dragdrop-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>
