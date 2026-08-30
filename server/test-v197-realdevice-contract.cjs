@@ -121,7 +121,7 @@ function fnSlice(name){const i=html.indexOf('function '+name);const j=html.index
   ok('K9 RED state degismedi',JSON.stringify(mm.tiles.map(t=>t.uid))===before);
 })();
 /* ---- K10: damga ---- */
-ok('K10 v197 damga',html.indexOf('gobek17-197-realdevice-dragfeed-kanon')>=0);
+ok('K10 v197 damga',html.indexOf('gobek17-198-feed-target-kanon')>=0);
 ok('K10 v196 damga kalmadi',html.indexOf('gobek17-196-grid-dragdrop-kanon')<0);
 console.log('v197-realdevice-contract: '+P+' PASS / '+F+' FAIL');
 if(F)process.exit(1);

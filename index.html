@@ -2007,7 +2007,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-197-realdevice-dragfeed-kanon";
+var BUILD="gobek17-198-feed-target-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -3990,7 +3990,8 @@ function bindDrag(t){
       var directHit=(rcx>pp0.x-16&&rcx<pp0.x+136&&rcy>pp0.y-16&&rcy<pp0.y+174);
       var releaseAssist=(src.area==="rack")?throwAssistInfo(d,{x:rcx,y:rcy}):{hot:false};
       var gestureThrow=(src.area==="rack"&&!!releaseAssist.hot); var _pu0=E.st.pending?E.st.pending.tile.uid:null; var _srcHit=false; if(_pu0&&String(t.uid)===String(_pu0)&&typeof E.takeSourceSeat==="function"){var _sp=padPos(E.takeSourceSeat(HSEAT));_srcHit=(rcx>_sp.x-16&&rcx<_sp.x+136&&rcy>_sp.y-16&&rcy<_sp.y+174);}
-      if(directHit||gestureThrow||_srcHit){
+      var meldGuard=(typeof dragDiscardMeldGuard==="function")?dragDiscardMeldGuard(rcx,rcy):false;/*V198-MELD-GUARD*/
+      if(((directHit||gestureThrow)&&!meldGuard)||_srcHit){/* v198: per zarfindaki birakma discard'a donusmez */
         if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
         var pUid0=E.st.pending?E.st.pending.tile.uid:null;
         if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);if(typeof ISLEK!=="undefined"&&ISLEK.on){/* v197: islek modu discard'i engellemez */}G17NET.discardUid(t.uid);if(PENDFIT){PENDFIT=false;fitSoon()}return}
@@ -4850,7 +4851,20 @@ function bestPerE(uids,mode,mustUid){
    Açılmış oyuncu legal taşı açık bir SERİ perinin yakınına bıraktığında görsel FREE taşı
    oluşmaz; engine E.process tek otorite olarak commit eder ve taş perin canonical sırasına
    fiziksel olarak snap olur. Hit testi yalnız taş/per seviyesindedir, scene layer üretmez. */
-function processDropTarget(uid,x,y){
+/*V198-FEED-TARGET-KANON*/
+function dragDiscardMeldGuard(x,y){
+  /* v198: birakma noktasi acik bir per zarfina (endpoint payi dahil) dusuyorsa
+     discard/gesture-throw yakalayamaz; karari feed/ambiguity zinciri verir.
+     Belirsiz/illegal birakma zincirde safeRackReturn ile rack'e doner. */
+  try{
+    if(typeof MELD_HIT==="undefined"||!MELD_HIT)return false;
+    var mx=Math.max(30,GW*.75),my=Math.max(24,GH*.6),k,hb;
+    for(k in MELD_HIT){hb=MELD_HIT[k];if(!hb)continue;
+      if(x>hb.x1-mx&&x<hb.x2+mx&&y>hb.y1-my&&y<hb.y2+my)return true}
+  }catch(_e){}
+  return false;
+}
+function processDropTargetCore(uid,x,y){
   var me=E.st.players[HSEAT],t=engTile(uid);
   if(!t||!me||!me.opened||E.st.turnIndex!==HSEAT||E.st.handOver||E.st.turnState!=="ACTION"||!me.hasDrawn||E.st.firstRoundActive)return null;
   var best=null,bs=1e9,padX=Math.max(36,Math.round(GW*.72)),padY=Math.max(28,Math.round(GH*.62));
@@ -4869,6 +4883,24 @@ function processDropTarget(uid,x,y){
   return best;
 }
 
+function processDropTarget(uid,x,y){/*V198-AMBIGUITY-SRR*/
+  /* v198 kontrat: ayni birakma noktasinda >=2 motor-legal per hedefi = AMBIGUOUS ->
+     null; zincir safeRackReturn ile tasi rack'e dondurur, discard yok.
+     Feed yalniz TEK kesin legal hedefte commit edilir. */
+  try{
+    if(typeof MELD_HIT==="undefined"||!MELD_HIT)return processDropTargetCore(uid,x,y);
+    var ks=Object.keys(MELD_HIT),sv={},n,q,k,r,cnt=0,one=null;
+    for(n=0;n<ks.length;n++)sv[ks[n]]=MELD_HIT[ks[n]];
+    try{
+      for(n=0;n<ks.length;n++){k=ks[n];
+        for(q=0;q<ks.length;q++)delete MELD_HIT[ks[q]];
+        MELD_HIT[k]=sv[k];
+        r=processDropTargetCore(uid,x,y);
+        if(r){cnt++;one=r;if(cnt>1)break}}
+    }finally{for(q=0;q<ks.length;q++)MELD_HIT[ks[q]]=sv[ks[q]]}
+    return (cnt===1)?one:null;
+  }catch(_e){return null}
+}
 function paintDragProcessMagnet(d,target){
   if(!d)return;var prev=d.procMag&&d.procMag.id,next=target&&target.id;
   if(prev===next){d.procMag=target||null;return}
@@ -6674,7 +6706,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-197-realdevice-dragfeed-kanon'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-198-feed-target-kanon'};
 })(window);
 </script>
 <script>
@@ -6959,7 +6991,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-197-realdevice-dragfeed-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-198-feed-target-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>
