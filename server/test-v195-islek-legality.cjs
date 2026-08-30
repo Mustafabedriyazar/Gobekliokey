@@ -14,13 +14,13 @@ T('runseri lokal bos-legal temizlik',html.indexOf('if(!made){toast("Bu hedefte l
 T('runseri net bos-legal temizlik',html.indexOf('if(!cands.length){toast("Bu hedefte legal islek yok");buzz(4);ISLEK.target=null;islekClearHi();islekUI();return}')>=0);
 T('cift paint exact-rep kapili',html.indexOf('(m.kind==="pair"&&m.owner===t.owner&&!!islekExactRepUid(m))')>=0);
 T('seri batch clear korunur',html.indexOf('tas secili seriye islendi");ISLEK.target=null;islekClearHi();islekUI()')>=0);
-T('v195 damga index',html.indexOf('gobek17-196-grid-dragdrop-kanon')>=0);
+T('v195 damga index',html.indexOf('gobek17-197-realdevice-dragfeed-kanon')>=0);
 T('eski v194 damga kalkti (index)',html.indexOf('gobek17-194-islek-ui-kanon')<0);
 const srv=fs.readFileSync(path.join(root,'server','server.cjs'),'utf8');
-T('v195 damga server',srv.indexOf('gobek17-196-grid-dragdrop-kanon')>=0);
+T('v195 damga server',srv.indexOf('gobek17-197-realdevice-dragfeed-kanon')>=0);
 T('eski v194 damga kalkti (server)',srv.indexOf('gobek17-194-islek-ui-kanon')<0);
 const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
-T('v195 damga sw cache',sw.indexOf('gobek17-196-grid-dragdrop-kanon')>=0);
+T('v195 damga sw cache',sw.indexOf('gobek17-197-realdevice-dragfeed-kanon')>=0);
 
 /* ---- 2) islekSeriLegal dinamik: gercek kod dilimi calistirilir ---- */
 const f0=html.indexOf('function islekSeriLegal(m){');

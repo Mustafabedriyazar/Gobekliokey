@@ -45,6 +45,6 @@ T('rds SRR cagiriyor',rds.indexOf('safeRackReturn(t,src)')>=0);
 /* 7) insert-shift canli yolu korunur */
 T('insert-shift korunur',html.indexOf('if(left>=0&&right>=0)target=(i-left<=right-i)?left:right;')>=0);
 /* 8) damga */
-T('v196 damga',html.indexOf('gobek17-196-grid-dragdrop-kanon')>=0);
+T('v196 damga',html.indexOf('gobek17-197-realdevice-dragfeed-kanon')>=0);
 T('v195 damga kalmadi',html.indexOf('gobek17-195-islek-legality-kanon')<0);
 console.log('v196-grid-dragdrop: '+P+' PASS / 0 FAIL');

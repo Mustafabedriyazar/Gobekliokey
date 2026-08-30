@@ -2007,7 +2007,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-196-grid-dragdrop-kanon";
+var BUILD="gobek17-197-realdevice-dragfeed-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -3993,8 +3993,8 @@ function bindDrag(t){
       if(directHit||gestureThrow||_srcHit){
         if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
         var pUid0=E.st.pending?E.st.pending.tile.uid:null;
-        if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);if(typeof ISLEK!=="undefined"&&ISLEK.on){toast("İşlek modu açık — taş atmak için İŞLEK YEDİR'i kapat");buzz(4);if(PENDFIT){PENDFIT=false;fitSoon()}return}G17NET.discardUid(t.uid);if(PENDFIT){PENDFIT=false;fitSoon()}return}
-        if(typeof ISLEK!=="undefined"&&ISLEK.on){restoreDraggedSource(t,e,src);toast("İşlek modu açık — taş atmak için İŞLEK YEDİR'i kapat");buzz(4);if(PENDFIT){PENDFIT=false;fitSoon()}return}var rD=E.discard(HSEAT,t.uid);
+        if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);if(typeof ISLEK!=="undefined"&&ISLEK.on){/* v197: islek modu discard'i engellemez */}G17NET.discardUid(t.uid);if(PENDFIT){PENDFIT=false;fitSoon()}return}
+        if(typeof ISLEK!=="undefined"&&ISLEK.on){/* v197: islek modu discard'i engellemez */}var rD=E.discard(HSEAT,t.uid);
         if(rD.ok){
           e.classList.remove("drag","press");document.body.classList.remove("dragging");setThrowAssist(false,false);
           if(DR&&DR.raf)cancelAnimationFrame(DR.raf);DR=null;
@@ -4027,14 +4027,14 @@ function bindDrag(t){
        and second matching drop commits both atomically. A lone/invalid pair drop is restored
        without creating a false BAD_PROCESS ×10 event. */
     if(commit&&t.uid){
-      var pairPoint={x:vcx,y:vcy},pairTogether=(typeof ISLEK!=="undefined"&&ISLEK.on)&&d.pairSelUids&&d.pairSelUids.length===2?d.pairSelUids:null;
+      var pairPoint={x:vcx,y:vcy},pairTogether=d.pairSelUids&&d.pairSelUids.length===2?d.pairSelUids:null;
       var pairTogetherTarget=pairTogether?pairDropTargetForUids(pairTogether,pairPoint.x,pairPoint.y):null;
       if(pairTogetherTarget){
         if(PAIR_FEED_STAGE.uid&&pairTogether.indexOf(PAIR_FEED_STAGE.uid)<0)clearPairFeedStage(true);
         var togetherPts=captureMotionCenters(pairTogether);togetherPts[t.uid]={x:vcx,y:vcy};
         if(commitPairFeedDrop(t,pairTogetherTarget,src,pairTogether,togetherPts)){if(PENDFIT){PENDFIT=false;fitSoon()}return}
       }
-      var pairHit=(typeof ISLEK!=="undefined"&&ISLEK.on)?opponentPairHit(pairPoint.x,pairPoint.y):null;
+      var pairHit=opponentPairHit(pairPoint.x,pairPoint.y);
       if(pairHit){
         /* v192d kanon: cift perde exact-rep -> OKEY_REPLACEMENT onceligi (feed/stage oncesi) */
         if(typeof okeyRepDropTarget==="function"){var _orp=okeyRepDropTarget(t.uid,pairPoint.x,pairPoint.y);
@@ -4062,14 +4062,20 @@ function bindDrag(t){
        floating 3/8 style tiles seen under opponent pers: legal drops are engine-committed
        and snap into the target meld instead of remaining as movable FREE tiles. */
     if(commit&&t.uid){
-      var magTarget=(typeof ISLEK!=="undefined"&&ISLEK.on)?(okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy)):null; /* v192f: kanon onceligi - replacement hedefi feedden once */
+      var magTarget=okeyRepDropTarget(t.uid,vcx,vcy)||liveMag||processDropTarget(t.uid,vcx,vcy); /* v197: feed her zaman motor legality ile - ISLEK modu on kosul degil; kanon: replacement > feed */
       if(window.G17NET&&G17NET.active()&&magTarget){restoreDraggedSource(t,e,src);G17NET.process(magTarget.id,[t.uid]);if(PENDFIT){PENDFIT=false;fitSoon()}return}
       var mag=commitDragProcess(t,vcx,vcy,magTarget);
       if(mag){if(PENDFIT){PENDFIT=false;fitSoon()}return}
       /* Kullanıcı açık bir SERİ perine belirgin şekilde bırakmışsa bu PROCESS intent'tir.
          Legal değilse taş FREE board'a düşüp perin altında takılı kalamaz: kaynağa geri döner. */
-      var nearProc=processIntentNear(t.uid,vcx,vcy);if(nearProc&&!(typeof ISLEK!=="undefined"&&ISLEK.on)){restoreDraggedSource(t,e,src);toast("İşlek kapalı — açık pere taş işlemek için İŞLEK YEDİR'i aç");buzz(4);if(PENDFIT){PENDFIT=false;fitSoon()}return}
+      var nearProc=processIntentNear(t.uid,vcx,vcy);
       if(nearProc){
+        /* v197: legal feed asla generic reject'e dusmez - govdeye birakilan legal uc tasi da commit olur */
+        if(nearProc.legal){
+          if(window.G17NET&&G17NET.active()){restoreDraggedSource(t,e,src);G17NET.process(nearProc.id,[t.uid]);if(PENDFIT){PENDFIT=false;fitSoon()}return}
+          var mgN=commitDragProcess(t,vcx,vcy,{id:nearProc.id,owner:nearProc.owner,meld:nearProc.meld});
+          if(mgN){if(PENDFIT){PENDFIT=false;fitSoon()}return}
+        }
         /* v157: açılmış per gövdesine/illegal ucuna bırakma artık FREE board'a düşmez.
            Taş aynen kaynağına döner ve denenen taş ×10 öz-ceza üretir. */
         var npm=nearProc.meld,why="Açılmış perin arasına taş konulamaz — per değişmez";
@@ -4863,7 +4869,7 @@ function processDropTarget(uid,x,y){
   return best;
 }
 
-function paintDragProcessMagnet(d,target){if(!(typeof ISLEK!=="undefined"&&ISLEK.on))target=null;
+function paintDragProcessMagnet(d,target){
   if(!d)return;var prev=d.procMag&&d.procMag.id,next=target&&target.id;
   if(prev===next){d.procMag=target||null;return}
   if(prev){var pa=VISM[prev]||[];for(var z=0;z<pa.length;z++)if(pa[z].el)pa[z].el.classList.remove("proc-magnet-hot")}
@@ -4932,7 +4938,15 @@ function commitDragProcess(t,x,y,forcedTarget){
   if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
   var target=forcedTarget||processDropTarget(t&&t.uid,x,y);if(!target)return null;
   var src={};src[t.uid]={x:x,y:y};
-  var r=E.process(HSEAT,target.id,[t.uid]);if(!r.ok&&E.okeyTake){var ro=E.okeyTake(HSEAT,target.id,t.uid);if(ro&&ro.ok){r=ro}}if(!r.ok)return null;
+  /*V197-REP-FIRST*/
+  var repFirst=false,_rm=target.meld||null;
+  if(!_rm){for(var _mi=0;_mi<E.st.melds.length;_mi++)if(E.st.melds[_mi].id===target.id){_rm=E.st.melds[_mi];break}}
+  var _et2=engTile(t.uid);
+  if(_rm&&_et2&&E.okeyTake){for(var _ti=0;_ti<_rm.tiles.length;_ti++){var _jt=_rm.tiles[_ti];
+    if(E.isJok(_jt)&&(!_jt.rep||(_jt.rep.color===_et2.color&&_jt.rep.num===_et2.num))){repFirst=true;break}}}
+  var r=repFirst?E.okeyTake(HSEAT,target.id,t.uid):E.process(HSEAT,target.id,[t.uid]);
+  if(!r||!r.ok){var _r2=repFirst?E.process(HSEAT,target.id,[t.uid]):(E.okeyTake?E.okeyTake(HSEAT,target.id,t.uid):null);if(_r2&&_r2.ok)r=_r2}
+  if(!r||!r.ok)return null;
   if(r.replaced||r.tookUid){removeVis(t);clearProcessAssist();clearSel();syncMelds();
       /* v192e uid-return: motorun iade ettigi Okey gorsel racke spawn edilir (idempotent) */
       if(r.tookUid){var _has=false,_rw,_ci;
@@ -5536,7 +5550,7 @@ function islekStageXY(ev){var st=document.getElementById("stage");if(!st)return 
 })();
 
 function doDiscard(){
-  if(typeof ISLEK!=="undefined"&&ISLEK.on){toast("İşlek modu açık — taş atmak için İŞLEK YEDİR'i kapat");buzz(4);return}
+  if(typeof ISLEK!=="undefined"&&ISLEK.on){/* v197: islek modu discard'i engellemez */}
   if(typeof clearPairFeedStage==="function"&&PAIR_FEED_STAGE.uid)clearPairFeedStage(true);
   if(window.G17NET&&G17NET.active())return G17NET.discard();
   if(!uiReady(doDiscard))return;
@@ -6660,7 +6674,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-196-grid-dragdrop-kanon'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-197-realdevice-dragfeed-kanon'};
 })(window);
 </script>
 <script>
@@ -6945,7 +6959,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-196-grid-dragdrop-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-197-realdevice-dragfeed-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>
