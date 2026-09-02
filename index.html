@@ -574,6 +574,13 @@ body.dragging .tr.oky{animation:none}
 .tr.mld.okey-back:not(.motion-flight),.tr.mld.okyp.okey-back:not(.motion-flight){animation:none!important;transform:none!important;translate:none!important;rotate:none!important;scale:none!important}
 .motion-flight.okey-back{animation:none!important}
 body.dragging .tr.okey-back{animation:none!important;transform:none!important}
+/* V200-GOSTERGE-MASK: ozel Gosterge ciftinin companion tasi kapali gorunur (yalniz sunum; motor kimligi degismez). */
+.tr.mld.gst-back{color:transparent!important;border-color:#5a4a2e!important;
+  background:radial-gradient(ellipse at 50% 38%,rgba(255,255,255,.10) 0 18%,transparent 52%),linear-gradient(160deg,#4a3a22 0%,#3a2c18 55%,#2a1f10 100%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -6px 0 #1f160a,inset 0 0 0 1px rgba(0,0,0,.45),0 6px 12px rgba(0,0,0,.5)!important;animation:none!important;transform:none!important}
+.tr.mld.gst-back .n,.tr.mld.gst-back .cres,.tr.mld.gst-back .dot{opacity:0!important}
+.tr.mld.gst-back:after{content:""!important;left:50%!important;top:50%!important;bottom:auto!important;width:22px!important;height:22px!important;padding:0!important;transform:translate(-50%,-50%)!important;border-radius:50%!important;
+  background:radial-gradient(circle at 40% 34%,#c9a765 0 22%,#8f6f36 60%,#5a4420 100%)!important;box-shadow:0 0 0 1px rgba(0,0,0,.4)!important}
 .t.cj,.tr.cj{color:#8a22b5}
 #chat{left:1016px;top:650px;width:70px;height:54px;background:linear-gradient(180deg,#ffd98a,#f2ab3e);border-radius:16px;display:flex;gap:6px;align-items:center;justify-content:center;box-shadow:0 3px 5px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.55),inset 0 -3px 4px rgba(150,90,10,.35)}
 #chat:after{content:"";position:absolute;left:12px;bottom:-12px;border:8px solid transparent;border-top:12px solid #f2ab3e;border-left-width:3px;border-right-width:11px}
@@ -2007,7 +2014,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-198-feed-target-kanon";
+var BUILD="gobek17-200-cift-2x1-gosterge-kanon";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -2483,7 +2490,7 @@ function newGame(seed){
   SEEDB=nextSeed;
   st={players:[],scoreKeeper:2,handDealerBase:0,handIndex:0,handCount:0,handType:null,dealer:0,
       turnIndex:0,turnCount:0,firstRoundActive:true,starter:0,deck:[],discardPile:[],currentDiscard:null,
-      indicator:null,okey:null,fakeIsPlain:false,okeyMode:null,melds:[],meldSeq:0,pending:null,lastOpenTotal:50,
+      indicator:null,okey:null,fakeIsPlain:false,okeyMode:null,melds:[],meldSeq:0,pending:null,lastOpenTotal:50,pairSeriesMin:0,/*V200-2X1*/
       winner:null,handOver:true,gameFinished:false,turnState:"WAIT",endBreakdown:null,finishSpecial:null,endMajorPenalties:null,matchFinal:null,
       teamMode:!!tc.teamMode,teams:tc.teamMode?[[0,2],[1,3]]:null,teamForfeitHandWins:[0,0],forfeitHistory:{}};
   for(var i=0;i<4;i++)st.players.push({id:i,seat:i,rack:[],opened:false,openingType:null,openingColor:null,
@@ -2503,7 +2510,7 @@ function startHand(){
   var deck=make106();
   for(var x=deck.length-1;x>0;x--){var y=rnd(x+1),tp=deck[x];deck[x]=deck[y];deck[y]=tp}
   st.deck=deck;st.discardPile=[];st.currentDiscard=null;st.melds=[];st.pending=null;
-  st.lastOpenTotal=50;st.endBreakdown=null;st.finishSpecial=null;st.endMajorPenalties=null;
+  st.lastOpenTotal=50;st.pairSeriesMin=0;/*V200-2X1-RESET*/st.endBreakdown=null;st.finishSpecial=null;st.endMajorPenalties=null;
   st.indicator=null;st.okey=null;st.fakeIsPlain=false;st.okeyMode=null;
   st.players.forEach(function(p){p.rack=[];p.opened=false;p.openingType=null;p.openingColor=null;p.handPenalty=0;p.hasDrawn=false;p.badOpenPenaltyKey=null;p.fedAny=false;p.kafaOpen=false;p.okeyLockUid=null;p.okeyLockKey=null});
   /* v152 — NORMAL ve BÜYÜK EL aynı düz-Okey gösterge otoritesini kullanır.
@@ -2576,8 +2583,11 @@ function grpValid(g){
     var jn=g.filter(function(t){return isPairWild(t)}).length;
     if(jn===2)return{kind:"pair",val:26,color:"k",pairNum:13,pairWild:true}; /* any two pair wilds = highest 13/13 */
     if(jn===1){
-      var real=isPairWild(g[0])?g[1]:g[0],rf=meldFace(real);
+      var real=isPairWild(g[0])?g[1]:g[0],wild=isPairWild(g[0])?g[0]:g[1],rf=meldFace(real);
       if(!rf)return null;
+      /*V200-GOSTERGE-VAL*/ /* Ozel GOSTERGE cifti (gercek gosterge + rack'ten gercek companion): her tas kendi kanonik degeriyle katilir
+         (gosterge.num + companion.num). 2*num varsayimi yalniz normal ciftler ve OKEY-wild ciftler icin kalir (degismedi). */
+      if(isIndicatorTile(wild)&&!isJok(wild)&&!wild.isFake&&!real.isFake)return{kind:"pair",val:wild.num+rf.num,color:rf.color,pairNum:rf.num,pairWild:true,gstPair:true};
       return{kind:"pair",val:rf.num*2,color:rf.color,pairNum:rf.num,pairWild:true};
     }
     var f0=meldFace(g[0]),f1=meldFace(g[1]);
@@ -2737,11 +2747,20 @@ function a_open(p,groupsUids,mode,orderedManual){
       if(ix>=0)st.players[p].rack.splice(ix,1);
       if(isJok(t)||(gr.v.kind==="pair"&&isPairWild(t)))t.rep=jrep[t.uid]||null;
     }
-    var openTiles=normalizeOpenedMeldTiles(gr.tiles,gr.v);st.melds.push({id:nextMeldId(),owner:p,kind:gr.v.kind,form:gr.v.form||null,color:gr.v.color,tiles:openTiles,ha:st.handIndex,openLen:openTiles.length,processAdds:0});
+    var openTiles=normalizeOpenedMeldTiles(gr.tiles,gr.v);
+    /*V200-GOSTERGE-BAS*/ var gst=null;
+    if(gr.v.kind==="pair"&&openTiles.length===2){
+      /* Yalniz GERCEK GOSTERGE (indicator ile ayni renk+sayi, sahte degil, Okey DEGIL). Companion: rack'ten gelen gercek fiziksel tas; kimligi/degeri motorda aynen korunur, yalniz sunum maski. */
+      var _g0=isIndicatorTile(openTiles[0])&&!isJok(openTiles[0]),_g1=isIndicatorTile(openTiles[1])&&!isJok(openTiles[1]);
+      if(_g0!==_g1){var _gi=_g0?0:1,_ci=1-_gi;if(!isPairWild(openTiles[_ci])&&!openTiles[_ci].isFake)gst={gstUid:openTiles[_gi].uid,companionUid:openTiles[_ci].uid,companionFaceDown:true}}
+    }
+    /*V200-GOSTERGE-SON*/
+    st.melds.push({id:nextMeldId(),owner:p,kind:gr.v.kind,form:gr.v.form||null,color:gr.v.color,tiles:openTiles,ha:st.handIndex,openLen:openTiles.length,processAdds:0,gst:gst});
   }
   if(!P.opened){
     P.opened=true;P.openingType=mode||(allPair?"PAIR":"SERIES");P.openingColor=groups[0].v.color;if(_kafa)P.kafaOpen=true;
     st.lastOpenTotal=total;
+    /*V200-2X1*/ if(P.openingType==="PAIR")st.pairSeriesMin=Math.max(st.pairSeriesMin||0,pairDerivedSeriesMin(total));
   }
   var takeFeed=null;
   if(st.pending){
@@ -2957,12 +2976,14 @@ function forfeitHand(disconnectedSeat,context,eventHandIndex){
   st.handIndex++;
   return{ok:true,winner:null,reason:"FORFEIT",handOver:true,losingTeam:losingTeam,winningTeam:winningTeam,hand:hi};
 }
+function pairDerivedSeriesMin(x){return 2*x+1}/*V200-2X1-FORMULA*/
 function openNeed(mode){
   var n=(CFG.KATLAMALI&&st.lastOpenTotal>50)?st.lastOpenTotal+1:51;
+  /*V200-2X1*/ if(mode!=="PAIR"&&st&&(st.pairSeriesMin||0)>n)n=st.pairSeriesMin;
   if(mode==="PAIR"&&n<52)n=52;
   return n;
 }
-return{CFG:CFG,newGame:newGame,startHand:startHand,draw:a_draw,take:a_take,takeCancel:a_takeCancel,okeyTake:a_okeyTake,takePenalty:a_takePenalty,tilePenaltyAmount:tilePenaltyAmount,__testState:function(v){if(arguments.length)st=v;return st},openNeed:openNeed,openingPolicy:openingPolicy,nextSeat:nextSeat,rightSeat:rightSeat,takeSourceSeat:takeSourceSeat,partnerOf:partnerOf,isTeamMode:isTeamMode,teamIndexOfSeat:teamIndexOfSeat,sameTeam:sameTeam,normalizeTeamsConfig:normalizeTeamsConfig,computeOkey:computeOkey,isBigRules:isBigRules,
+return{CFG:CFG,newGame:newGame,startHand:startHand,draw:a_draw,take:a_take,takeCancel:a_takeCancel,okeyTake:a_okeyTake,takePenalty:a_takePenalty,tilePenaltyAmount:tilePenaltyAmount,__testState:function(v){if(arguments.length)st=v;return st},openNeed:openNeed,pairDerivedSeriesMin:pairDerivedSeriesMin,openingPolicy:openingPolicy,nextSeat:nextSeat,rightSeat:rightSeat,takeSourceSeat:takeSourceSeat,partnerOf:partnerOf,isTeamMode:isTeamMode,teamIndexOfSeat:teamIndexOfSeat,sameTeam:sameTeam,normalizeTeamsConfig:normalizeTeamsConfig,computeOkey:computeOkey,isBigRules:isBigRules,
        open:a_open,openAttempt:openAttempt,badOpenPenalty:badOpenPenalty,badProcessPenalty:badProcessPenalty,process:a_process,discard:a_discard,discardMajorPenaltyKind:discardMajorPenaltyKind,workableDiscardTargets:workableDiscardTargets,canFeedTileToMeld:canFeedTileToMeld,meldTurnFeedsA:meldTurnFeedsA,meldTurnFeedsB:meldTurnFeedsB,canFeedPairToMeld:canFeedPairToMeld,pairFeedPlan:pairFeedPlan,tableMeldValid:tableMeldValid,seriesEndpointPlan:seriesEndpointPlan,meldProcessAdds:meldProcessAdds,check:check,rackPenaltyValue:rackPenaltyValue,unopenedPenalty:unopenedPenalty,openedPenalty:openedPenalty,finishSpecialMeta:finishSpecialMeta,buildMatchFinal:buildMatchFinal,matchSeatStats:matchSeatStats,teamMatchStats:teamMatchStats,forfeitHand:forfeitHand,isJok:isJok,isIndicatorTile:isIndicatorTile,isPairWild:isPairWild,plainFakeRep:plainFakeRep,meldFace:meldFace,tv:tv,grpValid:grpValid,grpValidOrdered:grpValidOrdered,jokerReps:jokerReps,
        get st(){return st},get seed(){return SEEDB},LOG:LOG,LED:LED};
 })();
@@ -4563,6 +4584,7 @@ function syncMelds(){
       if(vt.el&&vt.el.dataset){vt.el.dataset.uid=et.uid;vt.el.dataset.meldId=m.id}
       syncMeldTileFace(vt.el,et);
       if(E.isJok(et)&&!et.isFake)vt.el.classList.add("okey-back");else vt.el.classList.remove("okey-back");
+      /*V200-GOSTERGE-MASK*/ if(m.gst&&m.gst.companionFaceDown&&m.gst.companionUid===et.uid)vt.el.classList.add("gst-back");else vt.el.classList.remove("gst-back");
       vt.el.style.visibility="";vt.el.style.opacity="";vt.el.classList.remove("meld-hold-zoom");
       next.push(vt);globalVisualUid[et.uid]=m.id;liveEls.add(vt.el);
     }
@@ -6706,7 +6728,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-198-feed-target-kanon'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-200-cift-2x1-gosterge-kanon'};
 })(window);
 </script>
 <script>
@@ -6874,7 +6896,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     }
     var deck=[];for(var d=0;d<(h.deckCount||0);d++)deck.push({uid:'DECK-HIDDEN-'+d+'-R'+snap.rev,color:'k',num:0,hidden:true});
     var disc=[];for(var q=0;q<(h.discardPileCount||0);q++)disc.push({uid:'DISCARD-HIDDEN-'+q+'-R'+snap.rev,color:'k',num:0,hidden:true});
-    var st={players:players,scoreKeeper:0,handDealerBase:0,bigHandDealer:0,handIndex:+h.index||0,handCount:+(h.handCount!=null?h.handCount:h.bigHandCount)||0,bigHandCount:+(h.handCount!=null?h.handCount:h.bigHandCount)||0,handType:h.type||null,dealer:lseat(h.dealer),turnIndex:lseat(h.turnIndex),turnCount:+h.turnCount||0,firstRoundActive:!!h.firstRoundActive,starter:lseat(h.starter),deck:deck,discardPile:disc,currentDiscard:snap.currentDiscard?{by:lseat(snap.currentDiscard.by),tile:tile(snap.currentDiscard.tile)}:null,indicator:tile(h.indicator),okey:h.okey?{color:h.okey.color,num:h.okey.num}:null,fakeIsPlain:h.okeyMode==='INDICATOR',okeyMode:h.okeyMode||null,melds:(snap.melds||[]).map(function(m){return{id:m.id,owner:lseat(m.owner),kind:m.kind,form:m.form,color:m.color,openLen:m.openLen==null?(m.tiles||[]).length:+m.openLen,processAdds:+m.processAdds||0,tiles:(m.tiles||[]).map(tile)}}),meldSeq:0,pending:self.pending?{by:lseat(self.pending.by),tile:tile(self.pending.tile)}:null,lastOpenTotal:+h.lastOpenTotal||50,winner:h.winner==null?null:lseat(h.winner),handOver:!!h.handOver,gameFinished:!!h.gameFinished,turnState:h.turnState||'WAIT',endBreakdown:mapBreakdown(snap.endBreakdown),finishSpecial:snap.finishSpecial?JSON.parse(JSON.stringify(snap.finishSpecial)):null,endMajorPenalties:Array.isArray(snap.endMajorPenalties)?snap.endMajorPenalties.map(mapSeatObject):null,matchFinal:mapMatchFinal(snap.matchFinal),teamMode:snap.mode==='TEAM',teams:snap.mode==='TEAM'?[[0,2],[1,3]]:null,teamForfeitHandWins:[0,0],forfeitHistory:{}};
+    var st={players:players,scoreKeeper:0,handDealerBase:0,bigHandDealer:0,handIndex:+h.index||0,handCount:+(h.handCount!=null?h.handCount:h.bigHandCount)||0,bigHandCount:+(h.handCount!=null?h.handCount:h.bigHandCount)||0,handType:h.type||null,dealer:lseat(h.dealer),turnIndex:lseat(h.turnIndex),turnCount:+h.turnCount||0,firstRoundActive:!!h.firstRoundActive,starter:lseat(h.starter),deck:deck,discardPile:disc,currentDiscard:snap.currentDiscard?{by:lseat(snap.currentDiscard.by),tile:tile(snap.currentDiscard.tile)}:null,indicator:tile(h.indicator),okey:h.okey?{color:h.okey.color,num:h.okey.num}:null,fakeIsPlain:h.okeyMode==='INDICATOR',okeyMode:h.okeyMode||null,melds:(snap.melds||[]).map(function(m){return{id:m.id,owner:lseat(m.owner),kind:m.kind,form:m.form,color:m.color,openLen:m.openLen==null?(m.tiles||[]).length:+m.openLen,processAdds:+m.processAdds||0,gst:m.gst||null,tiles:(m.tiles||[]).map(tile)}}),meldSeq:0,pending:self.pending?{by:lseat(self.pending.by),tile:tile(self.pending.tile)}:null,lastOpenTotal:+h.lastOpenTotal||50,pairSeriesMin:+h.pairSeriesMin||0,winner:h.winner==null?null:lseat(h.winner),handOver:!!h.handOver,gameFinished:!!h.gameFinished,turnState:h.turnState||'WAIT',endBreakdown:mapBreakdown(snap.endBreakdown),finishSpecial:snap.finishSpecial?JSON.parse(JSON.stringify(snap.finishSpecial)):null,endMajorPenalties:Array.isArray(snap.endMajorPenalties)?snap.endMajorPenalties.map(mapSeatObject):null,matchFinal:mapMatchFinal(snap.matchFinal),teamMode:snap.mode==='TEAM',teams:snap.mode==='TEAM'?[[0,2],[1,3]]:null,teamForfeitHandWins:[0,0],forfeitHistory:{}};
     var tf=snap.teamForfeitHandWins||[0,0];st.teamForfeitHandWins[lteam(0)]=tf[0]||0;st.teamForfeitHandWins[lteam(1)]=tf[1]||0;return st;
   }
   function hydrate(snap){
@@ -6991,7 +7013,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-198-feed-target-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-200-cift-2x1-gosterge-kanon',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>

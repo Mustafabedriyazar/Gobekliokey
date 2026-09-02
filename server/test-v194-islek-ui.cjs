@@ -111,9 +111,9 @@ T('net seri clear',html.indexOf('[cands[q]])}catch(e){}}})();ISLEK.target=null;i
 T('net cift clear',html.indexOf(',legal[q])}catch(e){}}})();ISLEK.target=null;islekClearHi();islekUI();')>=0);
 
 /* ---- 4) damga hijyeni: canli health build dahil ---- */
-T('v194 damga index',html.indexOf('gobek17-198-feed-target-kanon')>=0);
+T('v194 damga index',html.indexOf('gobek17-200-cift-2x1-gosterge-kanon')>=0);
 const srv=fs.readFileSync(path.join(root,'server','server.cjs'),'utf8');
-T('v194 damga server/server.cjs',srv.indexOf('gobek17-198-feed-target-kanon')>=0);
+T('v194 damga server/server.cjs',srv.indexOf('gobek17-200-cift-2x1-gosterge-kanon')>=0);
 T('eski 192c health literali kalkti',srv.indexOf('gobek17-192c-okrep-ui')<0);
 
 console.log('v194-islek-ui: '+P+' PASS / 0 FAIL');

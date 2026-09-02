@@ -301,7 +301,7 @@ function newGame(seed){
   SEEDB=nextSeed;
   st={players:[],scoreKeeper:2,handDealerBase:0,handIndex:0,handCount:0,handType:null,dealer:0,
       turnIndex:0,turnCount:0,firstRoundActive:true,starter:0,deck:[],discardPile:[],currentDiscard:null,
-      indicator:null,okey:null,fakeIsPlain:false,okeyMode:null,melds:[],meldSeq:0,pending:null,lastOpenTotal:50,
+      indicator:null,okey:null,fakeIsPlain:false,okeyMode:null,melds:[],meldSeq:0,pending:null,lastOpenTotal:50,pairSeriesMin:0,/*V200-2X1*/
       winner:null,handOver:true,gameFinished:false,turnState:"WAIT",endBreakdown:null,finishSpecial:null,endMajorPenalties:null,matchFinal:null,
       teamMode:!!tc.teamMode,teams:tc.teamMode?[[0,2],[1,3]]:null,teamForfeitHandWins:[0,0],forfeitHistory:{}};
   for(var i=0;i<4;i++)st.players.push({id:i,seat:i,rack:[],opened:false,openingType:null,openingColor:null,
@@ -321,7 +321,7 @@ function startHand(){
   var deck=make106();
   for(var x=deck.length-1;x>0;x--){var y=rnd(x+1),tp=deck[x];deck[x]=deck[y];deck[y]=tp}
   st.deck=deck;st.discardPile=[];st.currentDiscard=null;st.melds=[];st.pending=null;
-  st.lastOpenTotal=50;st.endBreakdown=null;st.finishSpecial=null;st.endMajorPenalties=null;
+  st.lastOpenTotal=50;st.pairSeriesMin=0;/*V200-2X1-RESET*/st.endBreakdown=null;st.finishSpecial=null;st.endMajorPenalties=null;
   st.indicator=null;st.okey=null;st.fakeIsPlain=false;st.okeyMode=null;
   st.players.forEach(function(p){p.rack=[];p.opened=false;p.openingType=null;p.openingColor=null;p.handPenalty=0;p.hasDrawn=false;p.badOpenPenaltyKey=null;p.fedAny=false;p.kafaOpen=false;p.okeyLockUid=null;p.okeyLockKey=null});
   /* v152 — NORMAL ve BÜYÜK EL aynı düz-Okey gösterge otoritesini kullanır.
@@ -394,8 +394,11 @@ function grpValid(g){
     var jn=g.filter(function(t){return isPairWild(t)}).length;
     if(jn===2)return{kind:"pair",val:26,color:"k",pairNum:13,pairWild:true}; /* any two pair wilds = highest 13/13 */
     if(jn===1){
-      var real=isPairWild(g[0])?g[1]:g[0],rf=meldFace(real);
+      var real=isPairWild(g[0])?g[1]:g[0],wild=isPairWild(g[0])?g[0]:g[1],rf=meldFace(real);
       if(!rf)return null;
+      /*V200-GOSTERGE-VAL*/ /* Ozel GOSTERGE cifti (gercek gosterge + rack'ten gercek companion): her tas kendi kanonik degeriyle katilir
+         (gosterge.num + companion.num). 2*num varsayimi yalniz normal ciftler ve OKEY-wild ciftler icin kalir (degismedi). */
+      if(isIndicatorTile(wild)&&!isJok(wild)&&!wild.isFake&&!real.isFake)return{kind:"pair",val:wild.num+rf.num,color:rf.color,pairNum:rf.num,pairWild:true,gstPair:true};
       return{kind:"pair",val:rf.num*2,color:rf.color,pairNum:rf.num,pairWild:true};
     }
     var f0=meldFace(g[0]),f1=meldFace(g[1]);
@@ -555,11 +558,20 @@ function a_open(p,groupsUids,mode,orderedManual){
       if(ix>=0)st.players[p].rack.splice(ix,1);
       if(isJok(t)||(gr.v.kind==="pair"&&isPairWild(t)))t.rep=jrep[t.uid]||null;
     }
-    var openTiles=normalizeOpenedMeldTiles(gr.tiles,gr.v);st.melds.push({id:nextMeldId(),owner:p,kind:gr.v.kind,form:gr.v.form||null,color:gr.v.color,tiles:openTiles,ha:st.handIndex,openLen:openTiles.length,processAdds:0});
+    var openTiles=normalizeOpenedMeldTiles(gr.tiles,gr.v);
+    /*V200-GOSTERGE-BAS*/ var gst=null;
+    if(gr.v.kind==="pair"&&openTiles.length===2){
+      /* Yalniz GERCEK GOSTERGE (indicator ile ayni renk+sayi, sahte degil, Okey DEGIL). Companion: rack'ten gelen gercek fiziksel tas; kimligi/degeri motorda aynen korunur, yalniz sunum maski. */
+      var _g0=isIndicatorTile(openTiles[0])&&!isJok(openTiles[0]),_g1=isIndicatorTile(openTiles[1])&&!isJok(openTiles[1]);
+      if(_g0!==_g1){var _gi=_g0?0:1,_ci=1-_gi;if(!isPairWild(openTiles[_ci])&&!openTiles[_ci].isFake)gst={gstUid:openTiles[_gi].uid,companionUid:openTiles[_ci].uid,companionFaceDown:true}}
+    }
+    /*V200-GOSTERGE-SON*/
+    st.melds.push({id:nextMeldId(),owner:p,kind:gr.v.kind,form:gr.v.form||null,color:gr.v.color,tiles:openTiles,ha:st.handIndex,openLen:openTiles.length,processAdds:0,gst:gst});
   }
   if(!P.opened){
     P.opened=true;P.openingType=mode||(allPair?"PAIR":"SERIES");P.openingColor=groups[0].v.color;if(_kafa)P.kafaOpen=true;
     st.lastOpenTotal=total;
+    /*V200-2X1*/ if(P.openingType==="PAIR")st.pairSeriesMin=Math.max(st.pairSeriesMin||0,pairDerivedSeriesMin(total));
   }
   var takeFeed=null;
   if(st.pending){
@@ -789,12 +801,14 @@ function _serverRestore(s){
   LED.length=0;Array.prototype.push.apply(LED,_serverClone(s.LED||[]));
   return true;
 }
+function pairDerivedSeriesMin(x){return 2*x+1}/*V200-2X1-FORMULA*/
 function openNeed(mode){
   var n=(CFG.KATLAMALI&&st.lastOpenTotal>50)?st.lastOpenTotal+1:51;
+  /*V200-2X1*/ if(mode!=="PAIR"&&st&&(st.pairSeriesMin||0)>n)n=st.pairSeriesMin;
   if(mode==="PAIR"&&n<52)n=52;
   return n;
 }
-return{CFG:CFG,newGame:newGame,startHand:startHand,draw:a_draw,take:a_take,takeCancel:a_takeCancel,okeyTake:a_okeyTake,takePenalty:a_takePenalty,tilePenaltyAmount:tilePenaltyAmount,__testState:function(v){if(arguments.length)st=v;return st},openNeed:openNeed,openingPolicy:openingPolicy,nextSeat:nextSeat,rightSeat:rightSeat,takeSourceSeat:takeSourceSeat,partnerOf:partnerOf,isTeamMode:isTeamMode,teamIndexOfSeat:teamIndexOfSeat,sameTeam:sameTeam,normalizeTeamsConfig:normalizeTeamsConfig,computeOkey:computeOkey,isBigRules:isBigRules,
+return{CFG:CFG,newGame:newGame,startHand:startHand,draw:a_draw,take:a_take,takeCancel:a_takeCancel,okeyTake:a_okeyTake,takePenalty:a_takePenalty,tilePenaltyAmount:tilePenaltyAmount,__testState:function(v){if(arguments.length)st=v;return st},openNeed:openNeed,pairDerivedSeriesMin:pairDerivedSeriesMin,openingPolicy:openingPolicy,nextSeat:nextSeat,rightSeat:rightSeat,takeSourceSeat:takeSourceSeat,partnerOf:partnerOf,isTeamMode:isTeamMode,teamIndexOfSeat:teamIndexOfSeat,sameTeam:sameTeam,normalizeTeamsConfig:normalizeTeamsConfig,computeOkey:computeOkey,isBigRules:isBigRules,
        open:a_open,openAttempt:openAttempt,badOpenPenalty:badOpenPenalty,badProcessPenalty:badProcessPenalty,process:a_process,discard:a_discard,discardMajorPenaltyKind:discardMajorPenaltyKind,workableDiscardTargets:workableDiscardTargets,canFeedTileToMeld:canFeedTileToMeld,meldTurnFeedsA:meldTurnFeedsA,meldTurnFeedsB:meldTurnFeedsB,canFeedPairToMeld:canFeedPairToMeld,pairFeedPlan:pairFeedPlan,tableMeldValid:tableMeldValid,seriesEndpointPlan:seriesEndpointPlan,meldProcessAdds:meldProcessAdds,check:check,rackPenaltyValue:rackPenaltyValue,unopenedPenalty:unopenedPenalty,openedPenalty:openedPenalty,finishSpecialMeta:finishSpecialMeta,buildMatchFinal:buildMatchFinal,matchSeatStats:matchSeatStats,teamMatchStats:teamMatchStats,forfeitHand:forfeitHand,isJok:isJok,isIndicatorTile:isIndicatorTile,isPairWild:isPairWild,plainFakeRep:plainFakeRep,meldFace:meldFace,tv:tv,grpValid:grpValid,grpValidOrdered:grpValidOrdered,jokerReps:jokerReps,_serverSnapshot:_serverSnapshot,_serverRestore:_serverRestore,
        get st(){return st},get seed(){return SEEDB},LOG:LOG,LED:LED};
 })();

@@ -123,10 +123,10 @@ function fnSlice(name){const i=html.indexOf('function '+name);const j=html.index
 })();
 /* ---- K6: damga + surum ---- */
 (function(){
-  ok('K6 v198 damga',html.indexOf('gobek17-198-feed-target-kanon')>=0);
+  ok('K6 v198 damga',html.indexOf('gobek17-200-cift-2x1-gosterge-kanon')>=0);
   ok('K6 v197 damga kalmadi',html.indexOf('gobek17-197-realdevice-dragfeed-kanon')<0);
   const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
-  ok('K6 pkg 1.98.0',pkg.version==='1.98.0');
+  ok('K6 pkg 2.0.0',pkg.version==='2.0.0');
 })();
 console.log('v198-feed-target: '+P+' PASS / '+F+' FAIL');
 if(F)process.exit(1);
