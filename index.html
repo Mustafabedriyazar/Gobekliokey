@@ -2014,7 +2014,7 @@ try{V.src=SRC;V.load()}catch(e){teardown()}
 "use strict";
 var DBG=/[?&]debug\b/.test(location.search);
 function dlog(){if(DBG){try{console.log.apply(console,["[G17]"].concat([].slice.call(arguments)))}catch(x){}}}
-var BUILD="gobek17-201-pair-stage-visual";
+var BUILD="gobek17-202-pair-visual-handoff";
 window.__G17_MENU_ACTIVE__=location.protocol!=="about:";
 var OKEY_WILDCARD_RULE="INDICATOR_PLUS_ONE_ANY_COLOR_1_13";
 window.__GOBEK17_BUILD__=BUILD;
@@ -5102,36 +5102,72 @@ function clearPairFeedStage(reveal){
   if(reveal&&stg.uid){var vt=uiTileByUid(stg.uid);if(vt&&vt.el&&!vt.dead)vt.el.style.visibility=""}
   PAIR_FEED_STAGE={uid:null,meldId:null,ghost:null};
 }
-function pairStageSlot(hb,meldId){
+function pairStageSlot(hb,meldId,cw,ch){
   /*V201-PAIR-STAGE-SLOT: right adjacent cell of the target pair; left cell if another MELD_HIT overlaps; right fallback otherwise (fail-open). Visual only. */
-  var gap=Math.max(3,Math.round(GW*.08)),cy=(hb.y1+hb.y2)*.5,cands=[hb.x2+gap+GW*.5,hb.x1-gap-GW*.5],pick=cands[0];
+  var gw=(cw>0)?cw:GW,gh=(ch>0)?ch:GH; /* V202-PAIR-STAGE-CELL: hucre boyutu hedef satirin gercek tas boyutu (zw/zh); verilmezse GW/GH (v201) */
+  var gap=Math.max(3,Math.round(gw*.08)),cy=(hb.y1+hb.y2)*.5,cands=[hb.x2+gap+gw*.5,hb.x1-gap-gw*.5],pick=cands[0];
   var wv=(typeof WV==="number"&&WV>0)?WV:1e9;
   for(var ci=0;ci<cands.length;ci++){
-    var lx=cands[ci]-GW*.5,rx=cands[ci]+GW*.5,clash=(lx<0||rx>wv);
+    var lx=cands[ci]-gw*.5,rx=cands[ci]+gw*.5,clash=(lx<0||rx>wv);
     if(!clash&&typeof MELD_HIT==="object"&&MELD_HIT)for(var mk in MELD_HIT){
       if(String(mk)===String(meldId))continue;
       var ob=MELD_HIT[mk];if(!ob)continue;
-      if(rx>ob.x1&&lx<ob.x2&&cy+GH*.5>ob.y1&&cy-GH*.5<ob.y2){clash=true;break}
+      if(rx>ob.x1&&lx<ob.x2&&cy+gh*.5>ob.y1&&cy-gh*.5<ob.y2){clash=true;break}
     }
     if(!clash){pick=cands[ci];break}
   }
   return{x:pick,y:cy};
+}
+function pairStageBaseVis(meldId){ /* V202-PAIR-STAGE-GRIDFACE: hedef perin canli grid tasi (klon kaynagi); yoksa null (fail-open) */
+try{var arr=(typeof VISM==="object"&&VISM)?(VISM[meldId]||[]):[];for(var i=0;i<arr.length;i++)if(arr[i]&&arr[i].el&&!arr[i].dead)return arr[i]}catch(_e){}
+return null;
+}
+function pairStageGhostFace(f,uid){ /* V202-PAIR-STAGE-GRIDFACE: klon yuzu = bekleyen tasin motor yuzu; kaynak tasin durum siniflari/kimligi klonda kalmaz (salt sunum) */
+try{
+if(f.classList&&f.classList.remove)f.classList.remove("okey-back","gst-back","okyp","meld-first","meld-last","proc-magnet-hot","proc-target","proc-target-opp","islek-target","meld-hit","process-react","meld-hold-zoom","pnd","sel");
+if(f.removeAttribute){f.removeAttribute("data-uid");f.removeAttribute("data-meld-id");f.removeAttribute("data-meld-owner")}
+var et=(typeof engTile==="function")?engTile(uid):null;
+if(et&&typeof syncMeldTileFace==="function"){syncMeldTileFace(f,et);if(E.isJok(et)&&!et.isFake&&f.classList&&f.classList.add)f.classList.add("okey-back")}
+}catch(_e){}
 }
 function stagePairFeedTile(t,target,src,x,y){
   if(!t||!target)return false;
   clearPairFeedStage(true);restoreDraggedSource(t,t.el,src);
   /*V201-PAIR-STAGE-SLOT: bekleyen ilk CIFT tasi hedef perin satirinda bitisik bos hucrede durur (dikey ofset / ust uste binme yok) */
   var hb=target.hb||MELD_HIT[target.id],cx=x,cy=y;
-  if(hb){var ps0=pairStageSlot(hb,target.id);cx=ps0.x;cy=ps0.y}
-  var f=motionClone(t.el);if(f){
-    f.classList.add("pair-stage-hold");f.style.width=GW+"px";f.style.height=GH+"px";
-    f.style.left=(cx-GW*.5)+"px";f.style.top=(cy-GH*.5)+"px";f.style.zIndex="58";f.style.pointerEvents="none";
-    f.style.filter="drop-shadow(0 0 9px rgba(255,220,120,.78))";
+  var base=(typeof pairStageBaseVis==="function")?pairStageBaseVis(target.id):null,cw=(base&&base.zw>0)?base.zw:GW,ch=(base&&base.zh>0)?base.zh:GH; /* V202-PAIR-STAGE-GRIDFACE: bekleyen tasin temsili hedef perin GERCEK grid tasindan klonlanir (ayni sinif/boyut/yazi metrigi); rack klonu + golge efekti bulanik/cift goruntu uretiyordu */
+  if(hb){var ps0=pairStageSlot(hb,target.id,cw,ch);cx=ps0.x;cy=ps0.y}
+  var f=motionClone(base&&base.el?base.el:t.el);if(f){
+  if(typeof pairStageGhostFace==="function")pairStageGhostFace(f,t.uid);
+    f.classList.add("pair-stage-hold");f.style.width=cw+"px";f.style.height=ch+"px";
+    f.style.left=(cx-cw*.5)+"px";f.style.top=(cy-ch*.5)+"px";f.style.zIndex="58";f.style.pointerEvents="none";
+    f.style.boxShadow="0 0 0 3px rgba(255,232,130,.95),0 0 18px rgba(255,183,48,.8),0 6px 10px rgba(0,0,0,.5)";
   }
   t.el.style.visibility="hidden";
   PAIR_FEED_STAGE={uid:t.uid,meldId:target.id,ghost:f};
   clearSel();toast("İlk ÇİFT taşı hedefte — eşini aynı ÇİFT alanına bırak");buzz([7,12,7]);
   return true;
+}
+function animatePairFeedCommit(uids,points,landSound){ /* V202-PAIR-COMMIT-HANDOFF: TEK MANTIKSAL TAS = TEK GORUNUR TEMSIL. Gercek grid tasi ucus boyunca gizli; klon iner -> klon silinir -> gercek tas acilir. Salt sunum, motor/state/ceza/tur degismez. Fail-safe: zamanlayici + istisnada ensureMeldVisibility. */
+var maxT=0,n=0;
+try{
+if(!uids||!points)return 0;
+for(var i=0;i<uids.length;i++){
+var vt=(typeof meldVisByUid==="function")?meldVisByUid(uids[i]):null,from=points[uids[i]];
+if(!vt||!vt.el||!from||!isFinite(from.x)||!isFinite(from.y))continue;
+var target=motionElCenter(vt.el,vt.zw||GW,vt.zh||GH),ghost=motionClone(vt.el);if(!ghost)continue;
+vt.el.style.visibility="hidden";
+(function(el,gh,src,dst,idx,last){
+var dist=Math.hypot(dst.x-src.x,dst.y-src.y),done=false;
+var reveal=function(){if(done)return;done=true;revealMotionTarget(el)};
+var d=animateMotionClone(gh,src,dst,{delay:idx*56,seat:HSEAT,arc:Math.max(24,Math.min(72,dist*.10)),spin:((idx%3)-1)*4.2,startSound:false,sound:last?(landSound||"snap"):false,impactType:"drop"},reveal);
+setTimeout(reveal,(d||0)+420);
+if(d>maxT)maxT=d;
+})(vt.el,ghost,from,target,n,i===uids.length-1);
+n++;
+}
+}catch(_e){try{if(typeof ensureMeldVisibility==="function")ensureMeldVisibility()}catch(_x){}return 0}
+return maxT;
 }
 function commitPairFeedDrop(t,target,src,uids,points){
   if(!target||!uids||uids.length!==2)return false;
@@ -5145,7 +5181,7 @@ function commitPairFeedDrop(t,target,src,uids,points){
   for(var i=0;i<uids.length;i++){var vt=uiTileByUid(uids[i]);if(vt)removeVis(vt)}
   clearPairFeedStage(false);clearProcessAssist();clearSel();syncMelds();
   /*V201-PAIR-COMMIT-NOFLIGHT: stage/drop noktasindan ucan klonlar gercek grid render ile cakisip ghost/duplicate uretiyordu; CIFT commit dogrudan grid'e oturur */
-  var animMs=0;
+  var animMs=(typeof animatePairFeedCommit==="function")?animatePairFeedCommit(uids,motion,r.pair?"pairpenalty":"snap"):0; /* V202-PAIR-COMMIT-HANDOFF: klon ucar, gercek grid tasi inis bitene kadar gizli, sonra tek temsil (v201 NOFLIGHT dogrudan-grid yolu fail-open yedek) */
   toast(r.teamFree?"EŞİN ÇİFT ALANINA İŞLENDİ · CEZA 0":"ÇİFT İŞLENDİ — rakibe +"+r.amount+" ceza");
   if(!animMs)sfx(r.pair?"pairpenalty":"snap");buzz([10,18]);updUI();updHint();assertRack();
   if(r.handOver)handEndUI(r);return true;
@@ -6747,7 +6783,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
     try{while(true){var q=await rd.read();if(q.done)break;buf+=dec.decode(q.value,{stream:true});var cut;while((cut=buf.indexOf('\n\n'))>=0){var block=buf.slice(0,cut);buf=buf.slice(cut+2);var lines=block.split(/\r?\n/),ev='',data='';for(var i=0;i<lines.length;i++){if(lines[i].indexOf('event:')===0)ev=lines[i].slice(6).trim();else if(lines[i].indexOf('data:')===0)data+=lines[i].slice(5).trim()}if(ev==='snapshot'&&data){try{self._emit(JSON.parse(data))}catch(_){}}}}}
     catch(e){if(!ac.signal.aborted)throw e}finally{if(this.abort===ac)this.abort=null;this.connected=false}
   };
-  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-201-pair-stage-visual'};
+  g.G17MP={Client:Client,protocol:'G17MP/1',build:'gobek17-202-pair-visual-handoff'};
 })(window);
 </script>
 <script>
@@ -7032,7 +7068,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"){
 
   g.addEventListener('online',function(){if(S.active&&S.client)claimAndStream()});
   g.addEventListener('beforeunload',function(){try{if(S.active&&S.client)S.client.disconnect();else if(S.mmTimer&&S.client)S.client.cancelMatchmaking()}catch(_){} });
-  g.G17NET={build:'gobek17-201-pair-stage-visual',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
+  g.G17NET={build:'gobek17-202-pair-visual-handoff',_ledgerDiff:newLedgerEvents,active:active,isRoomActive:function(){return!!S.active},isBusy:function(){return!!S.busy},state:function(){return{active:S.active,launched:S.launched,roomId:S.roomId,roomCode:roomCode(S.roomId),serverSeat:S.serverSeat,endpoint:S.endpoint||endpoint(),serverReady:!!SERVER_PROBE.ok,localPreview:localPreview(),busy:S.busy,rev:S.lastSnap&&S.lastSnap.rev}},createRoom:createRoom,joinRoom:joinRoom,createRoomUI:createRoomUI,roomCodeUI:roomCodeUI,inviteUI:inviteUI,accountUI:accountUI,statsUI:statsUI,profileEditUI:profileEditUI,quickMatchUI:quickMatchUI,cancelQuickMatch:cancelQuick,rankedUI:rankedUI,rankedLeaderboardUI:rankedLeaderboardUI,startRanked:startRanked,cancelRanked:cancelRanked,copyCode:copyCode,leave:leave,resume:resumeSession,reportPlayer:reportPlayer,myProfile:myProfile,rotateRecoveryCodes:rotateRecoveryCodes,logoutAccount:logoutAccount,authUI:authUI,recoveryUI:recoveryUI,metaProfile:metaProfile,metaWallet:metaWallet,metaLeague:metaLeague,metaTournaments:metaTournaments,draw:draw,take:take,takePenalty:takePenalty,discard:discardSelected,discardUid:discardUid,finish:finish,open:open,badOpen:badOpen,perOpen:perOpen,process:process,badProcess:badProcess,next:next,_onSnapshot:onSnapshot,_project:project};
   setTimeout(function(){scrubLegacyLocalSecrets();if(window.G17_BOTFIRST===false){resumeSession()}else{try{clearSession()}catch(_rs){}}},0);
 })(window);
 </script>

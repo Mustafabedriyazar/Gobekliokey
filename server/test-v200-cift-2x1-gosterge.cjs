@@ -217,9 +217,9 @@ function gstFixture(katl){for(let seed=1;seed<400;seed++){const E=createEngine()
   ok('Y bridge (index) pairSeriesMin+gst',html.indexOf('pairSeriesMin:+h.pairSeriesMin||0')>=0&&html.indexOf('gst:m.gst||null,tiles:(m.tiles||[]).map(tile)')>=0);
   ok('Y bridge (multiplayer-bridge.js) pairSeriesMin+gst',bridge.indexOf('pairSeriesMin:+h.pairSeriesMin||0')>=0&&bridge.indexOf('gst:m.gst||null')>=0);
   ok('Y +250 gibi yeni Okey kurali eklenmedi',(html.match(/OKEY_DISCARD_PENALTY=250/g)||[]).length===1&&html.indexOf('GOSTERGE_PENALTY')<0);
-  ok('Y damga v200 index/sw/server',html.indexOf('gobek17-201-pair-stage-visual')>=0&&fs.readFileSync(path.join(root,'sw.js'),'utf8').indexOf('gobek17-201-pair-stage-visual')>=0&&fs.readFileSync(path.join(__dirname,'server.cjs'),'utf8').indexOf('gobek17-201-pair-stage-visual')>=0);
+  ok('Y damga v200 index/sw/server',html.indexOf('gobek17-202-pair-visual-handoff')>=0&&fs.readFileSync(path.join(root,'sw.js'),'utf8').indexOf('gobek17-202-pair-visual-handoff')>=0&&fs.readFileSync(path.join(__dirname,'server.cjs'),'utf8').indexOf('gobek17-202-pair-visual-handoff')>=0);
   ok('Y eski v198 damgasi kalmadi',html.indexOf('gobek17-198-feed-target-kanon')<0&&bridge.indexOf('gobek17-198')<0);
-  ok('Y pkg 2.0.1',pkg.version==='2.0.1');
+  ok('Y pkg 2.0.2',pkg.version==='2.0.2');
   /* MASTER17 UI blogu sozdizimi */
   try{const a=html.indexOf('/*MASTER17-BAS*/'),b=html.indexOf('</script>',a);new Function(html.slice(a,b));ok('Y MASTER17 UI parse',true)}catch(e){ok('Y MASTER17 UI parse: '+e.message,false)}
 })();

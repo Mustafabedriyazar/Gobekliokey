@@ -12,7 +12,7 @@ ok(!!(st&&ps&&cm),'K1a stagePairFeedTile/pairStageSlot/commitPairFeedDrop mevcut
 ok(!!st&&st.indexOf('V201-PAIR-STAGE-SLOT')>=0&&src.indexOf('hb.y2+Math.max(8,GH*.16)')<0,'K1b stage dikey ofset (perin altina sarkma) kalkti');
 ok(!!cm&&cm.indexOf('V201-PAIR-COMMIT-NOFLIGHT')>=0&&cm.indexOf('animateProcessTransfer(')<0,'K1c commit: stage/drop noktasindan ucan klon yok');
 ok(!!cm&&cm.indexOf('clearPairFeedStage(false)')>=0&&cm.indexOf('clearPairFeedStage(false)')<cm.indexOf('syncMelds()'),'K1d commit: stage ghost syncMelds oncesi kaldiriliyor');
-ok(src.indexOf('gobek17-201-pair-stage-visual')>=0&&src.indexOf('gobek17-200-cift-2x1-gosterge-kanon')<0,'K1e index.html damga v201');
+ok(src.indexOf('gobek17-202-pair-visual-handoff')>=0&&src.indexOf('gobek17-200-cift-2x1-gosterge-kanon')<0,'K1e index.html damga v201');
 /* K2 pairStageSlot geometri */
 function mkSlot(GW,GH,WV,MH){return new Function('GW','GH','WV','MELD_HIT',ps+'\nreturn pairStageSlot;')(GW,GH,WV,MH)}
 let MH={7:{x1:100,y1:200,x2:180,y2:260}},r=mkSlot(40,60,1000,MH)(MH[7],7);
